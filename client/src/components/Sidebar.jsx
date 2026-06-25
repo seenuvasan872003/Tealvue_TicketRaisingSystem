@@ -26,6 +26,7 @@ import {
   X,
   FileText,
   Clock,
+  CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
@@ -288,6 +289,10 @@ const Sidebar = ({ isOpen, onClose }) => {
             <NavLink to="/team-user/tickets" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
               <Ticket size={16} />
               Assigned Tickets
+            </NavLink>
+            <NavLink to="/team-user/finished-tickets" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+              <CheckCircle size={16} />
+              Finished Tickets
             </NavLink>
           </>
         )}

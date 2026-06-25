@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Ticket, CircleDot, RotateCcw, CheckCircle2, Plus,
-  AlertTriangle, Minus, Activity, Calendar, User, Hash
+  AlertTriangle, Minus, Activity, Calendar, User, Hash, XCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -55,21 +55,42 @@ const Dashboard = () => {
     const load = async () => {
       try {
         if (user?.role === 'team_admin' || user?.role === 'team_user') {
-          const ticketsRes = await getTickets({ page: 1, limit: 1000 });
+          const [ticketsRes, teamRes] = await Promise.all([
+            getTickets({ page: 1, limit: 1000 }),
+            getMyTeam().catch(() => ({ data: null }))
+          ]);
           const ticketsList = ticketsRes.data.tickets || [];
+          const myTeam = teamRes?.data;
+          const myTeamId = myTeam?._id;
+
+          // Filter to only include tickets that actively belong to this team (not transferred to admin, and not reallocated away)
+          const activeTickets = ticketsList.filter(t => {
+            const tTeamId = t.teamId?._id || t.teamId;
+            const tReallocatedFrom = t.reallocatedFromTeamId?._id || t.reallocatedFromTeamId;
+            
+            // Exclude transferred tickets
+            if (t.allocationStatus === 'transferred_to_admin') return false;
+            
+            // Exclude tickets reallocated away from this team
+            if (myTeamId && tReallocatedFrom === myTeamId && tTeamId !== myTeamId) return false;
+            
+            // Must belong to this team
+            return myTeamId ? tTeamId === myTeamId : true;
+          });
           
           const total = ticketsList.length;
-          const open = ticketsList.filter(t => t.status === 'open').length;
-          const inProgress = ticketsList.filter(t => t.status === 'in-progress').length;
-          const closed = ticketsList.filter(t => t.status === 'closed').length;
+          const open = activeTickets.filter(t => t.status === 'open').length;
+          const inProgress = activeTickets.filter(t => t.status === 'in-progress').length;
+          const closed = activeTickets.filter(t => t.status === 'closed').length;
+          const transferred = total - activeTickets.length;
           
-          const urgent = ticketsList.filter(t => t.priority === 'urgent').length;
-          const high = ticketsList.filter(t => t.priority === 'high').length;
-          const medium = ticketsList.filter(t => t.priority === 'medium').length;
-          const low = ticketsList.filter(t => t.priority === 'low').length;
+          const urgent = activeTickets.filter(t => t.priority === 'urgent').length;
+          const high = activeTickets.filter(t => t.priority === 'high').length;
+          const medium = activeTickets.filter(t => t.priority === 'medium').length;
+          const low = activeTickets.filter(t => t.priority === 'low').length;
 
-          setStats({ total, open, inProgress, closed, urgent, high, medium, low });
-          setRecent(ticketsList.slice(0, 5));
+          setStats({ total, open, inProgress, closed, transferred, urgent, high, medium, low });
+          setRecent(activeTickets.slice(0, 5));
 
           setPieData([
             { name: 'Open', value: open, color: '#3fb950' },
@@ -85,30 +106,27 @@ const Dashboard = () => {
           ]);
 
           // Fetch team members workload for team_admin
-          if (user?.role === 'team_admin') {
+          if (user?.role === 'team_admin' && myTeam) {
             try {
-              const teamRes = await getMyTeam();
-              if (teamRes.data) {
-                const membersRes = await getTeamMembers(teamRes.data._id);
-                const membersList = membersRes.data || [];
-                
-                const membersWithStats = membersList.map(member => {
-                  const memberTickets = ticketsList.filter(t => t.assignedToUser?._id === member._id || t.assignedToUser === member._id);
-                  const active = memberTickets.filter(t => t.status === 'in-progress' || t.status === 'open').length;
-                  const resolved = memberTickets.filter(t => t.status === 'closed').length;
-                  return {
-                    ...member,
-                    activeCount: active,
-                    resolvedCount: resolved,
-                  };
-                });
-                setTeamMembers(membersWithStats);
-                setTeamMembersChartData(membersWithStats.map(m => ({
-                  name: m.name,
-                  'Active Tickets': m.activeCount,
-                  'Resolved Tickets': m.resolvedCount,
-                })));
-              }
+              const membersRes = await getTeamMembers(myTeam._id);
+              const membersList = membersRes.data || [];
+              
+              const membersWithStats = membersList.map(member => {
+                const memberTickets = activeTickets.filter(t => t.assignedToUser?._id === member._id || t.assignedToUser === member._id);
+                const active = memberTickets.filter(t => t.status === 'in-progress' || t.status === 'open').length;
+                const resolved = memberTickets.filter(t => t.status === 'closed').length;
+                return {
+                  ...member,
+                  activeCount: active,
+                  resolvedCount: resolved,
+                };
+              });
+              setTeamMembers(membersWithStats);
+              setTeamMembersChartData(membersWithStats.map(m => ({
+                name: m.name,
+                'Active Tickets': m.activeCount,
+                'Resolved Tickets': m.resolvedCount,
+              })));
             } catch (err) {
               console.error('[Dashboard] Team members load error:', err);
             }
@@ -133,6 +151,7 @@ const Dashboard = () => {
               { name: 'Open', value: rawPie.find(x => x.status === 'open' || x._id === 'open')?.count || 0, color: '#3fb950' },
               { name: 'In Progress', value: rawPie.find(x => x.status === 'in-progress' || x._id === 'in-progress')?.count || 0, color: '#d29922' },
               { name: 'Closed', value: rawPie.find(x => x.status === 'closed' || x._id === 'closed')?.count || 0, color: '#6e7681' },
+              { name: 'Declined', value: rawPie.find(x => x.status === 'declined' || x._id === 'declined')?.count || 0, color: '#f85149' },
             ].filter(x => x.value > 0));
           }
         }
@@ -173,6 +192,12 @@ const Dashboard = () => {
         <StatCard label="Open" value={stats?.open} color="green" Icon={CircleDot} />
         <StatCard label="In Progress" value={stats?.inProgress} color="yellow" Icon={RotateCcw} />
         <StatCard label="Closed" value={stats?.closed} color="gray" Icon={CheckCircle2} />
+        {(isAdminLevel || user?.role === 'user') && (
+          <StatCard label="Declined Tickets" value={stats?.declined} color="red" Icon={XCircle} />
+        )}
+        {(user?.role === 'team_admin' || user?.role === 'team_user') && (
+          <StatCard label="Transferred" value={stats?.transferred} color="red" Icon={XCircle} />
+        )}
       </div>
 
       {(isAdminLevel || user?.role === 'team_admin' || user?.role === 'team_user') && stats && (

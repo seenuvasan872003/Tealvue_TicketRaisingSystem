@@ -131,9 +131,11 @@ const TeamDashboard = () => {
             const closedVal = team.closed || 0;
             const totalVal = team.total || 0;
             
+            const transferredVal = team.transferred || 0;
             const pctOpen = totalVal > 0 ? (openVal / totalVal) * 100 : 0;
             const pctProgress = totalVal > 0 ? (progressVal / totalVal) * 100 : 0;
             const pctClosed = totalVal > 0 ? (closedVal / totalVal) * 100 : 0;
+            const pctTransferred = totalVal > 0 ? (transferredVal / totalVal) * 100 : 0;
 
             return (
               <div key={team.teamId} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -177,10 +179,11 @@ const TeamDashboard = () => {
                   {openVal > 0 && <div style={{ width: `${pctOpen}%`, background: '#3fb950' }} title={`Open: ${openVal}`} />}
                   {progressVal > 0 && <div style={{ width: `${pctProgress}%`, background: '#d29922' }} title={`In Progress: ${progressVal}`} />}
                   {closedVal > 0 && <div style={{ width: `${pctClosed}%`, background: '#6e7681' }} title={`Closed: ${closedVal}`} />}
+                  {transferredVal > 0 && <div style={{ width: `${pctTransferred}%`, background: '#ef4444' }} title={`Transferred: ${transferredVal}`} />}
                 </div>
 
                 {/* Stats Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, padding: '8px 0', borderTop: '1px solid #252525', borderBottom: '1px solid #252525', textAlign: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, padding: '8px 0', borderTop: '1px solid #252525', borderBottom: '1px solid #252525', textAlign: 'center' }}>
                   <div>
                     <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Total</div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginTop: 2 }}>{team.total}</div>
@@ -196,6 +199,10 @@ const TeamDashboard = () => {
                   <div>
                     <div style={{ fontSize: 10, color: '#6e7681' }}>Closed</div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#6e7681', marginTop: 2 }}>{team.closed}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, color: '#ef4444' }}>Transferred</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#ef4444', marginTop: 2 }}>{team.transferred || 0}</div>
                   </div>
                 </div>
 
@@ -262,6 +269,7 @@ const TeamDashboard = () => {
                               { name: 'Open', value: selectedTeam.open || 0, color: '#3fb950' },
                               { name: 'In Progress', value: selectedTeam.inProgress || 0, color: '#d29922' },
                               { name: 'Closed', value: selectedTeam.closed || 0, color: '#6e7681' },
+                              { name: 'Transferred', value: selectedTeam.transferred || 0, color: '#ef4444' },
                             ].filter(d => d.value > 0)}
                             cx="50%"
                             cy="50%"
@@ -274,7 +282,8 @@ const TeamDashboard = () => {
                             {[
                               { name: 'Open', color: '#3fb950' },
                               { name: 'In Progress', color: '#d29922' },
-                              { name: 'Closed', color: '#6e7681' }
+                              { name: 'Closed', color: '#6e7681' },
+                              { name: 'Transferred', color: '#ef4444' }
                             ].map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                           </Pie>
                           <Tooltip contentStyle={{ background: '#111', border: '1px solid #2d2d2d', borderRadius: 8 }} />

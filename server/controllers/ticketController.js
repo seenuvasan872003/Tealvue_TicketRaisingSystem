@@ -81,13 +81,12 @@ const getTickets = async (req, res) => {
       const team = await Team.findOne({ members: req.user._id });
       if (team) {
         query.$or = [
-          { assignedToUser: req.user._id, allocationStatus: 'allocated_team_user' },
+          { assignedToUser: req.user._id },
           { reallocatedFromTeamId: team._id },
           { teamId: team._id, allocationStatus: 'transferred_to_admin' }
         ];
       } else {
         query.assignedToUser = req.user._id;
-        query.allocationStatus = 'allocated_team_user';
       }
     } else if (req.user.role === 'super-admin') {
       if (showDeclined === 'true') {
@@ -564,18 +563,19 @@ const getStats = async (req, res) => {
   try {
     const baseQuery = {};
 
-    const [total, open, inProgress, closed, high, medium, low, urgent] = await Promise.all([
+    const [total, open, inProgress, closed, high, medium, low, urgent, declined] = await Promise.all([
       Ticket.countDocuments(baseQuery),
-      Ticket.countDocuments({ ...baseQuery, status: 'open' }),
-      Ticket.countDocuments({ ...baseQuery, status: 'in-progress' }),
-      Ticket.countDocuments({ ...baseQuery, status: 'closed' }),
-      Ticket.countDocuments({ ...baseQuery, priority: 'high' }),
-      Ticket.countDocuments({ ...baseQuery, priority: 'medium' }),
-      Ticket.countDocuments({ ...baseQuery, priority: 'low' }),
-      Ticket.countDocuments({ ...baseQuery, priority: 'urgent' }),
+      Ticket.countDocuments({ ...baseQuery, status: 'open', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ ...baseQuery, status: 'in-progress', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ ...baseQuery, status: 'closed', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ ...baseQuery, priority: 'high', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ ...baseQuery, priority: 'medium', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ ...baseQuery, priority: 'low', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ ...baseQuery, priority: 'urgent', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ ...baseQuery, approvalStatus: 'rejected' }),
     ]);
 
-    res.json({ total, open, inProgress, closed, high, medium, low, urgent });
+    res.json({ total, open, inProgress, closed, high, medium, low, urgent, declined });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -585,13 +585,14 @@ const getStats = async (req, res) => {
 const getMyStats = async (req, res) => {
   try {
     const userId = req.user._id;
-    const [total, open, inProgress, closed] = await Promise.all([
+    const [total, open, inProgress, closed, declined] = await Promise.all([
       Ticket.countDocuments({ user_id: userId }),
-      Ticket.countDocuments({ user_id: userId, status: 'open' }),
-      Ticket.countDocuments({ user_id: userId, status: 'in-progress' }),
-      Ticket.countDocuments({ user_id: userId, status: 'closed' }),
+      Ticket.countDocuments({ user_id: userId, status: 'open', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ user_id: userId, status: 'in-progress', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ user_id: userId, status: 'closed', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ user_id: userId, approvalStatus: 'rejected' }),
     ]);
-    res.json({ total, open, inProgress, closed });
+    res.json({ total, open, inProgress, closed, declined });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -628,11 +629,19 @@ const getGrowthData = async (req, res) => {
 // ── Status Breakdown (Chart) ──────────────────────────────
 const getStatusBreakdown = async (req, res) => {
   try {
-    const baseQuery = {};
-
     const data = await Ticket.aggregate([
-      { $match: baseQuery },
-      { $group: { _id: '$status', count: { $sum: 1 } } },
+      {
+        $group: {
+          _id: {
+            $cond: {
+              if: { $eq: ['$approvalStatus', 'rejected'] },
+              then: 'declined',
+              else: '$status'
+            }
+          },
+          count: { $sum: 1 }
+        }
+      }
     ]);
 
     res.json(data.map((d) => ({ status: d._id, count: d.count })));

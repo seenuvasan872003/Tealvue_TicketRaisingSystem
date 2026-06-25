@@ -309,13 +309,15 @@ const getTeamPerformance = async (req, res) => {
     }
 
     // Team wide stats
-    const [total, open, inProgress, closed] = await Promise.all([
-      Ticket.countDocuments({ teamId: team._id }),
-      Ticket.countDocuments({ teamId: team._id, status: 'open' }),
-      Ticket.countDocuments({ teamId: team._id, status: 'in-progress' }),
-      Ticket.countDocuments({ teamId: team._id, status: 'closed' }),
+    const [total, open, inProgress, closed, transferred] = await Promise.all([
+      Ticket.countDocuments({ $or: [{ teamId: team._id }, { reallocatedFromTeamId: team._id }] }),
+      Ticket.countDocuments({ teamId: team._id, status: 'open', allocationStatus: { $ne: 'transferred_to_admin' } }),
+      Ticket.countDocuments({ teamId: team._id, status: 'in-progress', allocationStatus: { $ne: 'transferred_to_admin' } }),
+      Ticket.countDocuments({ teamId: team._id, status: 'closed', allocationStatus: { $ne: 'transferred_to_admin' } }),
+      Ticket.countDocuments({ $or: [{ teamId: team._id, allocationStatus: 'transferred_to_admin' }, { reallocatedFromTeamId: team._id }] }),
     ]);
-    const completionRate = total > 0 ? Math.round((closed / total) * 100) : 0;
+    const activeTotal = open + inProgress + closed;
+    const completionRate = activeTotal > 0 ? Math.round((closed / activeTotal) * 100) : 100;
 
     // Per member metrics
     const memberPerformance = [];
@@ -388,7 +390,7 @@ const getTeamPerformance = async (req, res) => {
         teamAdmin: team.teamAdmin ? { name: team.teamAdmin.name, email: team.teamAdmin.email } : null,
         teamAdminPassword: team.teamAdminPassword || 'password123'
       },
-      stats: { total, open, inProgress, closed, completionRate },
+      stats: { total, open, inProgress, closed, transferred, completionRate },
       memberPerformance,
       weeklyData,
       monthlyClosedData
@@ -409,13 +411,15 @@ const getTeamsDashboard = async (req, res) => {
     let sumCompletionRate = 0;
 
     for (const team of teams) {
-      const [total, open, inProgress, closed] = await Promise.all([
-        Ticket.countDocuments({ teamId: team._id }),
-        Ticket.countDocuments({ teamId: team._id, status: 'open' }),
-        Ticket.countDocuments({ teamId: team._id, status: 'in-progress' }),
-        Ticket.countDocuments({ teamId: team._id, status: 'closed' }),
+      const [total, open, inProgress, closed, transferred] = await Promise.all([
+        Ticket.countDocuments({ $or: [{ teamId: team._id }, { reallocatedFromTeamId: team._id }] }),
+        Ticket.countDocuments({ teamId: team._id, status: 'open', allocationStatus: { $ne: 'transferred_to_admin' } }),
+        Ticket.countDocuments({ teamId: team._id, status: 'in-progress', allocationStatus: { $ne: 'transferred_to_admin' } }),
+        Ticket.countDocuments({ teamId: team._id, status: 'closed', allocationStatus: { $ne: 'transferred_to_admin' } }),
+        Ticket.countDocuments({ $or: [{ teamId: team._id, allocationStatus: 'transferred_to_admin' }, { reallocatedFromTeamId: team._id }] }),
       ]);
-      const completionRate = total > 0 ? Math.round((closed / total) * 100) : 0;
+      const activeTotal = open + inProgress + closed;
+      const completionRate = activeTotal > 0 ? Math.round((closed / activeTotal) * 100) : 100;
       totalTickets += total;
       sumCompletionRate += completionRate;
 
@@ -432,6 +436,7 @@ const getTeamsDashboard = async (req, res) => {
         open,
         inProgress,
         closed,
+        transferred,
         completionRate,
       });
     }

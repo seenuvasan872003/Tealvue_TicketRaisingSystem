@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getTickets, closeTicket, getMyTeam } from '../services/ticketApi';
 import { toast } from 'react-toastify';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
@@ -8,13 +8,29 @@ import { CheckCircle, Clock, Calendar, ClipboardList, Send } from 'lucide-react'
 
 const TeamUserTickets = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const isFinishedPage = location.pathname.includes('finished-tickets');
+
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [statusFilter, setStatusFilter] = useState(''); // default show All Assigned
+  const [totalCount, setTotalCount] = useState(0);
+  const [statusFilter, setStatusFilter] = useState(isFinishedPage ? 'closed' : '');
   const [team, setTeam] = useState(null);
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'transferred'
+
+  // Synchronize filter when navigating between sidebar links
+  useEffect(() => {
+    if (isFinishedPage) {
+      setStatusFilter('closed');
+      setActiveTab('active');
+    } else {
+      setStatusFilter('');
+    }
+    setPage(1);
+  }, [location.pathname]);
 
   const loadAssignedTickets = async () => {
     try {
@@ -41,6 +57,7 @@ const TeamUserTickets = () => {
       const { data } = await getTickets(params);
       setTickets(data.tickets || []);
       setTotalPages(data.pages || 1);
+      setTotalCount(data.total || 0);
     } catch (err) {
       console.error(err);
       toast.error('Failed to load assigned tickets');
@@ -87,49 +104,67 @@ const TeamUserTickets = () => {
     <div className="page-body fade-in">
       <div className="page-header">
         <div>
-          <h1 className="page-title">My Assigned Tickets</h1>
-          <p className="page-subtitle">Resolve support requests assigned to you by your Team Admin.</p>
+          <h1 className="page-title">{isFinishedPage ? 'My Finished Tickets' : 'My Assigned Tickets'}</h1>
+          <p className="page-subtitle">
+            {isFinishedPage 
+              ? 'View all support requests resolved and completed by you.' 
+              : 'Resolve support requests assigned to you by your Team Admin.'}
+          </p>
         </div>
       </div>
 
       {/* Mini stats dashboard */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px' }}>
-          <Clock size={20} style={{ color: 'var(--color-yellow)' }} />
-          <div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Workload in Current Tab</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>{totalAssigned} tickets</div>
+        {isFinishedPage ? (
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', maxWidth: 300 }}>
+            <CheckCircle size={20} style={{ color: 'var(--color-success)' }} />
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Total Finished Tickets</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-teal)' }}>{totalCount} tickets</div>
+            </div>
           </div>
-        </div>
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px' }}>
-          <CheckCircle size={20} style={{ color: 'var(--color-success)' }} />
-          <div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Active In-Progress</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-teal)' }}>{inProgressCount} tickets</div>
-          </div>
-        </div>
+        ) : (
+          <>
+            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px' }}>
+              <Clock size={20} style={{ color: 'var(--color-yellow)' }} />
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Workload in Current Tab</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>{totalAssigned} tickets</div>
+              </div>
+            </div>
+            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px' }}>
+              <CheckCircle size={20} style={{ color: 'var(--color-success)' }} />
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Active In-Progress</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-teal)' }}>{inProgressCount} tickets</div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Main Tabs */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, borderBottom: '1px solid var(--color-border)', paddingBottom: 12 }}>
-        <button
-          className={`btn ${activeTab === 'active' ? 'btn-primary' : 'btn-ghost'}`}
-          onClick={() => setActiveTab('active')}
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-        >
-          <ClipboardList size={16} /> Active Assigned Tickets ({activeTickets.length})
-        </button>
-        <button
-          className={`btn ${activeTab === 'transferred' ? 'btn-primary' : 'btn-ghost'}`}
-          onClick={() => setActiveTab('transferred')}
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-        >
-          <Send size={16} /> Transferred Tickets ({transferredTickets.length})
-        </button>
-      </div>
+      {!isFinishedPage && (
+        <div style={{ display: 'flex', gap: 12, marginBottom: 16, borderBottom: '1px solid var(--color-border)', paddingBottom: 12 }}>
+          <button
+            className={`btn ${activeTab === 'active' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setActiveTab('active')}
+            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+          >
+            <ClipboardList size={16} /> Active Assigned Tickets ({activeTickets.length})
+          </button>
+          <button
+            className={`btn ${activeTab === 'transferred' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setActiveTab('transferred')}
+            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+          >
+            <Send size={16} /> Transferred Tickets ({transferredTickets.length})
+          </button>
+        </div>
+      )}
 
       {/* Tabs Filter - only show for active tickets */}
-      {activeTab === 'active' && (
+      {!isFinishedPage && activeTab === 'active' && (
         <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
           <button
             className={`btn ${statusFilter === '' ? 'btn-primary' : 'btn-ghost'}`}

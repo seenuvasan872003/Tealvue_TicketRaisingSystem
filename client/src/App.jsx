@@ -249,6 +249,14 @@ const App = () => (
               </RoleGuard>
             }
           />
+          <Route
+            path="/team-user/finished-tickets"
+            element={
+              <RoleGuard roles={['team_user']}>
+                <TeamUserTickets />
+              </RoleGuard>
+            }
+          />
         </Route>
 
         {/* Fallback */}

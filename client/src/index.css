@@ -351,7 +351,7 @@ td {
 /* ─── Stat Cards ─────────────────────────────────────────── */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   margin-bottom: 28px;
 }
@@ -377,6 +377,7 @@ td {
 .stat-card.green::before  { background: var(--color-open); }
 .stat-card.yellow::before { background: var(--color-progress); }
 .stat-card.gray::before   { background: var(--color-closed); }
+.stat-card.red::before    { background: #ef4444; }
 
 .stat-label {
   font-size: 11px;
