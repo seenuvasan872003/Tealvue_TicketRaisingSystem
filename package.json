@@ -1,0 +1,16 @@
+{
+  "name": "tealue-app",
+  "version": "1.0.0",
+  "description": "Tealue Ticket Raising System — root launcher",
+  "scripts": {
+    "start": "concurrently --kill-others-on-fail --names \"SERVER,CLIENT\" --prefix-colors \"cyan,green\" \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev": "npm run start",
+    "server": "npm run dev --prefix server",
+    "client": "npm run dev --prefix client",
+    "seed": "node server/seedAdmin.js",
+    "install:all": "npm install --prefix server && npm install --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
