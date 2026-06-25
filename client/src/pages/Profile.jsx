@@ -22,6 +22,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 // ── Password strength helper ──────────────────────────────
 const getPasswordStrength = (pw) => {
   if (!pw) return { score: 0, label: '', color: '' };
@@ -125,7 +127,7 @@ const Profile = () => {
                     user?.role === 'admin'        ? 'badge-teal' : 'badge-open';
 
   const avatarSrc = avatarPrev ||
-    (user?.avatar ? `http://localhost:5000${user.avatar}` : null);
+    (user?.avatar ? `${BASE_URL}${user.avatar}` : null);
 
   return (
     <div className="page-body fade-in">

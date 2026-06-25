@@ -27,6 +27,8 @@ import { toast } from 'react-toastify';
 import API from '../services/authApi';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const TicketApproval = () => {
   const [tickets, setTickets] = useState([]);
   const [activeTab, setActiveTab] = useState('all'); // all | suspended | rejected
@@ -522,7 +524,7 @@ const TicketApproval = () => {
                               {isImage ? (
                                 <div style={{ height: 110, width: '100%', borderRadius: 4, overflow: 'hidden', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                   <img
-                                    src={`http://localhost:5000${file.url}`}
+                                    src={`${BASE_URL}${file.url}`}
                                     alt={file.originalName}
                                     style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                   />
@@ -555,7 +557,7 @@ const TicketApproval = () => {
                               {/* Actions */}
                               <div style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #222', paddingTop: 8, marginTop: 4 }}>
                                 <a
-                                  href={`http://localhost:5000${file.url}`}
+                                  href={`${BASE_URL}${file.url}`}
                                   download
                                   target="_blank"
                                   rel="noreferrer"

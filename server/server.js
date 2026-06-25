@@ -32,9 +32,15 @@ const connectDB = require('./config/db');
 
 const app = express();
 const server = http.createServer(app);
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://tealvue-ticket-raising-system.vercel.app'
+];
+
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   }
@@ -66,8 +72,17 @@ io.on('connection', (socket) => {
 });
 
 // ─── Middleware ───────────────────────────────────────────
-// [CONFIG] Allow requests from Vite dev server (port 5173)
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+// [CONFIG] Allow requests from Vite dev server and production Vercel client
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 
 // [IMPORTANT] Parse incoming JSON bodies — required for POST/PUT routes
 app.use(express.json());

@@ -40,6 +40,7 @@ import { toast } from 'react-toastify';
 import TicketTimeline from '../components/TicketTimeline';
 import { io } from 'socket.io-client';
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 const CATEGORIES = ['General', 'Technical', 'Billing', 'HR', 'Other'];
 const PRIORITIES  = ['low', 'medium', 'high', 'urgent'];
 
@@ -226,7 +227,7 @@ const TicketDetails = () => {
   // Real-time comments via WebSocket (Socket.io)
   useEffect(() => {
     if (!id) return;
-    const socket = io('http://localhost:5000');
+    const socket = io(BASE_URL);
 
     socket.emit('joinTicket', id);
 
@@ -613,12 +614,12 @@ const TicketDetails = () => {
                     if (isImg) {
                       return (
                         <div key={i} onClick={() => setLightboxIndex(i)} style={{ width: 90, height: 90, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                          <img src={`http://localhost:5000${att.url}`} alt={att.originalName || att.original_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={`${BASE_URL}${att.url}`} alt={att.originalName || att.original_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                       );
                     }
                     return (
-                      <a key={i} href={`http://localhost:5000${att.url}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                      <a key={i} href={`${BASE_URL}${att.url}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
                         <div style={{ width: 90, height: 90, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                           <FileText size={24} color="#acacac" />
                           <span style={{ fontSize: 10, color: '#acacac', textAlign: 'center', padding: '0 4px', marginTop: 4 }}>{att.originalName || att.original_name}</span>
@@ -1170,7 +1171,7 @@ const TicketDetails = () => {
             {/* Image Container */}
             <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: '80%', maxHeight: '80%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <img 
-                src={`http://localhost:5000${currentAttachment.url}`} 
+                src={`${BASE_URL}${currentAttachment.url}`} 
                 alt={currentAttachment.originalName || currentAttachment.original_name} 
                 style={{ 
                   maxWidth: '100%', 

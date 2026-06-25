@@ -33,6 +33,8 @@ import NotificationBell from './NotificationBell';
 import tealvueLogo from '../assets/tealvue1.png';
 import API from '../services/authApi';
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout, isAdminLevel, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
@@ -111,7 +113,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           {/* Avatar */}
           {user?.avatar ? (
             <img
-              src={`http://localhost:5000${user.avatar}`}
+              src={`${BASE_URL}${user.avatar}`}
               alt={user.name}
               style={{
                 width: 38, height: 38, borderRadius: '50%',
