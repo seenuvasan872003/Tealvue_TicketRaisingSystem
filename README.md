@@ -42,7 +42,7 @@ npm run seed
 | Field    | Value             |
 |----------|-------------------|
 | Email    | admine@gmail.com  |
-| Password | Admin@1234        |
+| Password | *******        |
 | Role     | admin             |
 
 ## Tech Stack
