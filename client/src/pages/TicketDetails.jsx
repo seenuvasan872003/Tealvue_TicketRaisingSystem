@@ -32,6 +32,7 @@ import {
   declineTicket,
   reallocateTicketTeam,
   transferTicketToAdmin,
+  getCategories,
 } from '../services/ticketApi';
 import { getAllUsers } from '../services/userApi';
 import { useAuth } from '../context/AuthContext';
@@ -41,7 +42,6 @@ import TicketTimeline from '../components/TicketTimeline';
 import { io } from 'socket.io-client';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-const CATEGORIES = ['General', 'Technical', 'Billing', 'HR', 'Other'];
 const PRIORITIES  = ['low', 'medium', 'high', 'urgent'];
 
 const TicketDetails = () => {
@@ -50,6 +50,7 @@ const TicketDetails = () => {
   const navigate = useNavigate();
 
   const [ticket,   setTicket]   = useState(null);
+  const [categories, setCategories] = useState(['General', 'Technical', 'Billing', 'HR', 'Other']);
   const [comments, setComments] = useState([]);
   const [comment,  setComment]  = useState('');
   const [note,     setNote]     = useState('');
@@ -210,6 +211,20 @@ const TicketDetails = () => {
 
   useEffect(() => { load(); }, [id]);
   useEffect(() => { if (isSuperAdmin) loadAdmins(); }, [isSuperAdmin]);
+
+  useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const { data } = await getCategories();
+        if (data && data.length > 0) {
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    };
+    fetchCats();
+  }, []);
   
   useEffect(() => { 
     if (user?.role === 'admin') {
@@ -244,6 +259,18 @@ const TicketDetails = () => {
       socket.disconnect();
     };
   }, [id]);
+
+  // Lock background scroll when any modal is active
+  useEffect(() => {
+    if (reallocateModal || transferModal || declineModal || lightboxIndex !== null) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [reallocateModal, transferModal, declineModal, lightboxIndex]);
 
   // ── Permissions ──────────────────────────────────────────
   const isOwner     = ticket?.user_id?._id?.toString() === user?._id?.toString()
@@ -499,7 +526,8 @@ const TicketDetails = () => {
   };
 
   return (
-    <div className="page-body fade-in">
+    <>
+      <div className="page-body fade-in">
       <button className="btn btn-ghost btn-sm" style={{ marginBottom: 20 }} onClick={() => navigate('/tickets')}>
         <ArrowLeft size={14} /> Back to tickets
       </button>
@@ -571,7 +599,7 @@ const TicketDetails = () => {
                   <div className="field-group">
                     <label>Category</label>
                     <select style={inputStyle} value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))}>
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
+                      {categories.map(c => <option key={c} value={c}>{c.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
                     </select>
                   </div>
                 </div>
@@ -905,7 +933,7 @@ const TicketDetails = () => {
                         onChange={(e) => setAdminCategory(e.target.value)}
                         disabled={updating}
                       >
-                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                       <button
                         type="button"
@@ -994,7 +1022,7 @@ const TicketDetails = () => {
                     className="btn btn-ghost"
                     style={{ width: '100%', justifyContent: 'center', border: '1px solid var(--color-border)' }}
                     onClick={() => {
-                      const firstAvailable = CATEGORIES.find(c => c !== ticket.category) || 'General';
+                      const firstAvailable = categories.find(c => c !== ticket.category) || 'General';
                       setReallocateCategory(firstAvailable);
                       setReallocateModal(true);
                     }}
@@ -1074,6 +1102,9 @@ const TicketDetails = () => {
           )}
         </div>
       </div>
+      {/* Close the page-body fade-in container so that position: fixed modals render relative to the viewport instead of the animated page body container */}
+      </div>
+
       {/* Lightbox Modal for Image Preview */}
       {lightboxIndex !== null && (() => {
         const imageAttachments = ticket.attachments.filter(att => 
@@ -1259,7 +1290,7 @@ const TicketDetails = () => {
                   onChange={(e) => setReallocateCategory(e.target.value)}
                   disabled={updating}
                 >
-                  {CATEGORIES.filter(c => c !== ticket.category).map(c => <option key={c} value={c}>{c}</option>)}
+                  {categories.filter(c => c !== ticket.category).map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="field-group" style={{ marginBottom: 20 }}>
@@ -1313,7 +1344,7 @@ const TicketDetails = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

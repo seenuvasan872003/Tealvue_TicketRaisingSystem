@@ -7,24 +7,24 @@ import {
 } from 'lucide-react';
 
 const ACTION_ICONS = {
-  TICKET_CREATED: { Icon: Plus, color: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' },
-  TICKET_AUTO_ALLOCATED_TEAM: { Icon: Cpu, color: 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' },
-  TICKET_MANUALLY_ALLOCATED_TEAM: { Icon: Target, color: 'bg-blue-500/20 text-blue-400 border border-blue-500/30' },
-  TICKET_REALLOCATED_TEAM: { Icon: RefreshCw, color: 'bg-amber-500/20 text-amber-400 border border-amber-500/30' },
-  PRIORITY_CHANGED: { Icon: ShieldAlert, color: 'bg-red-500/20 text-red-400 border border-red-500/30' },
-  DUE_DATE_SET: { Icon: Calendar, color: 'bg-sky-500/20 text-sky-400 border border-sky-500/30' },
-  DUE_DATE_UPDATED: { Icon: Calendar, color: 'bg-sky-500/20 text-sky-400 border border-sky-500/30' },
-  TICKET_SUSPENDED: { Icon: AlertTriangle, color: 'bg-rose-500/20 text-rose-400 border border-rose-500/30' },
-  TICKET_RESTORED: { Icon: Play, color: 'bg-teal-500/20 text-teal-400 border border-teal-500/30' },
-  TICKET_REJECTED: { Icon: ShieldX, color: 'bg-rose-600/20 text-rose-400 border border-rose-600/30' },
-  TICKET_DECLINED_BY_ADMIN: { Icon: ShieldX, color: 'bg-rose-600/20 text-rose-400 border border-rose-600/30' },
-  TICKET_ASSIGNED_TO_MEMBER: { Icon: UserCheck, color: 'bg-violet-500/20 text-violet-400 border border-violet-500/30' },
-  TICKET_REASSIGNED_TO_MEMBER: { Icon: UserCheck, color: 'bg-purple-500/20 text-purple-400 border border-purple-500/30' },
-  TICKET_OPENED: { Icon: Unlock, color: 'bg-green-500/20 text-green-400 border border-green-500/30' },
-  TICKET_IN_PROGRESS: { Icon: Play, color: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' },
-  TICKET_CLOSED: { Icon: CheckCircle2, color: 'bg-gray-500/20 text-gray-400 border border-gray-500/30' },
-  COMMENT_ADDED: { Icon: MessageSquare, color: 'bg-pink-500/20 text-pink-400 border border-pink-500/30' },
-  ATTACHMENT_FLAGGED: { Icon: Flag, color: 'bg-red-600/20 text-red-400 border border-red-600/30' },
+  TICKET_CREATED: Plus,
+  TICKET_AUTO_ALLOCATED_TEAM: Cpu,
+  TICKET_MANUALLY_ALLOCATED_TEAM: Target,
+  TICKET_REALLOCATED_TEAM: RefreshCw,
+  PRIORITY_CHANGED: ShieldAlert,
+  DUE_DATE_SET: Calendar,
+  DUE_DATE_UPDATED: Calendar,
+  TICKET_SUSPENDED: AlertTriangle,
+  TICKET_RESTORED: Play,
+  TICKET_REJECTED: ShieldX,
+  TICKET_DECLINED_BY_ADMIN: ShieldX,
+  TICKET_ASSIGNED_TO_MEMBER: UserCheck,
+  TICKET_REASSIGNED_TO_MEMBER: UserCheck,
+  TICKET_OPENED: Unlock,
+  TICKET_IN_PROGRESS: Play,
+  TICKET_CLOSED: CheckCircle2,
+  COMMENT_ADDED: MessageSquare,
+  ATTACHMENT_FLAGGED: Flag,
 };
 
 const ACTION_LABELS = {
@@ -97,6 +97,8 @@ const TicketTimeline = ({ ticketId, isUserView = false }) => {
           if (isUserView) {
             logData = logData.filter(log => allowedUserActions.includes(log.action));
           }
+          // Sort logs chronologically (oldest at the top, newest at the bottom)
+          logData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
           setLogs(logData);
         }
 
@@ -115,161 +117,225 @@ const TicketTimeline = ({ ticketId, isUserView = false }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8 space-x-2 text-zinc-400">
-        <Clock className="w-5 h-5 animate-spin text-teal-400" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, color: 'var(--color-text-muted)', gap: 8 }}>
+        <Clock className="spin" size={18} style={{ color: 'var(--color-teal)' }} />
         <span>Loading ticket timeline logs...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 mt-8">
+    <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
-        <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-          <Clock className="w-5 h-5 text-teal-400" />
+        <h3 style={{ fontSize: 18, fontWeight: 600, color: '#fff', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+          <Clock size={20} style={{ color: 'var(--color-teal)' }} />
           Ticket Lifecycle Timeline
         </h3>
-        <p className="text-sm text-zinc-400">
-          A complete historical record of all actions taken on this ticket.
+        <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 6, margin: '6px 0 0 0' }}>
+          A complete progress tracker showing every action taken on this ticket.
         </p>
       </div>
 
       {logs.length === 0 ? (
-        <div className="p-6 text-center border border-dashed border-zinc-800 rounded-xl text-zinc-500 bg-zinc-900/20">
+        <div style={{ padding: 30, textAlign: 'center', border: '1px dashed #252525', borderRadius: 12, color: 'var(--color-text-muted)' }}>
           No logs found for this ticket.
         </div>
       ) : (
-        <div className="relative border-l border-zinc-800 ml-4 pl-6 space-y-6">
-          {logs.map((log) => {
-            const actionConfig = ACTION_ICONS[log.action] || { Icon: Clock, color: 'bg-zinc-500/20 text-zinc-400' };
-            const ActionIcon = actionConfig.Icon;
+        /* Timeline Container */
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 28, paddingLeft: 8 }}>
+          
+          {/* Render Chronological Log List */}
+          {logs.map((log, idx) => {
+            const nextLog = logs[idx + 1];
+            
+            // Determine if the action is manual, automatic, or a decline
+            const isDecline = ['TICKET_DECLINED_BY_ADMIN', 'TICKET_REJECTED', 'TICKET_SUSPENDED', 'ATTACHMENT_FLAGGED'].includes(log.action);
+            const isAutomatic = log.action === 'TICKET_AUTO_ALLOCATED_TEAM' || log.performedBy?.role === 'system' || log.performedBy?.name?.toLowerCase() === 'system';
+
+            let themeColor = '#3fb950'; // Manual = Green
+            let typeLabel = 'Manual';
+            let typeBadgeStyle = { background: 'rgba(63, 185, 80, 0.12)', color: '#3fb950', border: '1px solid rgba(63, 185, 80, 0.25)', padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase' };
+
+            if (isDecline) {
+              themeColor = '#ef4444'; // Decline = Red
+              typeLabel = 'Decline';
+              typeBadgeStyle = { background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.25)', padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase' };
+            } else if (isAutomatic) {
+              themeColor = '#6e7681'; // Automatic = Gray
+              typeLabel = 'Automatic';
+              typeBadgeStyle = { background: 'rgba(110, 118, 129, 0.12)', color: '#9ca3af', border: '1px solid rgba(110, 118, 129, 0.25)', padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase' };
+            }
+
+            const LogIcon = ACTION_ICONS[log.action] || Clock;
             const roleClass = ROLE_BADGES[log.performedBy?.role] || 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20';
 
             return (
-              <div key={log._id} className="relative group">
-                {/* Timeline Dot Icon */}
-                <div className={`absolute -left-[37px] top-1.5 w-7 h-7 rounded-full flex items-center justify-center ${actionConfig.color} shadow-lg transition-transform duration-200 group-hover:scale-110`}>
-                  <ActionIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
+              <div key={log._id} style={{ display: 'flex', gap: 20, alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
+                
+                {/* Connecting Line Segment overlaying the main track - colored exactly by action type */}
+                {nextLog && (
+                  <div style={{ 
+                    position: 'absolute', 
+                    left: 13, 
+                    top: 28, 
+                    height: 'calc(100% + 28px)', 
+                    width: 2, 
+                    background: themeColor, 
+                    zIndex: -1,
+                    boxShadow: `0 0 6px ${themeColor}60`,
+                    transition: 'background 0.3s ease'
+                  }} />
+                )}
+
+                {/* Left Side Icon Dot - Glowing colored border */}
+                <div style={{ 
+                  width: 28, 
+                  height: 28, 
+                  borderRadius: '50%', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  background: '#1c1c1c', 
+                  border: `2px solid ${themeColor}`,
+                  color: themeColor,
+                  boxShadow: `0 0 8px ${themeColor}50`,
+                  flexShrink: 0,
+                  transition: 'all 0.3s ease'
+                }}>
+                  <LogIcon size={13} strokeWidth={2.5} />
                 </div>
 
-                {/* Log Card Content */}
-                <div className="bg-[#1c2128] border border-zinc-800/80 rounded-xl p-4 shadow-sm hover:border-zinc-700/60 transition-colors duration-200">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                    <span className="font-semibold text-white text-sm sm:text-base">
-                      {ACTION_LABELS[log.action] || log.action}
-                    </span>
-                    <span className="text-xs text-zinc-500">
+                {/* Right Side Log Detail Card */}
+                <div className="card" style={{ 
+                  flex: 1, 
+                  padding: 18, 
+                  margin: 0, 
+                  border: `1px solid ${themeColor}20`,
+                  background: 'var(--color-card)',
+                  transition: 'border 0.3s ease'
+                }}>
+                  {/* Title & Badge Row */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#fff', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        {ACTION_LABELS[log.action] || log.action}
+                        <span style={typeBadgeStyle}>{typeLabel}</span>
+                      </h4>
+                    </div>
+                    <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
                       {new Date(log.timestamp).toLocaleString()}
                     </span>
                   </div>
 
-                  {/* Performer info */}
-                  <div className="flex items-center gap-2 mb-3 text-xs">
-                    <span className="text-zinc-400 font-medium">{log.performedBy?.name || 'Unknown'}</span>
-                    <span className="text-zinc-500">({log.performedBy?.email})</span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${roleClass}`}>
-                      {ROLE_LABELS[log.performedBy?.role] || log.performedBy?.role}
+                  {/* Performer Details Row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 11, marginBottom: 12 }}>
+                    <span style={{ color: 'var(--color-text-dim)', fontWeight: 500 }}>{log.performedBy?.name || 'System'}</span>
+                    <span style={{ color: 'var(--color-text-muted)' }}>({log.performedBy?.email || 'system@tealvue.com'})</span>
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider ${roleClass}`} style={{ display: 'inline-flex', alignSelf: 'center' }}>
+                      {ROLE_LABELS[log.performedBy?.role] || log.performedBy?.role || 'System'}
                     </span>
                   </div>
 
-                  {/* Metadata display */}
+                  {/* Metadata Box display */}
                   {log.metadata && (
-                    <div className="space-y-1.5 border-t border-zinc-800/60 pt-2 text-xs sm:text-sm text-zinc-300">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, background: '#141414', border: '1px solid #202020', borderRadius: 6, padding: '8px 12px', fontSize: 12 }}>
                       {log.metadata.teamName && (
                         <div>
-                          <span className="text-zinc-500 font-medium">Allocated Team:</span>{' '}
-                          <span className="text-teal-400 font-semibold">{log.metadata.teamName}</span>
+                          <span style={{ color: 'var(--color-text-muted)' }}>Allocated Team:</span>{' '}
+                          <span style={{ color: 'var(--color-teal)', fontWeight: 600 }}>{log.metadata.teamName}</span>
                         </div>
                       )}
                       {log.metadata.assignedToUserName && (
                         <div>
-                          <span className="text-zinc-500 font-medium">Assigned Agent:</span>{' '}
-                          <span className="text-violet-400 font-semibold">{log.metadata.assignedToUserName}</span>
+                          <span style={{ color: 'var(--color-text-muted)' }}>Assigned Agent:</span>{' '}
+                          <span style={{ color: '#818cf8', fontWeight: 600 }}>{log.metadata.assignedToUserName}</span>
                         </div>
                       )}
                       {(log.metadata.previousValue || log.metadata.newValue) && (
-                        <div className="flex items-center gap-2 bg-zinc-900/40 p-2 rounded border border-zinc-800/30">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#d1d5db' }}>
                           {log.metadata.previousValue && (
                             <>
-                              <span className="text-zinc-500 font-medium">From:</span>
-                              <span className="line-through text-red-400">{log.metadata.previousValue}</span>
+                              <span style={{ color: 'var(--color-text-muted)' }}>From:</span>
+                              <span style={{ textDecoration: 'line-through', color: '#f87171' }}>{log.metadata.previousValue}</span>
                             </>
                           )}
-                          <span className="text-zinc-500 font-medium">→ To:</span>
-                          <span className="text-green-400 font-semibold">{log.metadata.newValue}</span>
+                          <span style={{ color: 'var(--color-text-muted)' }}>→ To:</span>
+                          <span style={{ color: '#3fb950', fontWeight: 600 }}>{log.metadata.newValue}</span>
                         </div>
                       )}
                       {log.metadata.note && (
-                        <div className="italic text-zinc-400 bg-zinc-900/20 p-2.5 rounded-lg border border-zinc-800/40 mt-1">
+                        <div style={{ fontStyle: 'italic', color: 'var(--color-text-dim)', marginTop: 2 }}>
                           "{log.metadata.note}"
                         </div>
                       )}
                     </div>
                   )}
                 </div>
+
               </div>
             );
           })}
+
         </div>
       )}
 
       {/* Time Summary Panel */}
       {timeSummary && (
-        <div className="bg-gradient-to-br from-[#1c2128] to-[#14191f] border border-zinc-800 rounded-2xl p-6 shadow-md mt-6">
-          <h4 className="text-base font-semibold text-white mb-4 flex items-center gap-2 border-b border-zinc-800 pb-3">
-            <Clock className="w-5 h-5 text-teal-400" />
+        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <h4 style={{ fontSize: 15, fontWeight: 600, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #252525', paddingBottom: 12 }}>
+            <Clock size={18} style={{ color: 'var(--color-teal)' }} />
             Ticket Time Performance Analytics
           </h4>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div style={{ display: 'flex', gap: 16, width: '100%', flexWrap: 'nowrap' }}>
             {/* Metric Box: Time to Allocate */}
-            <div className="bg-zinc-900/30 border border-zinc-800/60 p-4 rounded-xl">
-              <span className="text-xs text-zinc-500 uppercase tracking-wider font-semibold block mb-1">
+            <div style={{ flex: 1, minWidth: 0, background: '#141414', border: '1px solid #202020', borderRadius: 10, padding: 14 }}>
+              <span style={{ fontSize: 10, color: 'var(--color-text-muted)', uppercase: true, letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>
                 Time to Allocate
               </span>
-              <span className="text-lg font-bold text-white block">
+              <span style={{ fontSize: 18, fontWeight: 700, color: '#fff', display: 'block' }}>
                 {timeSummary.formatted?.timeToAllocate || 'N/A'}
               </span>
-              <span className="text-[10px] text-zinc-500 block mt-1">
+              <span style={{ fontSize: 9, color: 'var(--color-text-muted)', display: 'block', marginTop: 4 }}>
                 From creation to team allocation
               </span>
             </div>
 
             {/* Metric Box: Time to Assign */}
-            <div className="bg-zinc-900/30 border border-zinc-800/60 p-4 rounded-xl">
-              <span className="text-xs text-zinc-500 uppercase tracking-wider font-semibold block mb-1">
+            <div style={{ flex: 1, minWidth: 0, background: '#141414', border: '1px solid #202020', borderRadius: 10, padding: 14 }}>
+              <span style={{ fontSize: 10, color: 'var(--color-text-muted)', uppercase: true, letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>
                 Time to Assign
               </span>
-              <span className="text-lg font-bold text-white block">
+              <span style={{ fontSize: 18, fontWeight: 700, color: '#fff', display: 'block' }}>
                 {timeSummary.formatted?.timeToAssign || 'N/A'}
               </span>
-              <span className="text-[10px] text-zinc-500 block mt-1">
+              <span style={{ fontSize: 9, color: 'var(--color-text-muted)', display: 'block', marginTop: 4 }}>
                 From team allocation to agent assignment
               </span>
             </div>
 
             {/* Metric Box: Time In Progress */}
-            <div className="bg-zinc-900/30 border border-zinc-800/60 p-4 rounded-xl">
-              <span className="text-xs text-zinc-500 uppercase tracking-wider font-semibold block mb-1">
+            <div style={{ flex: 1, minWidth: 0, background: '#141414', border: '1px solid #202020', borderRadius: 10, padding: 14 }}>
+              <span style={{ fontSize: 10, color: 'var(--color-text-muted)', uppercase: true, letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>
                 Time In-Progress
               </span>
-              <span className="text-lg font-bold text-white block">
+              <span style={{ fontSize: 18, fontWeight: 700, color: '#fff', display: 'block' }}>
                 {timeSummary.formatted?.timeInProgress || 'N/A'}
               </span>
-              <span className="text-[10px] text-zinc-500 block mt-1">
+              <span style={{ fontSize: 9, color: 'var(--color-text-muted)', display: 'block', marginTop: 4 }}>
                 Active time spent resolving the issue
               </span>
             </div>
 
             {/* Metric Box: Time to Close */}
-            <div className="bg-zinc-900/30 border border-zinc-800/60 p-4 rounded-xl">
-              <span className="text-xs text-zinc-500 uppercase tracking-wider font-semibold block mb-1">
+            <div style={{ flex: 1, minWidth: 0, background: '#141414', border: '1px solid #202020', borderRadius: 10, padding: 14 }}>
+              <span style={{ fontSize: 10, color: 'var(--color-text-muted)', uppercase: true, letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>
                 Total Resolution Time
               </span>
-              <span className="text-lg font-bold text-teal-400 block">
+              <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-teal)', display: 'block' }}>
                 {timeSummary.formatted?.timeToClose || 'N/A'}
               </span>
-              <span className="text-[10px] text-zinc-500 block mt-1">
+              <span style={{ fontSize: 9, color: 'var(--color-text-muted)', display: 'block', marginTop: 4 }}>
                 From creation to ticket closure
               </span>
             </div>

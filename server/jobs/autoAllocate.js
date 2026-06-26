@@ -63,9 +63,9 @@ const startAutoAllocation = () => {
         // Write lifecycle log
         const systemPerformer = {
           _id: '000000000000000000000000',
-          name: 'System',
-          email: 'system@tealvue.com',
-          role: 'system'
+          name: 'Tealvue',
+          email: 'tealvue@gmail.com',
+          role: 'Admin'
         };
 
         await createLog({

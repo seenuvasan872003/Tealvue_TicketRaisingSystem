@@ -12,6 +12,7 @@ const {
   getTeamPerformance,
   getTeamsDashboard,
   getMyTeam,
+  getCategories,
 } = require('../controllers/teamController');
 const { protect } = require('../middleware/authMiddleware');
 const { requireAdmin, requireSuperAdmin } = require('../middleware/roleMiddleware');
@@ -43,6 +44,9 @@ router.get('/dashboard', protect, requireAdmin, getTeamsDashboard);
 
 // GET own team - Team Admin or Team User
 router.get('/mine', protect, getMyTeam);
+
+// GET all active categories (merged defaults and team-specific)
+router.get('/categories', protect, getCategories);
 
 // GET team members - Team Admin (own team) + Super Admin
 router.get('/:id/members', protect, requireAdminSuperOrTeamAdmin, getTeamMembers);

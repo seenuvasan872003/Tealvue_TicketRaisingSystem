@@ -46,7 +46,7 @@ router.get('/:id/activity',  protect, requireAdmin,      getUserActivity);
 router.put('/:id',           protect, canEditProfile,    updateProfile);
 
 // ── Status update (approve / suspend / role change) ───────
-router.put('/:id/status',    protect, requireSuperAdmin, updateUserStatus);
+router.put('/:id/status',    protect, requireAdmin,      updateUserStatus);
 
 // ── Delete ────────────────────────────────────────────────
 router.delete('/:id',        protect, requireAdmin,      deleteUser);

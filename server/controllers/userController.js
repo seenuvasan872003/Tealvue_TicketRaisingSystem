@@ -86,14 +86,14 @@ const getAllUsers = async (req, res) => {
 // @access Admin+
 const getUserStats = async (req, res) => {
   try {
-    const [totalUsers, totalAdmins, totalSuperAdmins, pendingApprovals] = await Promise.all([
-      User.countDocuments({ role: 'user' }),
-      User.countDocuments({ role: 'admin' }),
-      User.countDocuments({ role: 'super-admin' }),
+    const [totalUsers, activeUsers, suspendedUsers, pendingApprovals] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ isActive: true, isApproved: true }),
+      User.countDocuments({ isActive: false }),
       User.countDocuments({ isApproved: false }),
     ]);
 
-    res.json({ totalUsers, totalAdmins, totalSuperAdmins, pendingApprovals });
+    res.json({ totalUsers, activeUsers, suspendedUsers, pendingApprovals });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -189,14 +189,14 @@ const createAdminAccount = async (req, res) => {
 };
 
 // ── Update User Status ────────────────────────────────────
-// @desc  Super Admin approve/suspend/activate, or change role
+// @desc  Super Admin/Admin approve/suspend/activate, or change role
 // @route PUT /api/users/:id/status
-// @access Super Admin only
+// @access Admin+
 const updateUserStatus = async (req, res) => {
   try {
     const { isApproved, isActive, role } = req.body;
 
-    // Prevent Super Admin from modifying own status
+    // Prevent modifying own status
     if (req.params.id === req.user._id.toString()) {
       return res.status(400).json({ message: 'Cannot modify your own account status' });
     }
@@ -204,13 +204,25 @@ const updateUserStatus = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    // Security checks for standard Admin
+    if (req.user.role === 'admin') {
+      // Admins can only modify 'user' role accounts
+      if (user.role !== 'user') {
+        return res.status(403).json({ message: 'You do not have permission to modify this account type' });
+      }
+      // Admins cannot change roles
+      if (role && role !== user.role) {
+        return res.status(403).json({ message: 'You do not have permission to change user roles' });
+      }
+    }
+
     // Track if we're approving for the first time (to send notification)
     const wasNotApproved = !user.isApproved;
 
     if (typeof isApproved === 'boolean') user.isApproved = isApproved;
     if (typeof isActive   === 'boolean') user.isActive   = isActive;
 
-    // Role change — validate super-admin cap
+    // Role change — validate super-admin cap (Super Admin only)
     if (role && role !== user.role) {
       if (!['user', 'admin', 'super-admin'].includes(role)) {
         return res.status(400).json({ message: 'Invalid role' });
@@ -228,8 +240,6 @@ const updateUserStatus = async (req, res) => {
     }
 
     await user.save();
-
-
 
     res.json({ message: 'User status updated', user: userResponse(user) });
   } catch (err) {

@@ -7,7 +7,7 @@
 //    npm start            ← production  (node)
 //
 //  REQUIRES in .env:
-//    MONGO_URI=mongodb://localhost:27017/tealue_tickets
+//    MONGO_URI=mongodb://localhost:27017/tealVue_tickets
 // ============================================================
 
 const mongoose = require('mongoose');

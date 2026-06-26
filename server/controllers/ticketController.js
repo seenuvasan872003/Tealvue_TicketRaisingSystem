@@ -1167,13 +1167,117 @@ const getAllTicketsAdmin = async (req, res) => {
     if (req.user.role !== 'super-admin') {
       return res.status(403).json({ message: 'Access denied — super admins only' });
     }
-    const tickets = await Ticket.find()
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    // Build query object
+    const query = {};
+
+    // Tab filter
+    if (req.query.tab === 'suspended') {
+      query.approvalStatus = 'suspended';
+    } else if (req.query.tab === 'rejected') {
+      query.approvalStatus = 'rejected';
+    }
+
+    // Category filter
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+
+    // Priority filter
+    if (req.query.priority) {
+      query.priority = req.query.priority;
+    }
+
+    // Date Range / Advanced Filters
+    if (req.query.dateRangeType) {
+      const now = new Date();
+      if (req.query.dateRangeType === 'today') {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0); // Start of today
+        query.createdAt = { $gte: todayStart };
+      } else if (req.query.dateRangeType === 'weekly') {
+        const weeklyStart = new Date();
+        weeklyStart.setDate(now.getDate() - 7);
+        query.createdAt = { $gte: weeklyStart };
+      } else if (req.query.dateRangeType === 'monthly') {
+        const monthlyStart = new Date();
+        monthlyStart.setDate(now.getDate() - 30);
+        query.createdAt = { $gte: monthlyStart };
+      } else if (req.query.dateRangeType === 'particular' && req.query.particularDate) {
+        const targetDate = new Date(req.query.particularDate);
+        const startOfDay = new Date(targetDate.setHours(0,0,0,0));
+        const endOfDay = new Date(targetDate.setHours(23,59,59,999));
+        query.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      }
+    } else if (req.query.startDate || req.query.endDate) {
+      query.createdAt = {};
+      if (req.query.startDate) {
+        query.createdAt.$gte = new Date(req.query.startDate);
+      }
+      if (req.query.endDate) {
+        const end = new Date(req.query.endDate);
+        // Only force end-of-day if the input doesn't contain a specific time separator 'T'
+        if (!req.query.endDate.includes('T')) {
+          end.setHours(23, 59, 59, 999);
+        }
+        query.createdAt.$lte = end;
+      }
+    }
+
+    // Search filter (ID, Title, User)
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search.trim(), 'i');
+      
+      const mongoose = require('mongoose');
+      const isObjectId = mongoose.Types.ObjectId.isValid(req.query.search.trim());
+
+      if (isObjectId) {
+        query._id = req.query.search.trim();
+      } else {
+        // Find users matching search to filter by user_id
+        const matchingUsers = await User.find({ name: searchRegex }).select('_id');
+        const userIds = matchingUsers.map(u => u._id);
+
+        query.$or = [
+          { title: searchRegex },
+          { user_id: { $in: userIds } }
+        ];
+      }
+    }
+
+    // Execute query with pagination
+    const tickets = await Ticket.find(query)
       .populate('user_id', 'name email avatar createdAt role')
       .populate('assigned_to', 'name email avatar')
       .populate('assignedToUser', 'name email avatar')
       .populate('teamId', 'name categories')
-      .sort({ createdAt: -1 });
-    res.json(tickets);
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Count matching documents for pagination metadata
+    const total = await Ticket.countDocuments(query);
+
+    // Dynamic database-wide aggregation for the top stats cards
+    const totalReviewed = await Ticket.countDocuments();
+    const totalSuspended = await Ticket.countDocuments({ approvalStatus: 'suspended' });
+    const totalRejected = await Ticket.countDocuments({ approvalStatus: 'rejected' });
+
+    res.json({
+      tickets,
+      total,
+      pages: Math.ceil(total / limit),
+      currentPage: page,
+      stats: {
+        totalReviewed,
+        totalSuspended,
+        totalRejected
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

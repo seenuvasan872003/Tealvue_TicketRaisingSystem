@@ -53,7 +53,6 @@ const ticketSchema = new mongoose.Schema(
     category: {
       type:    String,
       required: false,
-      enum:    ['General', 'Technical', 'Billing', 'HR', 'Other', null],
       default: null,
     },
     // priority: low | medium | high | urgent
@@ -182,6 +181,8 @@ ticketSchema.pre('validate', function(next) {
       this.category = 'HR';
     } else if (cat === 'other') {
       this.category = 'Other';
+    } else {
+      this.category = this.category.trim();
     }
   }
   

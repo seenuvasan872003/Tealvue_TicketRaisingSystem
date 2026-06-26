@@ -8,7 +8,7 @@ import {
   Sliders,
   X,
   ChevronRight,
-  ShieldAlert,
+  RefreshCw,
 } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { getTeamsDashboard, getTickets } from '../services/ticketApi';
@@ -25,6 +25,7 @@ const TeamDashboard = () => {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [teamTickets, setTeamTickets] = useState([]);
   const [teamLogs, setTeamLogs] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
   const [modalLoading, setModalLoading] = useState(false);
 
   const fetchDashboardData = async () => {
@@ -55,6 +56,10 @@ const TeamDashboard = () => {
       // 2. Fetch logs for this team
       const lRes = await API.get(`/logs?range=monthly&teamId=${team.teamId}`);
       setTeamLogs(lRes.data || []);
+
+      // 3. Fetch member performance for this team
+      const pRes = await API.get(`/teams/${team.teamId}/performance`);
+      setTeamMembers(pRes.data.memberPerformance || []);
     } catch (err) {
       toast.error('Failed to load team details');
       console.error(err);
@@ -71,11 +76,18 @@ const TeamDashboard = () => {
 
   return (
     <div className="page-body fade-in">
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h1 className="page-title">Team Progress Dashboard</h1>
           <p className="page-subtitle">Overview of specialized support teams' workload and allocation metrics.</p>
         </div>
+        <button 
+          className="btn btn-ghost"
+          onClick={fetchDashboardData}
+          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <RefreshCw size={14} /> Refresh
+        </button>
       </div>
 
       {/* Summary Chips */}
@@ -119,7 +131,7 @@ const TeamDashboard = () => {
       </div>
 
       {/* Teams Cards Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 24 }}>
         {teams.length === 0 ? (
           <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>
             No teams setup in the system.
@@ -129,44 +141,50 @@ const TeamDashboard = () => {
             const openVal = team.open || 0;
             const progressVal = team.inProgress || 0;
             const closedVal = team.closed || 0;
-            const totalVal = team.total || 0;
-            
             const transferredVal = team.transferred || 0;
-            const pctOpen = totalVal > 0 ? (openVal / totalVal) * 100 : 0;
-            const pctProgress = totalVal > 0 ? (progressVal / totalVal) * 100 : 0;
-            const pctClosed = totalVal > 0 ? (closedVal / totalVal) * 100 : 0;
-            const pctTransferred = totalVal > 0 ? (transferredVal / totalVal) * 100 : 0;
+
+            const chartData = [
+              { name: 'Open', value: openVal, color: '#3fb950' },
+              { name: 'Progress', value: progressVal, color: '#d29922' },
+              { name: 'Closed', value: closedVal, color: '#6e7681' },
+              { name: 'Transfer', value: transferredVal, color: '#ef4444' },
+            ].filter(d => d.value > 0);
+
+            // Fallback empty state for chart
+            const hasData = chartData.length > 0;
+            const displayChartData = hasData ? chartData : [{ name: 'Empty', value: 1, color: '#252525' }];
 
             return (
-              <div key={team.teamId} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div key={team.teamId} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 24 }}>
+                {/* Header Row */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: '#fff' }} onClick={() => openDetailsModal(team)} className="clickable-title">
+                    <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: '#fff', cursor: 'pointer' }} onClick={() => openDetailsModal(team)} className="clickable-title">
                       {team.name}
                     </h3>
-                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>
-                      Admin: {team.teamAdmin?.name || 'Unassigned'} • {team.membersCount} agents
+                    <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4 }}>
+                      Admin: <strong style={{ color: '#fff' }}>{team.teamAdmin?.name || 'Unassigned'}</strong> • {team.membersCount} agents
                     </div>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
                       {team.categories.map((c, i) => (
-                        <span key={i} style={{ fontSize: 9, padding: '1px 6px', background: '#252525', borderRadius: 4, color: '#acacac' }}>{c}</span>
+                        <span key={i} style={{ fontSize: 10, padding: '2px 8px', background: '#202020', borderRadius: 4, color: '#acacac', textTransform: 'capitalize' }}>{c}</span>
                       ))}
                     </div>
                   </div>
                   
-                  {/* Progress ring percentage */}
-                  <div style={{ position: 'relative', width: 50, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="50" height="50" style={{ transform: 'rotate(-90deg)' }}>
-                      <circle cx="25" cy="25" r="20" fill="transparent" stroke="#252525" strokeWidth="4" />
+                  {/* Team Completion Rate Ring */}
+                  <div style={{ position: 'relative', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="48" height="48" style={{ transform: 'rotate(-90deg)' }}>
+                      <circle cx="24" cy="24" r="19" fill="transparent" stroke="#252525" strokeWidth="3.5" />
                       <circle
-                        cx="25"
-                        cy="25"
-                        r="20"
+                        cx="24"
+                        cy="24"
+                        r="19"
                         fill="transparent"
                         stroke="var(--color-teal)"
-                        strokeWidth="4"
-                        strokeDasharray={2 * Math.PI * 20}
-                        strokeDashoffset={2 * Math.PI * 20 * (1 - team.completionRate / 100)}
+                        strokeWidth="3.5"
+                        strokeDasharray={2 * Math.PI * 19}
+                        strokeDashoffset={2 * Math.PI * 19 * (1 - team.completionRate / 100)}
                         strokeLinecap="round"
                       />
                     </svg>
@@ -174,35 +192,66 @@ const TeamDashboard = () => {
                   </div>
                 </div>
 
-                {/* Segments mini-bar */}
-                <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', background: '#252525' }}>
-                  {openVal > 0 && <div style={{ width: `${pctOpen}%`, background: '#3fb950' }} title={`Open: ${openVal}`} />}
-                  {progressVal > 0 && <div style={{ width: `${pctProgress}%`, background: '#d29922' }} title={`In Progress: ${progressVal}`} />}
-                  {closedVal > 0 && <div style={{ width: `${pctClosed}%`, background: '#6e7681' }} title={`Closed: ${closedVal}`} />}
-                  {transferredVal > 0 && <div style={{ width: `${pctTransferred}%`, background: '#ef4444' }} title={`Transferred: ${transferredVal}`} />}
-                </div>
+                {/* Unified Circle / Pie Chart & Detailed Stats Row */}
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '16px 0', borderTop: '1px solid #252525', borderBottom: '1px solid #252525' }}>
+                  {/* Left: Recharts Doughnut/Circle Chart */}
+                  <div style={{ width: 100, height: 100, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={displayChartData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={22}
+                          outerRadius={38}
+                          paddingAngle={hasData ? 3 : 0}
+                          dataKey="value"
+                        >
+                          {displayChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <span style={{ fontSize: 16, fontWeight: '800', color: '#fff' }}>{team.total}</span>
+                      <span style={{ fontSize: 8, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Total</span>
+                    </div>
+                  </div>
 
-                {/* Stats Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, padding: '8px 0', borderTop: '1px solid #252525', borderBottom: '1px solid #252525', textAlign: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Total</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginTop: 2 }}>{team.total}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10, color: '#3fb950' }}>Open</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#3fb950', marginTop: 2 }}>{team.open}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10, color: '#d29922' }}>In Progress</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#d29922', marginTop: 2 }}>{team.inProgress}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10, color: '#6e7681' }}>Closed</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#6e7681', marginTop: 2 }}>{team.closed}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10, color: '#ef4444' }}>Transferred</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#ef4444', marginTop: 2 }}>{team.transferred || 0}</div>
+                  {/* Right: Detailed Legend & Data List */}
+                  <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', paddingLeft: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#141414', borderRadius: 4, padding: '4px 8px', border: '1px solid #202020' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#3fb950' }} />
+                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Open</span>
+                      </div>
+                      <strong style={{ fontSize: 12, color: '#3fb950' }}>{openVal}</strong>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#141414', borderRadius: 4, padding: '4px 8px', border: '1px solid #202020' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d29922' }} />
+                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Progress</span>
+                      </div>
+                      <strong style={{ fontSize: 12, color: '#d29922' }}>{progressVal}</strong>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#141414', borderRadius: 4, padding: '4px 8px', border: '1px solid #202020' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6e7681' }} />
+                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Closed</span>
+                      </div>
+                      <strong style={{ fontSize: 12, color: '#9ca3af' }}>{closedVal}</strong>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#141414', borderRadius: 4, padding: '4px 8px', border: '1px solid #202020' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444' }} />
+                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Transfer</span>
+                      </div>
+                      <strong style={{ fontSize: 12, color: '#ef4444' }}>{transferredVal}</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -218,7 +267,7 @@ const TeamDashboard = () => {
       {/* Team Details Modal */}
       {selectedTeam && (
         <div className="modal-backdrop">
-          <div className="modal-content" style={{ maxWidth: 800, width: '90%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content" style={{ maxWidth: 800, width: '90%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
             <div className="modal-header">
               <div>
                 <h3 style={{ margin: 0 }}>{selectedTeam.name}</h3>
@@ -304,6 +353,50 @@ const TeamDashboard = () => {
                         {teamTickets.filter(t => t.autoAllocated).length} / {teamTickets.length} tickets
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Team Members & Performance */}
+                <div>
+                  <h4 style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 10 }}>Team Members & Performance</h4>
+                  <div className="table-wrap" style={{ maxHeight: 220, overflowY: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--color-border)' }}>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', color: '#acacac', fontWeight: 600 }}>Agent Name</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', color: '#acacac', fontWeight: 600 }}>Email</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'center', color: '#acacac', fontWeight: 600 }}>Total</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'center', color: '#acacac', fontWeight: 600 }}>Open</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'center', color: '#acacac', fontWeight: 600 }}>Progress</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'center', color: '#acacac', fontWeight: 600 }}>Closed</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'center', color: '#acacac', fontWeight: 600 }}>Completion</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {teamMembers.length === 0 ? (
+                          <tr>
+                            <td colSpan="7" style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: 20 }}>No agents assigned to this team.</td>
+                          </tr>
+                        ) : (
+                          teamMembers.map(m => (
+                            <tr key={m._id} style={{ borderBottom: '1px solid var(--color-border-soft)' }}>
+                              <td style={{ padding: '10px 14px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: m.isActive ? '#3fb950' : '#ef4444', display: 'inline-block' }} />
+                                  <strong style={{ color: '#e4e4e4' }}>{m.name}</strong>
+                                </div>
+                              </td>
+                              <td style={{ padding: '10px 14px', color: 'var(--color-text-muted)' }}>{m.email}</td>
+                              <td style={{ padding: '10px 14px', textAlign: 'center', color: '#fff' }}>{m.total}</td>
+                              <td style={{ padding: '10px 14px', textAlign: 'center', color: '#3fb950', fontWeight: '600' }}>{m.open}</td>
+                              <td style={{ padding: '10px 14px', textAlign: 'center', color: '#d29922', fontWeight: '600' }}>{m.inProgress}</td>
+                              <td style={{ padding: '10px 14px', textAlign: 'center', color: '#9ca3af', fontWeight: '600' }}>{m.closed}</td>
+                              <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: '700', color: 'var(--color-teal)' }}>{m.completionRate}%</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 

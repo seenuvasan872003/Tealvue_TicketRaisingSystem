@@ -65,4 +65,7 @@ export const reallocateTicketTeam = (id, newCategory, reason) => API.put(`/ticke
 export const transferTicketToAdmin = (id, reason) => API.put(`/tickets/${id}/transfer-to-admin`, { reason });
 export const restoreTicket = (id) => API.put(`/tickets/${id}/restore`);
 
+// Get dynamic list of categories
+export const getCategories = () => API.get('/teams/categories');
+
 

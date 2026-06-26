@@ -9,9 +9,10 @@
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Ticket, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import tealvueLogo from '../assets/tealvue1.png';
 
 const Register = () => {
   const { register } = useAuth();
@@ -51,9 +52,8 @@ const Register = () => {
 
         {/* ── Logo ──────────────────────────────────── */}
         <div className="auth-logo">
-          {/* [ICON] Ticket icon from lucide-react */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-            <Ticket size={36} color="var(--color-teal)" strokeWidth={1.8} />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+            <img src={tealvueLogo} alt="Tealvue Logo" style={{ height: 66, width: 'auto' }} />
           </div>
           <h1>Tealvue</h1>
           <p>Create your account</p>

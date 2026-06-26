@@ -7,13 +7,16 @@ import {
   Users,
   User,
   Shield,
-  Briefcase
+  Briefcase,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import {
   createTeam,
   updateTeam,
   deleteTeam,
   getTeamsDashboard,
+  getCategories,
 } from '../services/ticketApi';
 import { toast } from 'react-toastify';
 
@@ -37,7 +40,9 @@ const Teams = () => {
   // Validation Errors
   const [errors, setErrors] = useState({});
 
-  const categoryOptions = ['General', 'Technical', 'Billing', 'HR', 'Other'];
+  const [categoryOptions, setCategoryOptions] = useState(['General', 'Technical', 'Billing', 'HR', 'Other']);
+  const [customCategory, setCustomCategory] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
 
   const fetchTeamsData = async () => {
     try {
@@ -52,8 +57,20 @@ const Teams = () => {
     }
   };
 
+  const loadCategories = async () => {
+    try {
+      const { data } = await getCategories();
+      if (data && data.length > 0) {
+        setCategoryOptions(data);
+      }
+    } catch (err) {
+      console.error('[Teams] Failed to load categories:', err);
+    }
+  };
+
   useEffect(() => {
     fetchTeamsData();
+    loadCategories();
   }, []);
 
   const validateField = (field, val) => {
@@ -374,14 +391,15 @@ const Teams = () => {
       {/* Add / Edit Modal */}
       {showModal && (
         <div className="modal-backdrop">
-          <div className="modal-content" style={{ maxWidth: 500 }}>
-            <div className="modal-header">
-              <h3>{editingTeam ? 'Edit Team Details' : 'Add New Support Team'}</h3>
+          <div className="modal-content" style={{ maxWidth: 520, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div className="modal-header" style={{ flexShrink: 0, padding: '16px 20px', borderBottom: '1px solid var(--color-border)' }}>
+              <h3 style={{ margin: 0 }}>{editingTeam ? 'Edit Team Details' : 'Add New Support Team'}</h3>
               <button onClick={() => setShowModal(false)} className="modal-close">
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
+            <div className="modal-body" style={{ overflowY: 'auto', flex: 1, padding: '20px' }}>
+              <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
               <div className="form-group">
                 <label>Team Name *</label>
                 <input
@@ -412,7 +430,7 @@ const Teams = () => {
 
               <div className="form-group">
                 <label>Auto-Allocation Support Categories *</label>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6, marginBottom: 12 }}>
                   {categoryOptions.map((cat) => {
                     const isSelected = categories.includes(cat);
                     return (
@@ -435,6 +453,59 @@ const Teams = () => {
                       </button>
                     );
                   })}
+                </div>
+
+                {/* Add Custom Category Input */}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
+                  <input
+                    type="text"
+                    placeholder="Enter new custom category..."
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-surface)',
+                      color: '#fff',
+                      fontSize: 12,
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const trimmed = customCategory.trim();
+                      if (!trimmed) return;
+                      // Capitalize first letter of each word for neatness
+                      const capitalized = trimmed.replace(/\b\w/g, l => l.toUpperCase());
+                      
+                      // Add to options if not already present
+                      if (!categoryOptions.includes(capitalized)) {
+                        setCategoryOptions([...categoryOptions, capitalized]);
+                      }
+                      
+                      // Auto-select it
+                      if (!categories.includes(capitalized)) {
+                        setCategories([...categories, capitalized]);
+                      }
+                      
+                      setCustomCategory('');
+                      toast.success(`Category "${capitalized}" added and selected`);
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 6,
+                      border: '1px solid var(--color-teal)',
+                      background: 'rgba(20,160,125,0.1)',
+                      color: 'var(--color-teal)',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Add Custom
+                  </button>
                 </div>
               </div>
 
@@ -474,14 +545,28 @@ const Teams = () => {
 
                   <div className="form-group">
                     <label>Password *</label>
-                    <input
-                      type="password"
-                      className="form-control"
-                      value={adminPassword}
-                      onChange={(e) => handleFieldChange('adminPassword', e.target.value)}
-                      placeholder="At least 6 characters"
-                      required
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showAdminPassword ? "text" : "password"}
+                        className="form-control"
+                        value={adminPassword}
+                        onChange={(e) => handleFieldChange('adminPassword', e.target.value)}
+                        placeholder="At least 6 characters"
+                        style={{ width: '100%', paddingRight: 40 }}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowAdminPassword(!showAdminPassword)}
+                        style={{
+                          position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                          background: 'none', border: 'none', color: '#888', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}
+                      >
+                        {showAdminPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                     {errors.adminPassword && <span style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{errors.adminPassword}</span>}
                   </div>
                 </div>
@@ -507,6 +592,7 @@ const Teams = () => {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

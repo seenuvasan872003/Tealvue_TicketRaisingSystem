@@ -382,6 +382,34 @@ const getTeamPerformance = async (req, res) => {
       });
     }
 
+    // Paginated and Filtered Tickets Allocation History
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    
+    const ticketQuery = { teamId: team._id };
+    if (req.query.status) {
+      ticketQuery.status = req.query.status;
+    }
+    if (req.query.startDate || req.query.endDate) {
+      ticketQuery.createdAt = {};
+      if (req.query.startDate) {
+        ticketQuery.createdAt.$gte = new Date(req.query.startDate);
+      }
+      if (req.query.endDate) {
+        const end = new Date(req.query.endDate);
+        end.setHours(23, 59, 59, 999);
+        ticketQuery.createdAt.$lte = end;
+      }
+    }
+
+    const totalTicketsCount = await Ticket.countDocuments(ticketQuery);
+    const pages = Math.ceil(totalTicketsCount / limit) || 1;
+
+    const tickets = await Ticket.find(ticketQuery)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
     res.json({
       team: {
         name: team.name,
@@ -393,7 +421,9 @@ const getTeamPerformance = async (req, res) => {
       stats: { total, open, inProgress, closed, transferred, completionRate },
       memberPerformance,
       weeklyData,
-      monthlyClosedData
+      monthlyClosedData,
+      tickets,
+      pages
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -480,6 +510,29 @@ const getMyTeam = async (req, res) => {
   }
 };
 
+// @route   GET /api/teams/categories
+// @access  Protected (any logged-in user can access to view options)
+const getCategories = async (req, res) => {
+  try {
+    const defaultCategories = ['General', 'Technical', 'Billing', 'HR', 'Other'];
+    
+    // Find distinct categories defined in all teams
+    const teamCategories = await Team.distinct('categories');
+    
+    // Merge, deduplicate, filter empty/null, and sort
+    const allCategories = Array.from(
+      new Set([
+        ...defaultCategories,
+        ...teamCategories.filter(c => typeof c === 'string' && c.trim() !== '')
+      ])
+    ).sort((a, b) => a.localeCompare(b));
+    
+    res.json(allCategories);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   getTeams,
   getTeamById,
@@ -492,4 +545,5 @@ module.exports = {
   getTeamPerformance,
   getTeamsDashboard,
   getMyTeam,
+  getCategories,
 };

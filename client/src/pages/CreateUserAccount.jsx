@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
 import API from '../services/authApi';
 
@@ -21,6 +21,8 @@ const CreateUserAccount = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleNameChange = (val) => {
     setFormData(prev => {
@@ -178,28 +180,56 @@ const CreateUserAccount = () => {
             {/* Password */}
             <div className="field-group">
               <label>Temporary Password</label>
-              <input
-                className={`input ${errors.password ? 'input-error' : formData.password ? 'input-success' : ''}`}
-                type="password"
-                placeholder="••••••"
-                value={formData.password}
-                onChange={(e) => handlePasswordChange(e.target.value)}
-                required
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  className={`input ${errors.password ? 'input-error' : formData.password ? 'input-success' : ''}`}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••"
+                  value={formData.password}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  style={{ width: '100%', paddingRight: 40 }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', color: '#888', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               {errors.password && <span className="error-text">{errors.password}</span>}
             </div>
 
             {/* Confirm Password */}
             <div className="field-group">
               <label>Confirm Password</label>
-              <input
-                className={`input ${errors.confirmPassword ? 'input-error' : formData.confirmPassword ? 'input-success' : ''}`}
-                type="password"
-                placeholder="••••••"
-                value={formData.confirmPassword}
-                onChange={(e) => handleConfirmPasswordChange(e.target.value)}
-                required
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  className={`input ${errors.confirmPassword ? 'input-error' : formData.confirmPassword ? 'input-success' : ''}`}
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••"
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                  style={{ width: '100%', paddingRight: 40 }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', color: '#888', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
             </div>
 

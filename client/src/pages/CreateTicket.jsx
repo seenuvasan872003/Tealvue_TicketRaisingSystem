@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 // ============================================================
 //  client/src/pages/CreateTicket.jsx  —  Create New Ticket
 // ============================================================
@@ -6,24 +7,37 @@
 //  Attachments: Max 3 files, 5MB limit, JPG/PNG/WEBP/PDF only.
 // ============================================================
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Paperclip } from 'lucide-react';
-import { createTicket } from '../services/ticketApi';
+import { createTicket, getCategories } from '../services/ticketApi';
 import { toast } from 'react-toastify';
-
-const CATEGORIES = ['No Category', 'General', 'Technical', 'Billing', 'HR', 'Other'];
 
 const CreateTicket = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
+  const [categories, setCategories] = useState(['No Category', 'General', 'Technical', 'Billing', 'HR', 'Other']);
   const [form, setForm] = useState({
     title: '', description: '', category: 'No Category'
   });
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors,  setErrors]  = useState({});
+
+  useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const { data } = await getCategories();
+        if (data && data.length > 0) {
+          setCategories(['No Category', ...data]);
+        }
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    };
+    fetchCats();
+  }, []);
 
   const validate = () => {
     const e = {};
@@ -48,9 +62,9 @@ const CreateTicket = () => {
   const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files);
     
-    // Check total files count (max 3)
-    if (files.length + newFiles.length > 3) {
-      toast.error('Maximum 3 attachments allowed');
+    // Check total files count (max 20)
+    if (files.length + newFiles.length > 20) {
+      toast.error('Maximum 20 attachments allowed');
       return;
     }
 
@@ -126,8 +140,8 @@ const CreateTicket = () => {
       const e = { ...errors };
       if (!val.trim()) {
         e.description = 'Description is required';
-      } else if (val.length < 20 || val.length > 2000) {
-        e.description = 'Description must be 20–2000 characters';
+      } else if (val.length < 5 || val.length > 2000) {
+        e.description = 'Description must be 5–2000 characters';
       } else {
         delete e.description;
       }
@@ -177,13 +191,13 @@ const CreateTicket = () => {
           <div className="field-group" style={{ maxWidth: 320 }}>
             <label>Category</label>
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
+              {categories.map((c) => <option key={c} value={c}>{c.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
             </select>
           </div>
 
           {/* Attachments Section */}
           <div className="field-group" style={{ marginTop: 20 }}>
-            <label>Attachments (Max 3, 5MB each, JPG/PNG/WEBP/PDF only)</label>
+            <label>Attachments (Max 20, 5MB each, JPG/PNG/WEBP/PDF only)</label>
             <div className="attachment-zone" onClick={() => fileInputRef.current.click()} style={{ border: '2px dashed var(--color-border)', padding: 24, textAlign: 'center', borderRadius: 8, cursor: 'pointer', background: 'var(--color-surface)' }}>
               <Paperclip size={24} style={{ color: 'var(--color-text-muted)' }} />
               <p style={{ color: '#acacac', marginTop: 8 }}>Click to browse or drag files here</p>

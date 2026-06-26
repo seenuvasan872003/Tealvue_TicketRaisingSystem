@@ -10,6 +10,7 @@ import {
   updateAgency,
   deleteAgency,
   getAgenciesDashboard,
+  getCategories,
 } from '../services/ticketApi';
 import { toast } from 'react-toastify';
 
@@ -30,7 +31,8 @@ const Agencies = () => {
   // Validation Errors
   const [errors, setErrors] = useState({});
 
-  const categoryOptions = ['General', 'Technical', 'Billing', 'HR', 'Other'];
+  const [categoryOptions, setCategoryOptions] = useState(['General', 'Technical', 'Billing', 'HR', 'Other']);
+  const [customCategory, setCustomCategory] = useState('');
 
   const fetchAgenciesData = async () => {
     try {
@@ -45,8 +47,20 @@ const Agencies = () => {
     }
   };
 
+  const loadCategories = async () => {
+    try {
+      const { data } = await getCategories();
+      if (data && data.length > 0) {
+        setCategoryOptions(data);
+      }
+    } catch (err) {
+      console.error('[Agencies] Failed to load categories:', err);
+    }
+  };
+
   useEffect(() => {
     fetchAgenciesData();
+    loadCategories();
   }, []);
 
   const validateField = (field, val) => {
@@ -328,14 +342,14 @@ const Agencies = () => {
       {/* Add / Edit Modal */}
       {showModal && (
         <div className="modal-backdrop">
-          <div className="modal-content" style={{ maxWidth: 500 }}>
-            <div className="modal-header">
-              <h3>{editingAgency ? 'Edit Agency' : 'Add New Agency'}</h3>
+          <div className="modal-content" style={{ maxWidth: 500, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div className="modal-header" style={{ flexShrink: 0, padding: '16px 20px', borderBottom: '1px solid var(--color-border)' }}>
+              <h3 style={{ margin: 0 }}>{editingAgency ? 'Edit Agency' : 'Add New Agency'}</h3>
               <button onClick={() => setShowModal(false)} className="modal-close">
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', flex: 1, padding: '20px' }}>
               <div className="form-group">
                 <label>Agency Name *</label>
                 <input
@@ -391,7 +405,7 @@ const Agencies = () => {
 
               <div className="form-group">
                 <label>Support Categories *</label>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6, marginBottom: 12 }}>
                   {categoryOptions.map((cat) => {
                     const isSelected = categories.includes(cat);
                     return (
@@ -414,6 +428,59 @@ const Agencies = () => {
                       </button>
                     );
                   })}
+                </div>
+
+                {/* Add Custom Category Input */}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
+                  <input
+                    type="text"
+                    placeholder="Enter new custom category..."
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-surface)',
+                      color: '#fff',
+                      fontSize: 12,
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const trimmed = customCategory.trim();
+                      if (!trimmed) return;
+                      // Capitalize first letter of each word for neatness
+                      const capitalized = trimmed.replace(/\b\w/g, l => l.toUpperCase());
+                      
+                      // Add to options if not already present
+                      if (!categoryOptions.includes(capitalized)) {
+                        setCategoryOptions([...categoryOptions, capitalized]);
+                      }
+                      
+                      // Auto-select it
+                      if (!categories.includes(capitalized)) {
+                        setCategories([...categories, capitalized]);
+                      }
+                      
+                      setCustomCategory('');
+                      toast.success(`Category "${capitalized}" added and selected`);
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 6,
+                      border: '1px solid var(--color-teal)',
+                      background: 'rgba(20,160,125,0.1)',
+                      color: 'var(--color-teal)',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Add Custom
+                  </button>
                 </div>
               </div>
 

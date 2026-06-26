@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createAdminAccount } from '../services/userApi';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const CreateAdminAccount = () => {
@@ -22,6 +22,8 @@ const CreateAdminAccount = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleNameChange = (val) => {
     setFormData(prev => {
@@ -161,26 +163,54 @@ const CreateAdminAccount = () => {
 
           <div className="field-group">
             <label>Temporary Password</label>
-            <input 
-              className={errors.password ? 'input-error' : formData.password ? 'input-success' : ''}
-              type="password" 
-              placeholder="Enter the password" 
-              value={formData.password} 
-              onChange={e => handlePasswordChange(e.target.value)} 
-            />
+            <div style={{ position: 'relative' }}>
+              <input 
+                className={errors.password ? 'input-error' : formData.password ? 'input-success' : ''}
+                type={showPassword ? "text" : "password"} 
+                placeholder="Enter the password" 
+                value={formData.password} 
+                onChange={e => handlePasswordChange(e.target.value)} 
+                style={{ width: '100%', paddingRight: 40 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', color: '#888', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
             {errors.password && <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>{errors.password}</span>}
             {formData.password && !errors.password && <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>✓ Password is valid</span>}
           </div>
 
           <div className="field-group">
             <label>Confirm Password</label>
-            <input 
-              className={errors.confirmPassword ? 'input-error' : formData.confirmPassword ? 'input-success' : ''}
-              type="password" 
-              placeholder="Confirm password" 
-              value={formData.confirmPassword} 
-              onChange={e => handleConfirmPasswordChange(e.target.value)} 
-            />
+            <div style={{ position: 'relative' }}>
+              <input 
+                className={errors.confirmPassword ? 'input-error' : formData.confirmPassword ? 'input-success' : ''}
+                type={showConfirmPassword ? "text" : "password"} 
+                placeholder="Confirm password" 
+                value={formData.confirmPassword} 
+                onChange={e => handleConfirmPasswordChange(e.target.value)} 
+                style={{ width: '100%', paddingRight: 40 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{
+                  position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', color: '#888', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
             {errors.confirmPassword && <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>{errors.confirmPassword}</span>}
             {formData.confirmPassword && !errors.confirmPassword && <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>✓ Passwords match</span>}
           </div>

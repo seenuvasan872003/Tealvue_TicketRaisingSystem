@@ -37,6 +37,20 @@ const TicketApproval = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
 
+  // Server-side Pagination & Stats State
+  const [page, setPage]         = useState(1);
+  const [pages, setPages]       = useState(1);
+  const [total, setTotal]       = useState(0);
+  const [stats, setStats]       = useState({ totalReviewed: 0, totalSuspended: 0, totalRejected: 0 });
+  const [categories, setCategories] = useState(['General', 'Technical', 'Billing', 'HR', 'Other']);
+
+  // Advanced Filters State
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [dateRangeType, setDateRangeType] = useState(''); // '', weekly, monthly, particular, custom
+  const [particularDate, setParticularDate] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   // Bulk Selection
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -55,8 +69,25 @@ const TicketApproval = () => {
   const loadTickets = async () => {
     setLoading(true);
     try {
-      const { data } = await API.get('/tickets/all');
-      setTickets(data || []);
+      const params = {
+        page,
+        limit: 20,
+        tab: activeTab,
+        search: searchQuery,
+        category: categoryFilter,
+        priority: priorityFilter,
+        dateRangeType,
+        particularDate,
+        startDate,
+        endDate
+      };
+      const { data } = await API.get('/tickets/all', { params });
+      setTickets(data.tickets || []);
+      setTotal(data.total || 0);
+      setPages(data.pages || 1);
+      if (data.stats) {
+        setStats(data.stats);
+      }
       setSelectedIds([]);
     } catch (err) {
       console.error(err);
@@ -66,9 +97,30 @@ const TicketApproval = () => {
     }
   };
 
+  // Load categories dynamically
+  useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const { data } = await API.get('/teams/categories');
+        if (data && data.length > 0) {
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    };
+    fetchCats();
+  }, []);
+
+  // Fetch tickets reactive to filter and page changes
   useEffect(() => {
     loadTickets();
-  }, []);
+  }, [page, activeTab, categoryFilter, priorityFilter, searchQuery, dateRangeType, particularDate, startDate, endDate]);
+
+  // Reset page to 1 on filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, categoryFilter, priorityFilter, searchQuery, dateRangeType, particularDate, startDate, endDate]);
 
   const fetchTicketDetails = async (id) => {
     setLoadingDetail(true);
@@ -144,29 +196,8 @@ const TicketApproval = () => {
     }
   };
 
-  // Local Filtering
-  const filteredTickets = tickets.filter(t => {
-    // Tab filter
-    if (activeTab === 'suspended' && t.approvalStatus !== 'suspended') return false;
-    if (activeTab === 'rejected' && t.approvalStatus !== 'rejected') return false;
-
-    // Search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchTitle = t.title.toLowerCase().includes(query);
-      const matchId = t._id.toLowerCase().includes(query);
-      const matchUser = t.user_id?.name?.toLowerCase().includes(query);
-      if (!matchTitle && !matchId && !matchUser) return false;
-    }
-
-    // Category filter
-    if (categoryFilter && t.category !== categoryFilter) return false;
-
-    // Priority filter
-    if (priorityFilter && t.priority !== priorityFilter) return false;
-
-    return true;
-  });
+  // Server-side filtered tickets
+  const filteredTickets = tickets;
 
   const getApprovalBadge = (status) => {
     if (status === 'approved') {
@@ -225,20 +256,20 @@ const TicketApproval = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
         <div className="stat-card" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 16 }}>
           <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 4 }}>Total Tickets Reviewed</div>
-          <div style={{ fontSize: 24, fontWeight: 700 }}>{tickets.length}</div>
+          <div style={{ fontSize: 24, fontWeight: 700 }}>{stats.totalReviewed.toLocaleString()}</div>
         </div>
         <div className="stat-card" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 16 }}>
           <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 4 }}>Suspended Tickets</div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#fb923c' }}>{tickets.filter(t => t.approvalStatus === 'suspended').length}</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#fb923c' }}>{stats.totalSuspended.toLocaleString()}</div>
         </div>
         <div className="stat-card" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 16 }}>
           <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 4 }}>Rejected Tickets</div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#f87171' }}>{tickets.filter(t => t.approvalStatus === 'rejected').length}</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#f87171' }}>{stats.totalRejected.toLocaleString()}</div>
         </div>
       </div>
 
       {/* Controls: Tabs & Filters */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--color-border)', marginBottom: 20, paddingBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', marginBottom: 16, paddingBottom: 8 }}>
         <div style={{ display: 'flex', gap: 8 }}>
           {[
             { id: 'all', label: 'All Tickets' },
@@ -260,48 +291,213 @@ const TicketApproval = () => {
             </button>
           ))}
         </div>
+      </div>
 
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {/* Full-width Horizontal Filter Bar */}
+      <div style={{ 
+        display: 'flex', 
+        gap: 12, 
+        alignItems: 'center', 
+        background: 'var(--color-card)', 
+        border: '1px solid var(--color-border)', 
+        borderRadius: 12, 
+        padding: '12px 16px', 
+        marginBottom: 20,
+        flexWrap: 'nowrap',
+        width: '100%'
+      }}>
+        <div style={{ flex: 1, minWidth: 200 }}>
           <input
             type="text"
             placeholder="Search Title, ID, or User..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
-              padding: '6px 12px', background: '#111', border: '1px solid #333',
-              borderRadius: 6, color: '#fff', fontSize: 13, minWidth: 200, outline: 'none'
+              padding: '8px 12px', background: '#111', border: '1px solid #333',
+              borderRadius: 6, color: '#fff', fontSize: 13, width: '100%', outline: 'none'
             }}
           />
+        </div>
+        <div style={{ minWidth: 160 }}>
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             style={{
-              padding: '6px 12px', background: '#111', border: '1px solid #333',
-              borderRadius: 6, color: '#fff', fontSize: 13, outline: 'none'
+              padding: '8px 12px', background: '#111', border: '1px solid #333',
+              borderRadius: 6, color: '#fff', fontSize: 13, width: '100%', outline: 'none', cursor: 'pointer'
             }}
           >
             <option value="">All Categories</option>
-            <option value="General">General</option>
-            <option value="Technical">Technical</option>
-            <option value="Billing">Billing</option>
-            <option value="HR">HR</option>
-            <option value="Other">Other</option>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
+        </div>
+        <div style={{ minWidth: 160 }}>
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
             style={{
-              padding: '6px 12px', background: '#111', border: '1px solid #333',
-              borderRadius: 6, color: '#fff', fontSize: 13, outline: 'none'
+              padding: '8px 12px', background: '#111', border: '1px solid #333',
+              borderRadius: 6, color: '#fff', fontSize: 13, width: '100%', outline: 'none', cursor: 'pointer'
             }}
           >
             <option value="">All Priorities</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
+            <option value="urgent">Urgent</option>
           </select>
         </div>
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            style={{
+              padding: '8px 16px',
+              background: showAdvancedFilters ? 'var(--color-teal)' : 'rgba(255,255,255,0.05)',
+              border: '1px solid #333',
+              borderRadius: 6,
+              color: showAdvancedFilters ? '#000' : '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {showAdvancedFilters ? 'Hide Advanced' : 'Advanced Filters'}
+          </button>
+        </div>
       </div>
+
+      {/* Advanced Filters Expandable Panel */}
+      {showAdvancedFilters && (
+        <div style={{
+          background: 'var(--color-card)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 12,
+          padding: '20px 24px',
+          marginBottom: 20,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 18,
+          animation: 'fadeIn 0.2s'
+        }}>
+          {/* Direct selection pills (No dropdown) */}
+          <div>
+            <label style={{ fontSize: 11, color: '#acacac', display: 'block', marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Select Time Range
+            </label>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {[
+                { id: '', label: 'No Date Filter' },
+                { id: 'today', label: 'Today / Last 24 Hours' },
+                { id: 'weekly', label: 'Last 7 Days (Weekly)' },
+                { id: 'monthly', label: 'Last 30 Days (Monthly)' },
+                { id: 'particular', label: 'Particular Date & Time' },
+                { id: 'custom', label: 'Custom Date & Time Range' },
+              ].map(opt => {
+                const isActive = dateRangeType === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setDateRangeType(opt.id);
+                      setParticularDate('');
+                      setStartDate('');
+                      setEndDate('');
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      background: isActive ? 'var(--color-teal-muted)' : 'rgba(255,255,255,0.02)',
+                      border: isActive ? '1px solid var(--color-teal)' : '1px solid #333',
+                      borderRadius: 20,
+                      color: isActive ? '#fff' : '#acacac',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      outline: 'none',
+                      boxShadow: isActive ? '0 0 10px rgba(20, 160, 125, 0.2)' : 'none'
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Date & Time Inputs */}
+          {(dateRangeType === 'particular' || dateRangeType === 'custom') && (
+            <div style={{ 
+              display: 'flex', 
+              gap: 16, 
+              flexWrap: 'wrap', 
+              alignItems: 'center', 
+              paddingTop: 12, 
+              borderTop: '1px solid rgba(255,255,255,0.05)' 
+            }}>
+              {dateRangeType === 'particular' && (
+                <div className="field-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: 11, color: '#acacac', display: 'block', marginBottom: 6, fontWeight: 600 }}>Select Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    value={particularDate}
+                    onChange={(e) => setParticularDate(e.target.value)}
+                    style={{
+                      padding: '8px 12px', background: '#111', border: '1px solid #333',
+                      borderRadius: 6, color: '#fff', fontSize: 13, outline: 'none', minWidth: 220
+                    }}
+                  />
+                </div>
+              )}
+
+              {dateRangeType === 'custom' && (
+                <>
+                  <div className="field-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: 11, color: '#acacac', display: 'block', marginBottom: 6, fontWeight: 600 }}>Start Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      style={{
+                        padding: '8px 12px', background: '#111', border: '1px solid #333',
+                        borderRadius: 6, color: '#fff', fontSize: 13, outline: 'none', minWidth: 220
+                      }}
+                    />
+                  </div>
+                  <div className="field-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: 11, color: '#acacac', display: 'block', marginBottom: 6, fontWeight: 600 }}>End Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      style={{
+                        padding: '8px 12px', background: '#111', border: '1px solid #333',
+                        borderRadius: 6, color: '#fff', fontSize: 13, outline: 'none', minWidth: 220
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setParticularDate('');
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                style={{ padding: '8px 16px', marginTop: 18, fontSize: 12, height: 32, display: 'inline-flex', alignItems: 'center', border: '1px solid #333', borderRadius: 6 }}
+              >
+                Clear Inputs
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Bulk Action Controls */}
       {selectedIds.length > 0 && (
@@ -435,6 +631,32 @@ const TicketApproval = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* Pagination Controls */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 24px', borderTop: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.01)' }}>
+            <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+              Showing <strong>{total === 0 ? 0 : ((page - 1) * 20) + 1}</strong> to <strong>{Math.min(page * 20, total)}</strong> of <strong>{total}</strong> tickets
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                disabled={page === 1}
+                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 4, cursor: page === 1 ? 'not-allowed' : 'pointer' }}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                disabled={page === pages || pages === 0}
+                onClick={() => setPage(prev => Math.min(prev + 1, pages))}
+                style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 4, cursor: (page === pages || pages === 0) ? 'not-allowed' : 'pointer' }}
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       )}

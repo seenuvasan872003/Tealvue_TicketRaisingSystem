@@ -11,7 +11,6 @@ const teamSchema = new mongoose.Schema(
     categories: [
       {
         type: String,
-        enum: ['General', 'Technical', 'Billing', 'HR', 'Other'],
       },
     ],
     description: {
