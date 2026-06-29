@@ -1,6 +1,7 @@
 const Team = require('../models/Team');
 const Ticket = require('../models/Ticket');
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 
 // @route   GET /api/teams
 // @access  Admin + Super Admin
@@ -67,12 +68,15 @@ const createTeam = async (req, res) => {
     await teamAdmin.save();
 
     // 3. Create the Team
+    const salt = await bcrypt.genSalt(10);
+    const hashedTeamAdminPassword = await bcrypt.hash(teamAdminPassword, salt);
+
     const team = new Team({
       name,
       categories,
       description,
       teamAdmin: teamAdmin._id,
-      teamAdminPassword,
+      teamAdminPassword: hashedTeamAdminPassword,
       members: [],
       isActive: true,
       createdBy: req.user._id,

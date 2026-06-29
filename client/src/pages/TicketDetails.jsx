@@ -80,7 +80,7 @@ const TicketDetails = () => {
 
   // Reallocation and Transfer Modals (Staff)
   const [reallocateModal, setReallocateModal] = useState(false);
-  const [reallocateCategory, setReallocateCategory] = useState('General');
+  const [reallocateCategory, setReallocateCategory] = useState('');
   const [reallocateReason, setReallocateReason] = useState('');
 
   const [transferModal, setTransferModal] = useState(false);
@@ -128,6 +128,10 @@ const TicketDetails = () => {
 
   const handleReallocateSubmit = async (e) => {
     e.preventDefault();
+    if (!reallocateCategory) {
+      toast.error('Please select a team to transfer the ticket to');
+      return;
+    }
     if (!reallocateReason) {
       toast.error('Reallocation reason is required');
       return;
@@ -1011,7 +1015,7 @@ const TicketDetails = () => {
           {/* Staff Allocation Actions — for Team Admin or assigned Team Agent */}
           {((user?.role === 'team_admin') || 
             (user?.role === 'team_user' && ticket.assignedToUser?._id?.toString() === user?._id?.toString())) && 
-            ticket.status !== 'closed' && !ticket?._isReadOnlyForTeam && (
+            ticket.status !== 'closed' && (
               <div style={card}>
                 <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, color: '#e4e4e4' }}>
                   <ShieldCheck size={16} color="var(--color-teal)" /> Staff Actions
@@ -1022,8 +1026,7 @@ const TicketDetails = () => {
                     className="btn btn-ghost"
                     style={{ width: '100%', justifyContent: 'center', border: '1px solid var(--color-border)' }}
                     onClick={() => {
-                      const firstAvailable = categories.find(c => c !== ticket.category) || 'General';
-                      setReallocateCategory(firstAvailable);
+                      setReallocateCategory('');
                       setReallocateModal(true);
                     }}
                     disabled={updating}
@@ -1283,14 +1286,30 @@ const TicketDetails = () => {
             <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#e4e4e4', fontWeight: 600 }}>Reallocate to Other Team</h3>
             <form onSubmit={handleReallocateSubmit}>
               <div className="field-group" style={{ marginBottom: 16 }}>
-                <label>Select Correct Category</label>
+                <label>Select Team to Transfer Ticket</label>
                 <select
                   style={inputStyle}
                   value={reallocateCategory}
                   onChange={(e) => setReallocateCategory(e.target.value)}
                   disabled={updating}
+                  required
                 >
-                  {categories.filter(c => c !== ticket.category).map(c => <option key={c} value={c}>{c}</option>)}
+                  <option value="">-- Select Team --</option>
+                  {teams
+                    .filter(t => {
+                      if (!t.isActive) return false;
+                      const currentTeamId = ticket.teamId?._id || ticket.teamId;
+                      const isCurrent = t._id === currentTeamId;
+                      const oldTeamId = ticket.reallocatedFromTeamId?._id || ticket.reallocatedFromTeamId;
+                      const isOld = oldTeamId && t._id === oldTeamId;
+                      return !isCurrent && !isOld;
+                    })
+                    .map(t => (
+                      <option key={t._id} value={t.categories[0]}>
+                        {t.name} ({t.categories.join(', ')})
+                      </option>
+                    ))
+                  }
                 </select>
               </div>
               <div className="field-group" style={{ marginBottom: 20 }}>

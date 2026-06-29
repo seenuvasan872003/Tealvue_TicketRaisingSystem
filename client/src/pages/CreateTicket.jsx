@@ -62,9 +62,9 @@ const CreateTicket = () => {
   const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files);
     
-    // Check total files count (max 20)
-    if (files.length + newFiles.length > 20) {
-      toast.error('Maximum 20 attachments allowed');
+    // Check total files count (max 3)
+    if (files.length + newFiles.length > 3) {
+      toast.error('Maximum 3 attachments allowed');
       return;
     }
 
@@ -191,7 +191,7 @@ const CreateTicket = () => {
           <div className="field-group" style={{ maxWidth: 320 }}>
             <label>Category</label>
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-              {categories.map((c) => <option key={c} value={c}>{c.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
+              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 

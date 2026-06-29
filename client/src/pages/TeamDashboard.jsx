@@ -14,9 +14,11 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { getTeamsDashboard, getTickets } from '../services/ticketApi';
 import API from '../services/authApi';
 import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 
 const TeamDashboard = () => {
+  const { isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -81,13 +83,24 @@ const TeamDashboard = () => {
           <h1 className="page-title">Team Progress Dashboard</h1>
           <p className="page-subtitle">Overview of specialized support teams' workload and allocation metrics.</p>
         </div>
-        <button 
-          className="btn btn-ghost"
-          onClick={fetchDashboardData}
-          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-        >
-          <RefreshCw size={14} /> Refresh
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          {isSuperAdmin && (
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/super-admin/teams')}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              Create & Manage Teams
+            </button>
+          )}
+          <button 
+            className="btn btn-ghost"
+            onClick={fetchDashboardData}
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <RefreshCw size={14} /> Refresh
+          </button>
+        </div>
       </div>
 
       {/* Summary Chips */}

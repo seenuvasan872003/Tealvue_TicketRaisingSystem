@@ -22,6 +22,7 @@ const jwt          = require('jsonwebtoken');
 const path         = require('path');
 const User         = require('../models/User');
 const Notification = require('../models/Notification');
+const { isWhitelisted } = require('../utils/whitelist');
 
 // ── Helpers ───────────────────────────────────────────────
 
@@ -32,7 +33,11 @@ const generateToken = (id) =>
 
 // Validate password strength
 const validatePassword = (password) => {
-  if (!password || password.length < 6) return 'Password must be at least 6 characters';
+  if (!password || password.length < 8) return 'Password must be at least 8 characters';
+  if (!/[A-Z]/.test(password))          return 'Password must contain at least one uppercase letter';
+  if (!/[0-9]/.test(password))          return 'Password must contain at least one number';
+  if (!/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(password))
+    return 'Password must contain at least one special character';
   return null;
 };
 
@@ -78,6 +83,10 @@ const register = async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ message: 'Email already registered' });
+    }
+
+    if (!isWhitelisted(email)) {
+      return res.status(403).json({ message: 'Not authorised to register' });
     }
 
     // Public registration is ALWAYS 'user' role, isApproved: true

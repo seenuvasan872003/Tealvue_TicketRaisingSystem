@@ -391,199 +391,196 @@ const Teams = () => {
       {/* Add / Edit Modal */}
       {showModal && (
         <div className="modal-backdrop">
-          <div className="modal-content" style={{ maxWidth: 520, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div className="modal-header" style={{ flexShrink: 0, padding: '16px 20px', borderBottom: '1px solid var(--color-border)' }}>
+          <div className="modal-content" style={{ maxWidth: 540, height: 650, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div className="modal-header" style={{ flexShrink: 0, padding: '20px 28px 16px 28px', borderBottom: '1px solid var(--color-border)' }}>
               <h3 style={{ margin: 0 }}>{editingTeam ? 'Edit Team Details' : 'Add New Support Team'}</h3>
               <button onClick={() => setShowModal(false)} className="modal-close">
                 <X size={18} />
               </button>
             </div>
-            <div className="modal-body" style={{ overflowY: 'auto', flex: 1, padding: '20px' }}>
-              <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
-              <div className="form-group">
-                <label>Team Name *</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={name}
-                  onChange={(e) => handleFieldChange('name', e.target.value)}
-                  placeholder="e.g. Technical Support Team"
-                  required
-                />
-                {errors.name && <span style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>{errors.name}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  className="form-control"
-                  rows="2"
-                  value={description}
-                  onChange={(e) => handleFieldChange('description', e.target.value)}
-                  placeholder="Describe this team's primary role..."
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>
-                  <span>{errors.description && <span style={{ color: '#f87171' }}>{errors.description}</span>}</span>
-                  <span>{description.length}/500</span>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Auto-Allocation Support Categories *</label>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6, marginBottom: 12 }}>
-                  {categoryOptions.map((cat) => {
-                    const isSelected = categories.includes(cat);
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => handleCategoryToggle(cat)}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: 6,
-                          border: isSelected ? '1px solid var(--color-teal)' : '1px solid var(--color-border)',
-                          background: isSelected ? 'var(--color-teal-dark)' : 'var(--color-surface)',
-                          color: '#fff',
-                          cursor: 'pointer',
-                          fontSize: 12,
-                          transition: 'all 0.2s',
-                        }}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Add Custom Category Input */}
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
-                  <input
-                    type="text"
-                    placeholder="Enter new custom category..."
-                    value={customCategory}
-                    onChange={(e) => setCustomCategory(e.target.value)}
-                    style={{
-                      flex: 1,
-                      padding: '6px 10px',
-                      borderRadius: 6,
-                      border: '1px solid var(--color-border)',
-                      background: 'var(--color-surface)',
-                      color: '#fff',
-                      fontSize: 12,
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const trimmed = customCategory.trim();
-                      if (!trimmed) return;
-                      // Capitalize first letter of each word for neatness
-                      const capitalized = trimmed.replace(/\b\w/g, l => l.toUpperCase());
-                      
-                      // Add to options if not already present
-                      if (!categoryOptions.includes(capitalized)) {
-                        setCategoryOptions([...categoryOptions, capitalized]);
-                      }
-                      
-                      // Auto-select it
-                      if (!categories.includes(capitalized)) {
-                        setCategories([...categories, capitalized]);
-                      }
-                      
-                      setCustomCategory('');
-                      toast.success(`Category "${capitalized}" added and selected`);
-                    }}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: 6,
-                      border: '1px solid var(--color-teal)',
-                      background: 'rgba(20,160,125,0.1)',
-                      color: 'var(--color-teal)',
-                      cursor: 'pointer',
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Add Custom
-                  </button>
-                </div>
-              </div>
-
-              {/* Only show Team Admin creation fields for New Team */}
-              {!editingTeam && (
-                <div style={{ padding: 14, background: '#222', borderRadius: 8, border: '1px solid #333', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <h4 style={{ margin: 0, fontSize: 13, color: 'var(--color-teal)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Shield size={14} /> Create Team Admin Account
-                  </h4>
-                  <p style={{ fontSize: 11, color: 'var(--color-text-muted)', margin: 0 }}>This creates the admin user who will manage and allocate this team's tickets.</p>
-                  
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+              <div className="modal-body" style={{ overflowY: 'auto', flex: 1, padding: '24px 28px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div className="form-group">
-                    <label>Admin Name *</label>
+                    <label>Team Name *</label>
                     <input
                       type="text"
                       className="form-control"
-                      value={adminName}
-                      onChange={(e) => handleFieldChange('adminName', e.target.value)}
-                      placeholder="e.g. John Doe"
+                      value={name}
+                      onChange={(e) => handleFieldChange('name', e.target.value)}
+                      placeholder="e.g. Technical Support Team"
                       required
                     />
-                    {errors.adminName && <span style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{errors.adminName}</span>}
+                    {errors.name && <span style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>{errors.name}</span>}
                   </div>
 
                   <div className="form-group">
-                    <label>Admin Email *</label>
-                    <input
-                      type="email"
+                    <label>Description</label>
+                    <textarea
                       className="form-control"
-                      value={adminEmail}
-                      onChange={(e) => handleFieldChange('adminEmail', e.target.value)}
-                      placeholder="e.g. techadmin@tealvue.com"
-                      required
+                      rows="2"
+                      value={description}
+                      onChange={(e) => handleFieldChange('description', e.target.value)}
+                      placeholder="Describe this team's primary role..."
                     />
-                    {errors.adminEmail && <span style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{errors.adminEmail}</span>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>
+                      <span>{errors.description && <span style={{ color: '#f87171' }}>{errors.description}</span>}</span>
+                      <span>{description.length}/500</span>
+                    </div>
                   </div>
 
                   <div className="form-group">
-                    <label>Password *</label>
-                    <div style={{ position: 'relative' }}>
+                    <label>Auto-Allocation Support Categories *</label>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6, marginBottom: 12 }}>
+                      {categoryOptions.map((cat) => {
+                        const isSelected = categories.includes(cat);
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => handleCategoryToggle(cat)}
+                            style={{
+                              padding: '6px 12px',
+                              borderRadius: 6,
+                              border: isSelected ? '1px solid var(--color-teal)' : '1px solid var(--color-border)',
+                              background: isSelected ? 'var(--color-teal-dark)' : 'var(--color-surface)',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              fontSize: 12,
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            {cat}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Add Custom Category Input */}
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
                       <input
-                        type={showAdminPassword ? "text" : "password"}
-                        className="form-control"
-                        value={adminPassword}
-                        onChange={(e) => handleFieldChange('adminPassword', e.target.value)}
-                        placeholder="At least 6 characters"
-                        style={{ width: '100%', paddingRight: 40 }}
-                        required
+                        type="text"
+                        placeholder="Enter new custom category..."
+                        value={customCategory}
+                        onChange={(e) => setCustomCategory(e.target.value)}
+                        style={{
+                          flex: 1,
+                          padding: '6px 10px',
+                          borderRadius: 6,
+                          border: '1px solid var(--color-border)',
+                          background: 'var(--color-surface)',
+                          color: '#fff',
+                          fontSize: 12,
+                        }}
                       />
                       <button
                         type="button"
-                        onClick={() => setShowAdminPassword(!showAdminPassword)}
+                        onClick={() => {
+                          const trimmed = customCategory.trim();
+                          if (!trimmed) return;
+                          const capitalized = trimmed.replace(/\b\w/g, l => l.toUpperCase());
+                          if (!categoryOptions.includes(capitalized)) {
+                            setCategoryOptions([...categoryOptions, capitalized]);
+                          }
+                          if (!categories.includes(capitalized)) {
+                            setCategories([...categories, capitalized]);
+                          }
+                          setCustomCategory('');
+                          toast.success(`Category "${capitalized}" added and selected`);
+                        }}
                         style={{
-                          position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                          background: 'none', border: 'none', color: '#888', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          padding: '6px 12px',
+                          borderRadius: 6,
+                          border: '1px solid var(--color-teal)',
+                          background: 'rgba(20,160,125,0.1)',
+                          color: 'var(--color-teal)',
+                          cursor: 'pointer',
+                          fontSize: 12,
+                          fontWeight: 600,
                         }}
                       >
-                        {showAdminPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        Add Custom
                       </button>
                     </div>
-                    {errors.adminPassword && <span style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{errors.adminPassword}</span>}
+                  </div>
+
+                  {/* Only show Team Admin creation fields for New Team */}
+                  {!editingTeam && (
+                    <div style={{ padding: 14, background: '#222', borderRadius: 8, border: '1px solid #333', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <h4 style={{ margin: 0, fontSize: 13, color: 'var(--color-teal)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Shield size={14} /> Create Team Admin Account
+                      </h4>
+                      <p style={{ fontSize: 11, color: 'var(--color-text-muted)', margin: 0 }}>This creates the admin user who will manage and allocate this team's tickets.</p>
+                      
+                      <div className="form-group">
+                        <label>Admin Name *</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={adminName}
+                          onChange={(e) => handleFieldChange('adminName', e.target.value)}
+                          placeholder="e.g. John Doe"
+                          required
+                        />
+                        {errors.adminName && <span style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{errors.adminName}</span>}
+                      </div>
+
+                      <div className="form-group">
+                        <label>Admin Email *</label>
+                        <input
+                          type="email"
+                          className="form-control"
+                          value={adminEmail}
+                          onChange={(e) => handleFieldChange('adminEmail', e.target.value)}
+                          placeholder="e.g. techadmin@tealvue.com"
+                          required
+                        />
+                        {errors.adminEmail && <span style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{errors.adminEmail}</span>}
+                      </div>
+
+                      <div className="form-group">
+                        <label>Password *</label>
+                        <div style={{ position: 'relative' }}>
+                          <input
+                            type={showAdminPassword ? "text" : "password"}
+                            className="form-control"
+                            value={adminPassword}
+                            onChange={(e) => handleFieldChange('adminPassword', e.target.value)}
+                            placeholder="At least 6 characters"
+                            style={{ width: '100%', paddingRight: 40 }}
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowAdminPassword(!showAdminPassword)}
+                            style={{
+                              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                              background: 'none', border: 'none', color: '#888', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}
+                          >
+                            {showAdminPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+                        {errors.adminPassword && <span style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{errors.adminPassword}</span>}
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                    <input
+                      type="checkbox"
+                      id="isActive"
+                      checked={isActive}
+                      onChange={(e) => setIsActive(e.target.checked)}
+                      style={{ width: 16, height: 16 }}
+                    />
+                    <label htmlFor="isActive" style={{ cursor: 'pointer' }}>Active and accepting ticket allocations</label>
                   </div>
                 </div>
-              )}
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  style={{ width: 16, height: 16 }}
-                />
-                <label htmlFor="isActive" style={{ cursor: 'pointer' }}>Active and accepting ticket allocations</label>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 14 }}>
+              <div className="modal-footer" style={{ flexShrink: 0, padding: '16px 28px', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'flex-end', gap: 12, background: 'rgba(255,255,255,0.01)' }}>
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>
                   Cancel
                 </button>
@@ -592,7 +589,6 @@ const Teams = () => {
                 </button>
               </div>
             </form>
-            </div>
           </div>
         </div>
       )}

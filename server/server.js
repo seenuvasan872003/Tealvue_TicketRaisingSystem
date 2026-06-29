@@ -127,43 +127,47 @@ const PORT = process.env.PORT || 5000;
 const { seedTeams } = require('./seeders/teamSeed');
 const { startTeamAdminTimeoutJob } = require('./jobs/teamAdminTimeout');
 
-connectDB().then(async () => {
-  // Seed default teams
-  await seedTeams();
+if (process.env.NODE_ENV !== 'test') {
+  connectDB().then(async () => {
+    // Seed default teams
+    await seedTeams();
 
-  // Migrate existing tickets categories, priorities, and approval status
-  try {
-    const db = mongoose.connection.db;
-    const ticketsCollection = db.collection('tickets');
-    
-    // Force lowercase categories to exact capitalization enums
-    await ticketsCollection.updateMany({ category: 'technical' }, { $set: { category: 'Technical' } });
-    await ticketsCollection.updateMany({ category: 'billing' }, { $set: { category: 'Billing' } });
-    await ticketsCollection.updateMany({ category: 'general' }, { $set: { category: 'General' } });
-    await ticketsCollection.updateMany({ category: 'hr' }, { $set: { category: 'HR' } });
-    await ticketsCollection.updateMany({ category: 'other' }, { $set: { category: 'Other' } });
-    await ticketsCollection.updateMany({ category: 'feature-request' }, { $set: { category: 'Technical' } });
-    await ticketsCollection.updateMany({ category: 'bug' }, { $set: { category: 'Technical' } });
-    
-    // Force old priorities to aligned low/medium/high
-    await ticketsCollection.updateMany({ priority: 'urgent' }, { $set: { priority: 'high' } });
-    await ticketsCollection.updateMany({ priority: { $nin: ['low', 'medium', 'high'] } }, { $set: { priority: 'medium' } });
+    // Migrate existing tickets categories, priorities, and approval status
+    try {
+      const db = mongoose.connection.db;
+      const ticketsCollection = db.collection('tickets');
+      
+      // Force lowercase categories to exact capitalization enums
+      await ticketsCollection.updateMany({ category: 'technical' }, { $set: { category: 'Technical' } });
+      await ticketsCollection.updateMany({ category: 'billing' }, { $set: { category: 'Billing' } });
+      await ticketsCollection.updateMany({ category: 'general' }, { $set: { category: 'General' } });
+      await ticketsCollection.updateMany({ category: 'hr' }, { $set: { category: 'HR' } });
+      await ticketsCollection.updateMany({ category: 'other' }, { $set: { category: 'Other' } });
+      await ticketsCollection.updateMany({ category: 'feature-request' }, { $set: { category: 'Technical' } });
+      await ticketsCollection.updateMany({ category: 'bug' }, { $set: { category: 'Technical' } });
+      
+      // Force old priorities to aligned low/medium/high
+      await ticketsCollection.updateMany({ priority: 'urgent' }, { $set: { priority: 'high' } });
+      await ticketsCollection.updateMany({ priority: { $nin: ['low', 'medium', 'high'] } }, { $set: { priority: 'medium' } });
 
-    // Force approvalStatus compliance
-    await ticketsCollection.updateMany({ approvalStatus: 'pending_approval' }, { $set: { approvalStatus: 'approved' } });
-    await ticketsCollection.updateMany({ approvalStatus: { $exists: false } }, { $set: { approvalStatus: 'approved' } });
-    await ticketsCollection.updateMany({ approvalStatus: null }, { $set: { approvalStatus: 'approved' } });
+      // Force approvalStatus compliance
+      await ticketsCollection.updateMany({ approvalStatus: 'pending_approval' }, { $set: { approvalStatus: 'approved' } });
+      await ticketsCollection.updateMany({ approvalStatus: { $exists: false } }, { $set: { approvalStatus: 'approved' } });
+      await ticketsCollection.updateMany({ approvalStatus: null }, { $set: { approvalStatus: 'approved' } });
 
-    console.log('[MIGRATION] Raw database enums mapping completed successfully.');
-  } catch (migError) {
-    console.error('[MIGRATION ERROR]', migError);
-  }
+      console.log('[MIGRATION] Raw database enums mapping completed successfully.');
+    } catch (migError) {
+      console.error('[MIGRATION ERROR]', migError);
+    }
 
-  // Start Team Admin Timeout Job
-  startTeamAdminTimeoutJob();
+    // Start Team Admin Timeout Job
+    startTeamAdminTimeoutJob();
 
-  server.listen(PORT, () =>
-    console.log(`Server running with WebSockets → http://localhost:${PORT}`)
-  );
-});
+    server.listen(PORT, () =>
+      console.log(`Server running with WebSockets → http://localhost:${PORT}`)
+    );
+  });
+}
+
+module.exports = app;
 

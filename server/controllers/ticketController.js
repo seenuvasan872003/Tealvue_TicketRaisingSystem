@@ -132,7 +132,8 @@ const getTicketById = async (req, res) => {
       .populate('assigned_to',               'name email avatar')
       .populate('assignedToUser',            'name email avatar')
       .populate('internal_notes.author',     'name email role')
-      .populate('teamId',                    'name categories description teamAdmin');
+      .populate('teamId',                    'name categories description teamAdmin')
+      .populate('reallocatedFromTeamId',     'name categories description teamAdmin');
 
     if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
 
@@ -327,7 +328,14 @@ const createTicket = async (req, res) => {
       categorySelectedByUser,
       autoAllocatedAt,
       teamAdminAllocatedAt,
-      teamId
+      teamId,
+      timeTracking: matchedTeam ? {
+        createdAt: new Date(),
+        allocatedAt: autoAllocatedAt,
+        timeToAllocate: 0
+      } : {
+        createdAt: new Date()
+      }
     });
 
     const ActivityLog = require('../models/ActivityLog');
@@ -1545,8 +1553,10 @@ const getTicketLogs = async (req, res) => {
       }
     } else if (req.user.role === 'team_admin') {
       const team = await Team.findOne({ teamAdmin: req.user._id });
-      if (!team || ticket.teamId?.toString() !== team._id.toString()) {
-        return res.status(403).json({ message: 'Access denied — own team tickets only' });
+      const isCurrentTeam = ticket.teamId?.toString() === team?._id?.toString();
+      const isOldTeam = ticket.reallocatedFromTeamId?.toString() === team?._id?.toString();
+      if (!team || (!isCurrentTeam && !isOldTeam)) {
+        return res.status(403).json({ message: 'Access denied — own/old team tickets only' });
       }
     } else if (req.user.role === 'team_user') {
       if (ticket.assignedToUser?.toString() !== req.user._id.toString()) {
@@ -1631,7 +1641,68 @@ const getTicketTimeSummary = async (req, res) => {
     }
 
     const { formatDuration } = require('../utils/timeFormat');
-    const tracking = ticket.timeTracking || {};
+    
+    const tracking = {
+      timeToAllocate: ticket.timeTracking?.timeToAllocate || null,
+      timeToAssign: ticket.timeTracking?.timeToAssign || null,
+      timeToClose: ticket.timeTracking?.timeToClose || null,
+      timeInProgress: ticket.timeTracking?.timeInProgress || null,
+    };
+
+    // If any tracking value is missing, calculate it using logs
+    if (!tracking.timeToAllocate || !tracking.timeToAssign || !tracking.timeToClose || !tracking.timeInProgress) {
+      const TicketLog = require('../models/TicketLog');
+      const logs = await TicketLog.find({ ticketId }).sort({ timestamp: 1 });
+
+      let createdTime = ticket.createdAt;
+      let allocatedTime = ticket.timeTracking?.allocatedAt || null;
+      let assignedTime = ticket.timeTracking?.memberAssignedAt || null;
+      let inProgressTime = ticket.timeTracking?.inProgressAt || null;
+      let closedTime = ticket.timeTracking?.closedAt || null;
+
+      for (const log of logs) {
+        if (log.action === 'TICKET_CREATED') {
+          createdTime = log.timestamp;
+        }
+        if (['AUTO_ALLOCATED_TEAM_ADMIN', 'TICKET_MANUALLY_ALLOCATED_TEAM', 'TICKET_REALLOCATED_TEAM', 'TICKET_AUTO_ALLOCATED_TEAM'].includes(log.action)) {
+          if (!allocatedTime) allocatedTime = log.timestamp;
+        }
+        if (['TICKET_ASSIGNED_TO_MEMBER', 'TICKET_REASSIGNED_TO_MEMBER', 'AUTO_ALLOCATED_TEAM_USER_AFTER_TIMEOUT', 'ALLOCATED_TO_TEAM_USER_BY_TEAM_ADMIN'].includes(log.action)) {
+          if (!assignedTime) assignedTime = log.timestamp;
+        }
+        if (['TICKET_IN_PROGRESS', 'TICKET_OPENED'].includes(log.action)) {
+          if (!inProgressTime) inProgressTime = log.timestamp;
+        }
+        if (['TICKET_CLOSED', 'TICKET_CLOSED_BY_TEAM_USER'].includes(log.action)) {
+          if (!closedTime) closedTime = log.timestamp;
+        }
+      }
+
+      // Fallback strategies for missing logs
+      if (!allocatedTime && ticket.teamId) {
+        allocatedTime = ticket.createdAt;
+      }
+      if (!closedTime && ticket.status === 'closed') {
+        closedTime = ticket.updatedAt;
+      }
+      if (!inProgressTime && (ticket.status === 'in-progress' || ticket.status === 'closed')) {
+        inProgressTime = assignedTime || allocatedTime || ticket.createdAt;
+      }
+
+      // Calculations
+      if (allocatedTime && createdTime && !tracking.timeToAllocate) {
+        tracking.timeToAllocate = Math.max(0, allocatedTime - createdTime);
+      }
+      if (assignedTime && allocatedTime && !tracking.timeToAssign) {
+        tracking.timeToAssign = Math.max(0, assignedTime - allocatedTime);
+      }
+      if (closedTime && createdTime && !tracking.timeToClose) {
+        tracking.timeToClose = Math.max(0, closedTime - createdTime);
+      }
+      if (closedTime && inProgressTime && !tracking.timeInProgress) {
+        tracking.timeInProgress = Math.max(0, closedTime - inProgressTime);
+      }
+    }
 
     res.json({
       timeTracking: tracking,
@@ -1687,6 +1758,10 @@ const setCategory = async (req, res) => {
       ticket.autoAllocatedAt = new Date();
       ticket.teamAdminAllocatedAt = new Date();
       ticket.teamAdminViewedAt = null;
+
+      const now = new Date();
+      ticket.timeTracking.allocatedAt = now;
+      ticket.timeTracking.timeToAllocate = Math.max(0, now - ticket.createdAt);
     } else {
       ticket.allocationStatus = 'pending_admin';
     }
@@ -1824,6 +1899,9 @@ const reallocateTicket = async (req, res) => {
     ticket.teamAdminAllocatedAt = new Date();
     ticket.assignedToUser = null;
     ticket.status = 'open';
+    if (ticket.timeTracking) {
+      ticket.timeTracking.allocatedAt = new Date();
+    }
 
     await ticket.save();
 
@@ -1879,8 +1957,8 @@ const transferToAdmin = async (req, res) => {
       return res.status(403).json({ message: 'Access denied — Team Admin or Team User only' });
     }
     const { reason } = req.body;
-    if (!reason) {
-      return res.status(400).json({ message: 'Transfer reason is required' });
+    if (!reason || reason.trim().length < 10) {
+      return res.status(400).json({ message: 'Transfer reason is required and must be at least 10 characters' });
     }
 
     const ticket = await Ticket.findById(req.params.id);

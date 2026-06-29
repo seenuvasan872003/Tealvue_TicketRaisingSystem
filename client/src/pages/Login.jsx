@@ -31,7 +31,24 @@ const Login = () => {
       // [API] POST /api/auth/login
       const user = await login(form.email, form.password);
       toast.success(`Welcome back, ${user.name}!`);
-      navigate('/dashboard');
+      
+      switch (user.role) {
+        case 'super-admin':
+          navigate('/super-admin/dashboard');
+          break;
+        case 'admin':
+          navigate('/admin/dashboard');
+          break;
+        case 'team_admin':
+          navigate('/team-admin/dashboard');
+          break;
+        case 'team_user':
+          navigate('/team-user/dashboard');
+          break;
+        case 'user':
+        default:
+          navigate('/dashboard');
+      }
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed';
       setError(msg);

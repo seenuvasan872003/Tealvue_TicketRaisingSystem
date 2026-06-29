@@ -2,3 +2,8 @@
 node_modules/
 .env
 *.log
+
+
+bug.md
+test_log.md
+bug_fixes_log.md

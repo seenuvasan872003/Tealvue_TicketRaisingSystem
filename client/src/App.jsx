@@ -32,6 +32,8 @@ import TicketApproval     from './pages/TicketApproval';
 import CreateUserAccount  from './pages/CreateUserAccount';
 import PerformanceDetails from './pages/PerformanceDetails';
 import Notifications      from './pages/Notifications';
+import Agencies           from './pages/Agencies';
+import AgencyDashboard    from './pages/AgencyDashboard';
 
 import TeamTickets        from './pages/TeamTickets';
 import TeamMembers        from './pages/TeamMembers';
@@ -87,7 +89,22 @@ const AppShell = () => {
 
 // ── Dashboard Router — redirects based on role ───────────────────
 const DashboardRouter = () => {
-  return <Dashboard />;
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  
+  switch (user.role) {
+    case 'super-admin':
+      return <Navigate to="/super-admin/dashboard" replace />;
+    case 'admin':
+      return <Navigate to="/admin/dashboard" replace />;
+    case 'team_admin':
+      return <Navigate to="/team-admin/dashboard" replace />;
+    case 'team_user':
+      return <Navigate to="/team-user/dashboard" replace />;
+    case 'user':
+    default:
+      return <Navigate to="/dashboard" replace />;
+  }
 };
 
 // ── App ────────────────────────────────────────────────────
@@ -102,7 +119,46 @@ const App = () => (
         {/* Protected shell — ONE ProtectedRoute wraps the entire shell */}
         <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
           <Route index                  element={<DashboardRouter />} />
-          <Route path="/dashboard"      element={<DashboardRouter />} />
+          <Route
+            path="/super-admin/dashboard"
+            element={
+              <RoleGuard roles={['super-admin']}>
+                <Dashboard />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <RoleGuard roles={['admin']}>
+                <Dashboard />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/team-admin/dashboard"
+            element={
+              <RoleGuard roles={['team_admin']}>
+                <Dashboard />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/team-user/dashboard"
+            element={
+              <RoleGuard roles={['team_user']}>
+                <Dashboard />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <RoleGuard roles={['user']}>
+                <Dashboard />
+              </RoleGuard>
+            }
+          />
           <Route
             path="/tickets"
             element={
@@ -191,6 +247,22 @@ const App = () => (
           />
           <Route
             path="/teams/:id/performance"
+            element={
+              <RoleGuard roles={['admin', 'super-admin']}>
+                <PerformanceDetails />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/admin/agencies"
+            element={
+              <RoleGuard roles={['admin', 'super-admin']}>
+                <AgencyDashboard />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/agencies/:id/performance"
             element={
               <RoleGuard roles={['admin', 'super-admin']}>
                 <PerformanceDetails />

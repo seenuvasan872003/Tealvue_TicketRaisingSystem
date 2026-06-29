@@ -61,6 +61,17 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const closeMobile = () => onClose && onClose();
+  
+  const getDashboardLink = () => {
+    if (!user) return '/login';
+    switch (user.role) {
+      case 'super-admin': return '/super-admin/dashboard';
+      case 'admin': return '/admin/dashboard';
+      case 'team_admin': return '/team-admin/dashboard';
+      case 'team_user': return '/team-user/dashboard';
+      default: return '/dashboard';
+    }
+  };
 
   // Role display helpers
   const roleName  = user?.role === 'super-admin' ? 'Super Admin' :
@@ -166,7 +177,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       <nav className="sidebar-nav" onClick={closeMobile}>
         <span className="nav-section-label">Main</span>
 
-        <NavLink to="/dashboard" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+        <NavLink to={getDashboardLink()} className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
           <LayoutDashboard size={16} />
           Dashboard
         </NavLink>

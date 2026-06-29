@@ -20,6 +20,19 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+// Intercept responses to handle global token expiration/tampering (401 Unauthorized)
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('tealue_token');
+      // Use window.location directly for a global application redirect/reset
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // ── Auth endpoints ─────────────────────────────────────────
 export const registerUser    = (data) => API.post('/auth/register', data);
 export const loginUser       = (data) => API.post('/auth/login', data);

@@ -67,5 +67,8 @@ export const restoreTicket = (id) => API.put(`/tickets/${id}/restore`);
 
 // Get dynamic list of categories
 export const getCategories = () => API.get('/teams/categories');
-
-
+// Agency aliases for Team operations
+export const createAgency = createTeam;
+export const updateAgency = updateTeam;
+export const deleteAgency = deleteTeam;
+export const getAgenciesDashboard = getTeamsDashboard;

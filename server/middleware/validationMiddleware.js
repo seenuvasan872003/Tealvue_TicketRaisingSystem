@@ -19,8 +19,20 @@ const registerValidator = [
     .isEmail()
     .withMessage('Enter a valid email address'),
   body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters'),
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters')
+    .custom(value => {
+      if (!/[A-Z]/.test(value)) {
+        throw new Error('Password must contain at least one uppercase letter');
+      }
+      if (!/[0-9]/.test(value)) {
+        throw new Error('Password must contain at least one number');
+      }
+      if (!/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(value)) {
+        throw new Error('Password must contain at least one special character');
+      }
+      return true;
+    }),
   runValidation
 ];
 
@@ -40,8 +52,20 @@ const createAdminValidator = [
     .isEmail()
     .withMessage('Enter a valid email address'),
   body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters'),
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters')
+    .custom(value => {
+      if (!/[A-Z]/.test(value)) {
+        throw new Error('Password must contain at least one uppercase letter');
+      }
+      if (!/[0-9]/.test(value)) {
+        throw new Error('Password must contain at least one number');
+      }
+      if (!/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(value)) {
+        throw new Error('Password must contain at least one special character');
+      }
+      return true;
+    }),
   body('role')
     .optional()
     .isIn(['admin', 'super-admin'])
@@ -58,10 +82,10 @@ const teamValidator = [
     .isArray({ min: 1 })
     .withMessage('At least one category is required')
     .custom((cats) => {
-      const valid = ['General', 'Technical', 'Billing', 'HR', 'Other'];
-      return cats.every(c => valid.includes(c));
+      // Allow any non-empty string categories (default + custom user-created)
+      return cats.every(c => typeof c === 'string' && c.trim().length > 0 && c.trim().length <= 100);
     })
-    .withMessage('Invalid category selected'),
+    .withMessage('Each category must be a non-empty string (max 100 characters)'),
   body('description')
     .optional({ checkFalsy: true })
     .isLength({ max: 500 })
@@ -109,13 +133,19 @@ const ticketValidator = [
   body('category')
     .optional({ checkFalsy: true })
     .trim()
-    .isIn(['General', 'Technical', 'Billing', 'HR', 'Other'])
-    .withMessage('Category must match exact enum: General | Technical | Billing | HR | Other'),
+    .custom((val) => {
+      // Allow any non-empty string category including user-created ones
+      // No whitelist restriction — teams can create custom categories
+      if (val && (val.length < 1 || val.length > 100)) {
+        throw new Error('Category must be between 1 and 100 characters');
+      }
+      return true;
+    }),
   body('priority')
     .optional()
     .trim()
-    .isIn(['low', 'medium', 'high', 'urgent'])
-    .withMessage('Priority must match exact enum: low | medium | high | urgent'),
+    .isIn(['low', 'medium', 'high'])
+    .withMessage('Priority must match exact enum: low | medium | high'),
   body('due_date')
     .optional({ checkFalsy: true })
     .isISO8601()
