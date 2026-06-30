@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, Check, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { notificationApi } from '../services/notificationApi';
+import logger from '../utils/logger';
 
 const relativeTime = (date) => {
   const diff = Date.now() - new Date(date).getTime();
@@ -45,6 +46,7 @@ const Notifications = () => {
 
   const loadNotifications = async () => {
     setLoading(true);
+    logger.info('Notifications', 'loadNotifications', `Loading notifications — page: ${page} | tab: ${activeTab}`, { api: '/api/notifications', method: 'GET', action: 'Notifications Load Start' });
     try {
       const res = await notificationApi.getAll(page);
       const allNotifs = res.data.notifications || [];
@@ -65,7 +67,11 @@ const Notifications = () => {
         : filtered.length;
       
       setTotalPages(Math.max(1, Math.ceil(totalCount / LIMIT)));
+      logger.info('Notifications', 'loadNotifications', `Notifications loaded — ${filtered.length} shown | ${res.data.unreadCount} unread`, {
+        api: '/api/notifications', method: 'GET', status: 200, action: 'Notifications Load Success',
+      });
     } catch (err) {
+      logger.error('Notifications', 'loadNotifications', 'Error loading notifications', err, { api: '/api/notifications', method: 'GET', action: 'Notifications Load Failure' });
       console.error('Error loading notifications:', err);
     } finally {
       setLoading(false);

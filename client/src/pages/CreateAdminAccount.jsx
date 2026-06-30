@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { createAdminAccount } from '../services/userApi';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
+import logger from '../utils/logger';
 
 const CreateAdminAccount = () => {
   const navigate = useNavigate();
@@ -105,9 +106,11 @@ const CreateAdminAccount = () => {
       toast.error('Passwords do not match'); return;
     }
     setLoading(true);
+    logger.info('CreateAdminAccount', 'handleSubmit', `Creating ${formData.role} account for: ${formData.email}`, { api: '/api/users/create-admin', method: 'POST', action: 'Admin Account Create Start' });
     try {
       await createAdminAccount(formData);
       toast.success(`${formData.role === 'super-admin' ? 'Super Admin' : 'Admin'} account created successfully`);
+      logger.info('CreateAdminAccount', 'handleSubmit', `${formData.role} account created for: ${formData.email}`, { api: '/api/users/create-admin', method: 'POST', status: 201, action: 'Admin Account Create Success' });
       setFormData({
         name: '',
         email: '',
@@ -119,6 +122,7 @@ const CreateAdminAccount = () => {
       navigate('/admin/users');
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to create account');
+      logger.error('CreateAdminAccount', 'handleSubmit', 'Admin account creation FAILED', err, { api: '/api/users/create-admin', method: 'POST', status: err?.response?.status, action: 'Admin Account Create Failure' });
     } finally {
       setLoading(false);
     }

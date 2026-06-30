@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import logger from '../utils/logger';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
@@ -54,7 +55,11 @@ const Profile = () => {
 
   const pwStrength = getPasswordStrength(newPw);
 
-  const handleLogout = () => { logout(); navigate('/login'); };
+  const handleLogout = () => {
+    logger.info('Profile', 'handleLogout', 'User initiated logout from Profile page', { action: 'Manual Logout' });
+    logout();
+    navigate('/login');
+  };
 
   const formatDate = (d) =>
     d ? new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—';
@@ -73,10 +78,13 @@ const Profile = () => {
     e.preventDefault();
     setNameErr('');
     if (!name.trim() || name.length < 2 || name.length > 50) {
-      setNameErr('Name must be 2–50 characters'); return;
+      setNameErr('Name must be 2–50 characters');
+      logger.warn('Profile', 'handleSave', 'Profile save validation failed — name invalid', { action: 'Profile Save Validation Failure' });
+      return;
     }
 
     setSaving(true);
+    logger.info('Profile', 'handleSave', 'Saving profile changes', { api: '/api/auth/profile', method: 'PUT', action: 'Profile Save Start' });
     try {
       const fd = new FormData();
       fd.append('name', name.trim());
@@ -86,23 +94,30 @@ const Profile = () => {
       await updateProfile(fd);
       setAvatarFile(null);
       toast.success('Profile updated successfully');
+      logger.info('Profile', 'handleSave', 'Profile saved successfully', { api: '/api/auth/profile', method: 'PUT', status: 200, action: 'Profile Save Success' });
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to update profile');
+      logger.error('Profile', 'handleSave', 'Profile save FAILED', err, { api: '/api/auth/profile', method: 'PUT', status: err?.response?.status, action: 'Profile Save Failure' });
     } finally {
       setSaving(false);
     }
   };
 
-  // ── Change password ───────────────────────────────────
+  // ── Change password ───────────────────────────────
   const handlePwChange = async (e) => {
     e.preventDefault();
     if (pwStrength.score < 4) {
-      toast.error('Password does not meet strength requirements'); return;
+      toast.error('Password does not meet strength requirements');
+      logger.warn('Profile', 'handlePwChange', 'Password change failed — strength requirement not met', { action: 'Password Change Validation Failure' });
+      return;
     }
     if (newPw !== confirmPw) {
-      toast.error('Passwords do not match'); return;
+      toast.error('Passwords do not match');
+      logger.warn('Profile', 'handlePwChange', 'Password change failed — passwords do not match', { action: 'Password Change Validation Failure' });
+      return;
     }
     setPwSaving(true);
+    logger.info('Profile', 'handlePwChange', 'Changing password', { api: '/api/auth/profile', method: 'PUT', action: 'Password Change Start' });
     try {
       const fd = new FormData();
       fd.append('name', user.name);
@@ -111,8 +126,10 @@ const Profile = () => {
       setNewPw('');
       setConfirmPw('');
       toast.success('Password changed successfully');
+      logger.info('Profile', 'handlePwChange', 'Password changed successfully', { api: '/api/auth/profile', method: 'PUT', status: 200, action: 'Password Change Success' });
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to change password');
+      logger.error('Profile', 'handlePwChange', 'Password change FAILED', err, { api: '/api/auth/profile', method: 'PUT', status: err?.response?.status, action: 'Password Change Failure' });
     } finally {
       setPwSaving(false);
     }

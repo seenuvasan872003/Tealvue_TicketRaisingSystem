@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import API from '../services/authApi';
 import { toast } from 'react-toastify';
+import logger from '../utils/logger';
 
 const Logs = () => {
   const [range, setRange] = useState('daily'); // 'daily', 'weekly', 'monthly'
@@ -26,12 +27,15 @@ const Logs = () => {
   const logsPerPage = 12; // 12 logs per page (between 10 and 15)
 
   const fetchLogs = async (currentRange) => {
+    logger.info('Logs', 'fetchLogs', `Fetching activity logs — range: ${currentRange}`, { api: `/api/logs?range=${currentRange}`, method: 'GET', action: 'Activity Logs Fetch Start' });
     try {
       setLoading(true);
       const { data } = await API.get(`/logs?range=${currentRange}`);
       setLogs(data);
       setCurrentPage(1);
+      logger.info('Logs', 'fetchLogs', `Activity logs loaded — ${data.length || 0} entries`, { api: `/api/logs?range=${currentRange}`, method: 'GET', status: 200, action: 'Activity Logs Fetch Success' });
     } catch (err) {
+      logger.error('Logs', 'fetchLogs', 'Failed to fetch activity logs', err, { api: `/api/logs?range=${currentRange}`, method: 'GET', action: 'Activity Logs Fetch Failure' });
       toast.error('Failed to fetch activity logs');
       console.error(err);
     } finally {

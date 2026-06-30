@@ -18,6 +18,7 @@ import {
 import { toast } from 'react-toastify';
 import API from '../services/authApi';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
+import logger from '../utils/logger';
 
 const COLORS = ['#eac253', '#3b82f6', '#22c55e', '#fb923c'];
 
@@ -34,6 +35,7 @@ const PerformanceDetails = () => {
   const [endDate, setEndDate] = useState('');
 
   const loadData = useCallback(async () => {
+    logger.info('PerformanceDetails', 'loadData', `Loading performance metrics for team: ${id}`, { api: `/api/teams/${id}/performance`, method: 'GET', action: 'Performance Details Load Start' });
     try {
       const params = { page, status: statusFilter };
       if (startDate) params.startDate = startDate;
@@ -42,7 +44,9 @@ const PerformanceDetails = () => {
       const res = await API.get(`/teams/${id}/performance`, { params });
       setData(res.data);
       setPages(res.data.pages || 1);
+      logger.info('PerformanceDetails', 'loadData', `Performance data loaded for team: ${id}`, { api: `/api/teams/${id}/performance`, method: 'GET', status: 200, action: 'Performance Details Load Success' });
     } catch (err) {
+      logger.error('PerformanceDetails', 'loadData', 'Failed to load performance metrics', err, { api: `/api/teams/${id}/performance`, method: 'GET', action: 'Performance Details Load Failure' });
       console.error(err);
       toast.error('Failed to load team performance metrics');
     } finally {

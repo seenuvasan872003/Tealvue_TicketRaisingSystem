@@ -21,6 +21,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, BarChart, Bar
 } from 'recharts';
+import logger from '../utils/logger';
 
 const StatCard = ({ label, value, color, Icon }) => (
   <div className={`stat-card ${color}`}>
@@ -53,6 +54,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const load = async () => {
+      logger.info('Dashboard', 'load', `Loading dashboard data for role: ${user?.role}`, { action: 'Dashboard Data Load Start' });
       try {
         if (user?.role === 'team_admin' || user?.role === 'team_user') {
           const [ticketsRes, teamRes] = await Promise.all([
@@ -127,7 +129,13 @@ const Dashboard = () => {
                 'Active Tickets': m.activeCount,
                 'Resolved Tickets': m.resolvedCount,
               })));
+              logger.info('Dashboard', 'load', `Team members loaded — ${membersList.length} member(s)`, {
+                api: `/api/teams/${myTeam._id}/members`, method: 'GET', action: 'Team Members Load Success',
+              });
             } catch (err) {
+              logger.error('Dashboard', 'load', 'Team members load error', err, {
+                api: `/api/teams/${myTeam._id}/members`, method: 'GET', action: 'Team Members Load Failure',
+              });
               console.error('[Dashboard] Team members load error:', err);
             }
           }
@@ -156,6 +164,9 @@ const Dashboard = () => {
           }
         }
       } catch (e) {
+        logger.error('Dashboard', 'load', 'Dashboard data load failed', e, {
+          action: 'Dashboard Data Load Failure',
+        });
         console.error('[Dashboard] load error:', e);
       } finally {
         setLoading(false);
@@ -401,7 +412,7 @@ const Dashboard = () => {
       {/* Recent Tickets Table */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600 }}>Recent Tickets</h2>
-        <Link to={user?.role === 'team_admin' ? '/team-admin/tickets' : user?.role === 'team_user' ? '/team-user/tickets' : '/tickets'} style={{ fontSize: 12, color: 'var(--color-teal)', display: 'flex', alignItems: 'center', gap: 4 }}>View all</Link>
+        <Link to={user?.role === 'super-admin' ? '/super-admin/tickets' : user?.role === 'admin' ? '/admin/tickets' : user?.role === 'team_admin' ? '/admin/tickets' : user?.role === 'team_user' ? '/team-user/tickets' : '/tickets'} style={{ fontSize: 12, color: 'var(--color-teal)', display: 'flex', alignItems: 'center', gap: 4 }}>View all</Link>
       </div>
 
       {recent.length === 0 ? (

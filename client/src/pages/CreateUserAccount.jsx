@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
 import API from '../services/authApi';
+import logger from '../utils/logger';
 
 const CreateUserAccount = () => {
   const navigate = useNavigate();
@@ -105,6 +106,7 @@ const CreateUserAccount = () => {
     }
 
     setLoading(true);
+    logger.info('CreateUserAccount', 'handleSubmit', `Creating user account for: ${formData.email}`, { api: '/api/users/create-user', method: 'POST', action: 'User Account Create Start' });
     try {
       await API.post('/users/create-user', {
         name: formData.name,
@@ -113,9 +115,11 @@ const CreateUserAccount = () => {
       });
 
       toast.success('User account created successfully');
+      logger.info('CreateUserAccount', 'handleSubmit', `User account created for: ${formData.email}`, { api: '/api/users/create-user', method: 'POST', status: 201, action: 'User Account Create Success' });
       navigate('/super-admin/users');
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to create user account');
+      logger.error('CreateUserAccount', 'handleSubmit', 'User account creation FAILED', err, { api: '/api/users/create-user', method: 'POST', status: err?.response?.status, action: 'User Account Create Failure' });
     } finally {
       setLoading(false);
     }

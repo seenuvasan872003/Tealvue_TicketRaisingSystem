@@ -26,6 +26,7 @@ import {
 import { toast } from 'react-toastify';
 import API from '../services/authApi';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
+import logger from '../utils/logger';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
@@ -68,6 +69,7 @@ const TicketApproval = () => {
 
   const loadTickets = async () => {
     setLoading(true);
+    logger.info('TicketApproval', 'loadTickets', `Loading moderation tickets — tab: ${activeTab} | page: ${page}`, { api: '/api/tickets/all', method: 'GET', action: 'Ticket Approval Load Start' });
     try {
       const params = {
         page,
@@ -89,7 +91,9 @@ const TicketApproval = () => {
         setStats(data.stats);
       }
       setSelectedIds([]);
+      logger.info('TicketApproval', 'loadTickets', `Moderation tickets loaded — ${(data.tickets || []).length} of ${data.total || 0}`, { api: '/api/tickets/all', method: 'GET', status: 200, action: 'Ticket Approval Load Success' });
     } catch (err) {
+      logger.error('TicketApproval', 'loadTickets', 'Failed to load moderation tickets', err, { api: '/api/tickets/all', method: 'GET', action: 'Ticket Approval Load Failure' });
       console.error(err);
       toast.error('Failed to load tickets list');
     } finally {

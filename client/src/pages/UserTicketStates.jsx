@@ -8,6 +8,7 @@ import {
   Clock, Ticket, ChevronDown, ChevronUp, AlertCircle
 } from 'lucide-react';
 import TicketTimeline from '../components/TicketTimeline';
+import logger from '../utils/logger';
 
 const UserTicketStates = () => {
   const [tickets, setTickets] = useState([]);
@@ -20,11 +21,14 @@ const UserTicketStates = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    logger.info('UserTicketStates', 'load', `Loading user tickets with timelines — page: ${page}`, { api: '/api/tickets', method: 'GET', action: 'User Ticket States Load Start' });
     try {
       const { data } = await getTickets({ page, limit: LIMIT });
       setTickets(data.tickets || []);
       setPages(data.pages || 1);
+      logger.info('UserTicketStates', 'load', `User tickets loaded — ${(data.tickets || []).length} tickets`, { api: '/api/tickets', method: 'GET', status: 200, action: 'User Ticket States Load Success' });
     } catch (e) {
+      logger.error('UserTicketStates', 'load', 'Failed to load user tickets with timelines', e, { api: '/api/tickets', method: 'GET', action: 'User Ticket States Load Failure' });
       console.error('[UserTicketStates] load error:', e);
     } finally {
       setLoading(false);

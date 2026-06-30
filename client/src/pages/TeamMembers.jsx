@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getMyTeam, getTeamMembers, addTeamMember, deleteTeamMember } from '../services/ticketApi';
 import { toast } from 'react-toastify';
 import { Plus, Trash2, X, Users, User, ShieldAlert, Mail } from 'lucide-react';
+import logger from '../utils/logger';
 
 const TeamMembers = () => {
   const [team, setTeam] = useState(null);
@@ -16,6 +17,7 @@ const TeamMembers = () => {
   const [errors, setErrors] = useState({});
 
   const loadTeamAndMembers = async () => {
+    logger.info('TeamMembers', 'loadTeamAndMembers', 'Loading team and members data', { action: 'Team Members Load Start' });
     try {
       setLoading(true);
       const teamRes = await getMyTeam();
@@ -23,7 +25,13 @@ const TeamMembers = () => {
 
       const membersRes = await getTeamMembers(teamRes.data._id);
       setMembers(membersRes.data || []);
+      logger.info('TeamMembers', 'loadTeamAndMembers', `Team members loaded — team: ${teamRes.data.name} | ${(membersRes.data || []).length} member(s)`, {
+        api: `/api/teams/${teamRes.data._id}/members`, method: 'GET', action: 'Team Members Load Success',
+      });
     } catch (err) {
+      logger.error('TeamMembers', 'loadTeamAndMembers', 'Failed to load team members', err, {
+        api: '/api/teams/mine', method: 'GET', action: 'Team Members Load Failure',
+      });
       console.error(err);
       toast.error('Failed to load team members');
     } finally {
@@ -64,9 +72,15 @@ const TeamMembers = () => {
     try {
       await addTeamMember(team._id, { name, email, password });
       toast.success('Team agent created and added successfully!');
+      logger.info('TeamMembers', 'handleAddMember', `Team agent added — email: ${email}`, {
+        api: `/api/teams/${team._id}/members`, method: 'POST', status: 201, action: 'Team Member Add Success',
+      });
       setShowModal(false);
       loadTeamAndMembers();
     } catch (err) {
+      logger.error('TeamMembers', 'handleAddMember', 'Failed to add team member', err, {
+        api: `/api/teams/${team._id}/members`, method: 'POST', status: err.response?.status, action: 'Team Member Add Failure',
+      });
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to add team member');
     }
@@ -74,11 +88,18 @@ const TeamMembers = () => {
 
   const handleDeleteMember = async (memberId) => {
     if (!window.confirm('Are you sure you want to remove this member from the team?')) return;
+    logger.info('TeamMembers', 'handleDeleteMember', `Removing member: ${memberId}`, { action: 'Team Member Delete Attempt' });
     try {
       await deleteTeamMember(team._id, memberId);
       toast.success('Member removed from team successfully');
+      logger.info('TeamMembers', 'handleDeleteMember', 'Team member removed successfully', {
+        api: `/api/teams/${team._id}/members/${memberId}`, method: 'DELETE', action: 'Team Member Delete Success',
+      });
       loadTeamAndMembers();
     } catch (err) {
+      logger.error('TeamMembers', 'handleDeleteMember', 'Failed to remove member', err, {
+        api: `/api/teams/${team._id}/members/${memberId}`, method: 'DELETE', status: err.response?.status, action: 'Team Member Delete Failure',
+      });
       console.error(err);
       toast.error('Failed to remove member');
     }
@@ -189,7 +210,7 @@ const TeamMembers = () => {
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleAddMember} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
+            <form onSubmit={handleAddMember} style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '0 28px 28px 28px' }}>
               <div className="form-group">
                 <label>Agent Name *</label>
                 <input

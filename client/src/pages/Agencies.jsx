@@ -13,6 +13,7 @@ import {
   getCategories,
 } from '../services/ticketApi';
 import { toast } from 'react-toastify';
+import logger from '../utils/logger';
 
 const Agencies = () => {
   const [agencies, setAgencies] = useState([]);
@@ -35,11 +36,14 @@ const Agencies = () => {
   const [customCategory, setCustomCategory] = useState('');
 
   const fetchAgenciesData = async () => {
+    logger.info('Agencies', 'fetchAgenciesData', 'Loading agencies dashboard data', { api: '/api/agencies', method: 'GET', action: 'Agencies Load Start' });
     try {
       setLoading(true);
       const { data } = await getAgenciesDashboard();
       setAgencies(data.agencies || data);
+      logger.info('Agencies', 'fetchAgenciesData', `Agencies loaded — ${(data.agencies || data || []).length} agencies`, { api: '/api/agencies', method: 'GET', status: 200, action: 'Agencies Load Success' });
     } catch (err) {
+      logger.error('Agencies', 'fetchAgenciesData', 'Failed to load agencies', err, { api: '/api/agencies', method: 'GET', action: 'Agencies Load Failure' });
       console.error(err);
       toast.error('Failed to load agencies');
     } finally {

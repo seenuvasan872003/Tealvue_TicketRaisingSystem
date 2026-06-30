@@ -14,6 +14,7 @@ import { getAgenciesDashboard, getTickets } from '../services/ticketApi';
 import API from '../services/authApi';
 import { toast } from 'react-toastify';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
+import logger from '../utils/logger';
 
 const AgencyDashboard = () => {
   const navigate = useNavigate();
@@ -27,11 +28,14 @@ const AgencyDashboard = () => {
   const [modalLoading, setModalLoading] = useState(false);
 
   const fetchDashboardData = async () => {
+    logger.info('AgencyDashboard', 'fetchDashboardData', 'Loading agency dashboard statistics', { api: '/api/agencies', method: 'GET', action: 'Agency Dashboard Load Start' });
     try {
       setLoading(true);
       const { data } = await getAgenciesDashboard();
       setData(data);
+      logger.info('AgencyDashboard', 'fetchDashboardData', `Agency dashboard loaded — ${(data.agencies || []).length} agencies`, { api: '/api/agencies', method: 'GET', status: 200, action: 'Agency Dashboard Load Success' });
     } catch (err) {
+      logger.error('AgencyDashboard', 'fetchDashboardData', 'Failed to load agency dashboard stats', err, { api: '/api/agencies', method: 'GET', action: 'Agency Dashboard Load Failure' });
       toast.error('Failed to load agency dashboard stats');
       console.error(err);
     } finally {

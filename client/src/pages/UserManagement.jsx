@@ -12,6 +12,7 @@ import { getAllUsers, updateUserStatus, getUserStats } from '../services/userApi
 import { useAuth } from '../context/AuthContext';
 import { ShieldCheck, User, Search, RefreshCw, XCircle, CheckCircle, Crown, Eye, Users, ShieldAlert, Check } from 'lucide-react';
 import { toast } from 'react-toastify';
+import logger from '../utils/logger';
 
 const UserManagement = () => {
   const { user: currentUser, isSuperAdmin } = useAuth();
@@ -28,17 +29,21 @@ const UserManagement = () => {
   const [stats, setStats]       = useState({ totalUsers: 0, activeUsers: 0, suspendedUsers: 0, pendingApprovals: 0 });
 
   const loadStats = async () => {
+    logger.info('UserManagement', 'loadStats', 'Loading user statistics', { api: '/api/users/stats', method: 'GET', action: 'User Stats Load Start' });
     try {
       const { data } = await getUserStats();
       if (data) {
         setStats(data);
+        logger.info('UserManagement', 'loadStats', `User stats loaded — total: ${data.totalUsers}`, { api: '/api/users/stats', method: 'GET', status: 200, action: 'User Stats Load Success' });
       }
     } catch (e) {
+      logger.error('UserManagement', 'loadStats', 'Failed to load user stats', e, { api: '/api/users/stats', method: 'GET', action: 'User Stats Load Failure' });
       console.error('[UserManagement] load stats error:', e);
     }
   };
 
   const loadUsers = async () => {
+    logger.info('UserManagement', 'loadUsers', `Loading users — filter: ${filter} | page: ${page}`, { api: '/api/users', method: 'GET', action: 'Users Load Start' });
     try {
       setLoading(true);
       const params = {
@@ -59,7 +64,9 @@ const UserManagement = () => {
       setUsers(data.users || []);
       setTotal(data.total || 0);
       setPages(data.pages || 1);
+      logger.info('UserManagement', 'loadUsers', `Users loaded — ${(data.users || []).length} of ${data.total || 0} total`, { api: '/api/users', method: 'GET', status: 200, action: 'Users Load Success' });
     } catch (e) {
+      logger.error('UserManagement', 'loadUsers', 'Failed to load users', e, { api: '/api/users', method: 'GET', action: 'Users Load Failure' });
       console.error(e);
       toast.error('Failed to load users');
       setUsers([]);

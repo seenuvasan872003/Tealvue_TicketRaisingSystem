@@ -19,6 +19,7 @@ import {
   getCategories,
 } from '../services/ticketApi';
 import { toast } from 'react-toastify';
+import logger from '../utils/logger';
 
 const Teams = () => {
   const [teams, setTeams] = useState([]);
@@ -45,11 +46,14 @@ const Teams = () => {
   const [showAdminPassword, setShowAdminPassword] = useState(false);
 
   const fetchTeamsData = async () => {
+    logger.info('Teams', 'fetchTeamsData', 'Loading teams dashboard data', { api: '/api/teams/dashboard', method: 'GET', action: 'Teams Load Start' });
     try {
       setLoading(true);
       const { data } = await getTeamsDashboard();
       setTeams(data.teams || data);
+      logger.info('Teams', 'fetchTeamsData', `Teams loaded — ${(data.teams || data || []).length} teams`, { api: '/api/teams/dashboard', method: 'GET', status: 200, action: 'Teams Load Success' });
     } catch (err) {
+      logger.error('Teams', 'fetchTeamsData', 'Failed to load teams', err, { api: '/api/teams/dashboard', method: 'GET', action: 'Teams Load Failure' });
       console.error(err);
       toast.error('Failed to load teams');
     } finally {
@@ -183,6 +187,7 @@ const Teams = () => {
         const payload = { name, description, categories, isActive };
         await updateTeam(editingTeam.teamId, payload);
         toast.success('Team updated successfully');
+        logger.info('Teams', 'handleSave', `Team updated: ${name}`, { api: `/api/teams/${editingTeam.teamId}`, method: 'PUT', status: 200, action: 'Team Update Success' });
       } else {
         const payload = {
           name,
@@ -194,21 +199,26 @@ const Teams = () => {
         };
         await createTeam(payload);
         toast.success('Team and Team Admin account created successfully');
+        logger.info('Teams', 'handleSave', `Team created: ${name}`, { api: '/api/teams', method: 'POST', status: 201, action: 'Team Create Success' });
       }
       setShowModal(false);
       fetchTeamsData();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error saving team');
+      logger.error('Teams', 'handleSave', 'Team save FAILED', err, { api: '/api/teams', method: editingTeam ? 'PUT' : 'POST', status: err.response?.status, action: 'Team Save Failure' });
     }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this team? All unresolved tickets must be completed first.')) return;
+    logger.info('Teams', 'handleDelete', `Deleting team: ${id}`, { api: `/api/teams/${id}`, method: 'DELETE', action: 'Team Delete Attempt' });
     try {
       await deleteTeam(id);
       toast.success('Team deleted successfully');
+      logger.info('Teams', 'handleDelete', 'Team deleted successfully', { api: `/api/teams/${id}`, method: 'DELETE', status: 200, action: 'Team Delete Success' });
       fetchTeamsData();
     } catch (err) {
+      logger.error('Teams', 'handleDelete', 'Failed to delete team', err, { api: `/api/teams/${id}`, method: 'DELETE', status: err.response?.status, action: 'Team Delete Failure' });
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to delete team');
     }

@@ -10,6 +10,7 @@ import {
   Users,
   Percent,
 } from 'lucide-react';
+import logger from '../utils/logger';
 
 const TeamPerformance = () => {
   const [team, setTeam] = useState(null);
@@ -17,6 +18,7 @@ const TeamPerformance = () => {
   const [loading, setLoading] = useState(true);
 
   const loadPerformanceData = async () => {
+    logger.info('TeamPerformance', 'loadPerformanceData', 'Loading team performance data', { action: 'Team Performance Load Start' });
     try {
       setLoading(true);
       const teamRes = await getMyTeam();
@@ -24,7 +26,13 @@ const TeamPerformance = () => {
 
       const perfRes = await getTeamPerformance(teamRes.data._id);
       setPerformance(perfRes.data);
+      logger.info('TeamPerformance', 'loadPerformanceData', `Performance data loaded for team: ${teamRes.data.name}`, {
+        api: `/api/teams/${teamRes.data._id}/performance`, method: 'GET', action: 'Team Performance Load Success',
+      });
     } catch (err) {
+      logger.error('TeamPerformance', 'loadPerformanceData', 'Failed to load team performance analytics', err, {
+        api: '/api/teams/mine', method: 'GET', action: 'Team Performance Load Failure',
+      });
       console.error(err);
       toast.error('Failed to load team performance analytics');
     } finally {
@@ -60,7 +68,7 @@ const TeamPerformance = () => {
 
       {/* Summary Cards */}
       <div className="stat-grid" style={{ marginBottom: 28 }}>
-        <div className="stat-card teal">
+        <div className="stat-card teal" style={{ padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div className="stat-label">Total Allocated</div>
@@ -69,7 +77,7 @@ const TeamPerformance = () => {
             <TrendingUp size={24} style={{ opacity: 0.5 }} />
           </div>
         </div>
-        <div className="stat-card green">
+        <div className="stat-card green" style={{ padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div className="stat-label">Completed Tickets</div>
@@ -78,7 +86,7 @@ const TeamPerformance = () => {
             <CheckCircle2 size={24} style={{ opacity: 0.5 }} />
           </div>
         </div>
-        <div className="stat-card yellow">
+        <div className="stat-card yellow" style={{ padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div className="stat-label">In Progress</div>
@@ -87,7 +95,7 @@ const TeamPerformance = () => {
             <Clock size={24} style={{ opacity: 0.5 }} />
           </div>
         </div>
-        <div className="stat-card blue">
+        <div className="stat-card blue" style={{ padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div className="stat-label">Completion Rate</div>
@@ -99,7 +107,7 @@ const TeamPerformance = () => {
       </div>
 
       {/* Top Section: Top Agent & Weekly Trend */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, marginBottom: 28 }}>
         {/* Top Agent Spotlight */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 24, background: 'linear-gradient(135deg, #161b22, #0d1117)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -129,7 +137,7 @@ const TeamPerformance = () => {
         </div>
 
         {/* Weekly Productivity Trend */}
-        <div className="card">
+        <div className="card" style={{ padding: 24 }}>
           <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600, color: '#fff' }}>Weekly Productivity Trend</h3>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', height: 120, padding: '10px 0 0 0' }}>
             {weeklyData.map((w, idx) => (
@@ -150,7 +158,7 @@ const TeamPerformance = () => {
       </div>
 
       {/* Member Rankings & Workloads Table */}
-      <div className="card">
+      <div className="card" style={{ padding: 28 }}>
         <h3 style={{ margin: '0 0 18px 0', fontSize: 16, fontWeight: 600, color: '#fff' }}>Agent Workload & Performance Rankings</h3>
         <div className="table-wrap">
           <table>

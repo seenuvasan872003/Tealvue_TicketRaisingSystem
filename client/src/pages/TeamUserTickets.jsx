@@ -5,6 +5,7 @@ import { getTickets, closeTicket, getMyTeam } from '../services/ticketApi';
 import { toast } from 'react-toastify';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import { CheckCircle, Clock, Calendar, ClipboardList, Send } from 'lucide-react';
+import logger from '../utils/logger';
 
 const TeamUserTickets = () => {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ const TeamUserTickets = () => {
   }, [location.pathname]);
 
   const loadAssignedTickets = async () => {
+    logger.info('TeamUserTickets', 'loadAssignedTickets', `Loading assigned tickets — page: ${page}`, { api: '/api/tickets', method: 'GET', action: 'Assigned Tickets Load Start' });
     try {
       setLoading(true);
 
@@ -44,6 +46,7 @@ const TeamUserTickets = () => {
           currentTeam = teamRes.data;
           setTeam(currentTeam);
         } catch (teamErr) {
+          logger.error('TeamUserTickets', 'loadAssignedTickets', 'Failed to load team details for agent', teamErr, { api: '/api/teams/mine', method: 'GET', action: 'Team Load Failure' });
           console.error('Failed to load team details for agent', teamErr);
         }
       }
@@ -58,7 +61,9 @@ const TeamUserTickets = () => {
       setTickets(data.tickets || []);
       setTotalPages(data.pages || 1);
       setTotalCount(data.total || 0);
+      logger.info('TeamUserTickets', 'loadAssignedTickets', `Assigned tickets loaded — ${(data.tickets || []).length} tickets`, { api: '/api/tickets', method: 'GET', status: 200, action: 'Assigned Tickets Load Success' });
     } catch (err) {
+      logger.error('TeamUserTickets', 'loadAssignedTickets', 'Failed to load assigned tickets', err, { api: '/api/tickets', method: 'GET', action: 'Assigned Tickets Load Failure' });
       console.error(err);
       toast.error('Failed to load assigned tickets');
     } finally {

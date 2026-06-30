@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { Paperclip } from 'lucide-react';
 import { createTicket, getCategories } from '../services/ticketApi';
 import { toast } from 'react-toastify';
+import logger from '../utils/logger';
 
 const CreateTicket = () => {
   const navigate = useNavigate();
@@ -27,12 +28,15 @@ const CreateTicket = () => {
 
   useEffect(() => {
     const fetchCats = async () => {
+      logger.info('CreateTicket', 'fetchCats', 'Fetching ticket categories', { api: '/api/teams/categories', method: 'GET', action: 'Categories Load Start' });
       try {
         const { data } = await getCategories();
         if (data && data.length > 0) {
           setCategories(['No Category', ...data]);
+          logger.info('CreateTicket', 'fetchCats', `Categories loaded — ${data.length} available`, { api: '/api/teams/categories', method: 'GET', action: 'Categories Load Success' });
         }
       } catch (err) {
+        logger.error('CreateTicket', 'fetchCats', 'Failed to load categories', err, { api: '/api/teams/categories', method: 'GET', action: 'Categories Load Failure' });
         console.error('Failed to load categories', err);
       }
     };
@@ -97,8 +101,12 @@ const CreateTicket = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {
+      logger.warn('CreateTicket', 'handleSubmit', 'Form validation failed — ticket not submitted', { action: 'Ticket Form Validation Failure' });
+      return;
+    }
     setLoading(true);
+    logger.info('CreateTicket', 'handleSubmit', `Submitting ticket: "${form.title}" | category: ${form.category}`, { api: '/api/tickets', method: 'POST', action: 'Ticket Create Start' });
     try {
       const fd = new FormData();
       fd.append('title', form.title);
@@ -108,9 +116,11 @@ const CreateTicket = () => {
 
       const { data } = await createTicket(fd);
       toast.success('Ticket created successfully!');
+      logger.info('CreateTicket', 'handleSubmit', `Ticket created successfully \u2014 ID: ${data._id}`, { api: '/api/tickets', method: 'POST', status: 201, action: 'Ticket Create Success' });
       navigate(`/tickets/${data._id}`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create ticket');
+      logger.error('CreateTicket', 'handleSubmit', 'Ticket creation FAILED', err, { api: '/api/tickets', method: 'POST', status: err.response?.status, action: 'Ticket Create Failure' });
     } finally {
       setLoading(false);
     }

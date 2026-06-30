@@ -13,6 +13,7 @@ import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import API from '../services/authApi';
+import logger from '../utils/logger';
 
 const AllTickets = () => {
   const navigate = useNavigate();
@@ -31,16 +32,20 @@ const AllTickets = () => {
   const LIMIT = 12;
 
   const loadTeams = async () => {
+    logger.info('AllTickets', 'loadTeams', 'Loading teams list', { api: '/api/teams', method: 'GET', action: 'Teams Load Start' });
     try {
       const { data } = await getTeams();
       setTeams(data.teams || data || []);
+      logger.info('AllTickets', 'loadTeams', `Teams loaded — ${(data.teams || data || []).length} teams`, { api: '/api/teams', method: 'GET', status: 200, action: 'Teams Load Success' });
     } catch (e) {
+      logger.error('AllTickets', 'loadTeams', 'Failed to load teams', e, { api: '/api/teams', method: 'GET', action: 'Teams Load Failure' });
       console.error('[AllTickets] load teams error:', e);
     }
   };
 
   const load = useCallback(async () => {
     setLoading(true);
+    logger.info('AllTickets', 'load', `Loading all tickets — page: ${page}`, { api: '/api/tickets', method: 'GET', action: 'All Tickets Load Start' });
     try {
       const params = { page, limit: LIMIT };
       if (filters.status)   params.status   = filters.status;
@@ -61,7 +66,9 @@ const AllTickets = () => {
       setTickets(fetched);
       setTotal(data.total || 0);
       setPages(data.pages || 1);
+      logger.info('AllTickets', 'load', `Tickets loaded — ${fetched.length} of ${data.total} total`, { api: '/api/tickets', method: 'GET', status: 200, action: 'All Tickets Load Success' });
     } catch (e) {
+      logger.error('AllTickets', 'load', 'Failed to load all tickets', e, { api: '/api/tickets', method: 'GET', action: 'All Tickets Load Failure' });
       console.error('[AllTickets] load error:', e);
       setTickets([]);
     } finally {

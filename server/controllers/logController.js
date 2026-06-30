@@ -1,4 +1,5 @@
 const ActivityLog = require('../models/ActivityLog');
+const ClientLog = require('../models/ClientLog');
 
 // @route   GET /api/logs
 // @access  Admin + Super Admin
@@ -38,4 +39,35 @@ const getActivityLogs = async (req, res) => {
   }
 };
 
-module.exports = { getActivityLogs };
+const saveClientLog = async (req, res) => {
+  try {
+    const logData = { ...req.body };
+    
+    // Attach userId if request is authenticated
+    if (req.user && req.user._id) {
+      logData.userId = req.user._id;
+    }
+
+    const log = await ClientLog.create(logData);
+    res.status(201).json({ success: true, logId: log._id });
+  } catch (err) {
+    console.error('[ClientLog Server Error] Failed to write client log:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// @route   GET /api/logs/client
+// @access  Admin + Super Admin
+const getClientLogs = async (req, res) => {
+  try {
+    const logs = await ClientLog.find()
+      .populate('userId', 'name email role')
+      .sort({ createdAt: -1 });
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { getActivityLogs, saveClientLog, getClientLogs };
+

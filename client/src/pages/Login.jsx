@@ -13,6 +13,7 @@ import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import tealvueLogo from '../assets/tealvue1.png';
+import logger from '../utils/logger';
 
 const Login = () => {
   const { login } = useAuth();
@@ -27,11 +28,14 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    logger.info('Login', 'handleSubmit', `Login attempt for: ${form.email}`, { action: 'Login Form Submit' });
     try {
       // [API] POST /api/auth/login
       const user = await login(form.email, form.password);
       toast.success(`Welcome back, ${user.name}!`);
-      
+      logger.info('Login', 'handleSubmit', `Login SUCCESS → navigating for role: ${user.role}`, {
+        api: '/api/auth/login', method: 'POST', status: 200, action: 'Login Success + Navigate',
+      });
       switch (user.role) {
         case 'super-admin':
           navigate('/super-admin/dashboard');
@@ -53,6 +57,11 @@ const Login = () => {
       const msg = err.response?.data?.message || 'Login failed';
       setError(msg);
       toast.error(msg);
+      logger.error('Login', 'handleSubmit', `Login FAILED — ${msg}`, err, {
+        api: '/api/auth/login', method: 'POST',
+        status: err.response?.status,
+        action: 'Login Failure',
+      });
     } finally {
       setLoading(false);
     }

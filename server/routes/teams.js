@@ -36,8 +36,14 @@ const requireAdminSuperOrTeamAdmin = async (req, res, next) => {
   return res.status(403).json({ message: 'Access denied — admin or own team admin only' });
 };
 
-// GET all teams - Admin + Super Admin
-router.get('/', protect, requireAdmin, getTeams);
+// GET all teams - Admin + Super Admin + Team Admin + Team User (for ticket reallocation dropdown)
+const requireStaff = (req, res, next) => {
+  if (req.user && ['admin', 'super-admin', 'team_admin', 'team_user'].includes(req.user.role)) {
+    return next();
+  }
+  return res.status(403).json({ message: 'Access denied — staff only' });
+};
+router.get('/', protect, requireStaff, getTeams);
 
 // GET stats dashboard summary - Admin + Super Admin
 router.get('/dashboard', protect, requireAdmin, getTeamsDashboard);

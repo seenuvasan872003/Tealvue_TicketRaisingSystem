@@ -10,6 +10,7 @@ import {
 import { toast } from 'react-toastify';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import TicketTimeline from '../components/TicketTimeline';
+import logger from '../utils/logger';
 
 const ACTION_ICONS = {
   TICKET_CREATED: { Icon: Plus, color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
@@ -88,13 +89,16 @@ const TicketLogs = () => {
 
   // 1. Fetch Users on mount
   const loadUsers = async () => {
+    logger.info('TicketLogs', 'loadUsers', 'Loading user directory for ticket log audit', { api: '/api/users', method: 'GET', action: 'Ticket Logs Users Load Start' });
     try {
       setLoading(true);
       const { data } = await getAllUsers({ role: 'user', limit: 100 });
       const rawUsers = Array.isArray(data) ? data : (data.users || []);
       // Client-side filter to guarantee only 'user' role is displayed
       setUsers(rawUsers.filter(u => u.role === 'user'));
+      logger.info('TicketLogs', 'loadUsers', `Users loaded for audit — ${rawUsers.filter(u => u.role === 'user').length} users`, { api: '/api/users', method: 'GET', status: 200, action: 'Ticket Logs Users Load Success' });
     } catch (err) {
+      logger.error('TicketLogs', 'loadUsers', 'Failed to load user directory', err, { api: '/api/users', method: 'GET', action: 'Ticket Logs Users Load Failure' });
       toast.error('Failed to load user directory.');
     } finally {
       setLoading(false);
@@ -107,6 +111,7 @@ const TicketLogs = () => {
 
   // 2. Fetch User's Tickets when user is selected
   const handleSelectUser = async (userObj) => {
+    logger.info('TicketLogs', 'handleSelectUser', `Loading tickets for user: ${userObj.email}`, { api: `/api/users/${userObj._id}/activity`, method: 'GET', action: 'Ticket Logs User Ticket Select' });
     try {
       setLoading(true);
       setSelectedUser(userObj);
@@ -114,7 +119,9 @@ const TicketLogs = () => {
       setTickets(data.ticketsRaised || []);
       setViewState('tickets');
       setSearch('');
+      logger.info('TicketLogs', 'handleSelectUser', `Tickets loaded for ${userObj.email} — ${(data.ticketsRaised || []).length} tickets`, { api: `/api/users/${userObj._id}/activity`, method: 'GET', status: 200, action: 'Ticket Logs User Tickets Loaded' });
     } catch (err) {
+      logger.error('TicketLogs', 'handleSelectUser', 'Failed to load tickets for selected user', err, { api: `/api/users/${userObj._id}/activity`, method: 'GET', action: 'Ticket Logs User Ticket Select Failure' });
       toast.error('Failed to load tickets for selected user.');
     } finally {
       setLoading(false);

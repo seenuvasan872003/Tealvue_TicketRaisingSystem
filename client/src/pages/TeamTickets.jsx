@@ -4,6 +4,7 @@ import { getTickets, getMyTeam, getTeamMembers, assignTicketMember } from '../se
 import { toast } from 'react-toastify';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import { User, ClipboardList, Send, Calendar } from 'lucide-react';
+import logger from '../utils/logger';
 
 const TeamTickets = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const TeamTickets = () => {
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'transferred'
 
   const loadTeamData = async () => {
+    logger.info('TeamTickets', 'loadTeamData', 'Loading team data and tickets', { action: 'Team Tickets Load Start' });
     try {
       setLoading(true);
       // 1. Get own team details
@@ -30,7 +32,13 @@ const TeamTickets = () => {
 
       // 3. Get tickets
       await loadTickets(teamRes.data._id, page, search, statusFilter);
+      logger.info('TeamTickets', 'loadTeamData', `Team data loaded — team: ${teamRes.data.name}`, {
+        api: '/api/teams/mine', method: 'GET', action: 'Team Tickets Load Success',
+      });
     } catch (err) {
+      logger.error('TeamTickets', 'loadTeamData', 'Failed to load team tickets or members', err, {
+        api: '/api/teams/mine', method: 'GET', action: 'Team Tickets Load Failure',
+      });
       console.error(err);
       toast.error('Failed to load team tickets or members');
     } finally {
@@ -39,6 +47,7 @@ const TeamTickets = () => {
   };
 
   const loadTickets = async (teamId, pageNum, searchTerm, status) => {
+    logger.info('TeamTickets', 'loadTickets', `Fetching team tickets — page: ${pageNum}`, { api: '/api/tickets', method: 'GET', action: 'Team Tickets Fetch Start' });
     try {
       const params = {
         page: pageNum,
@@ -50,7 +59,11 @@ const TeamTickets = () => {
       const { data } = await getTickets(params);
       setTickets(data.tickets || []);
       setTotalPages(data.pages || 1);
+      logger.info('TeamTickets', 'loadTickets', `Tickets fetched — ${(data.tickets || []).length} tickets on page ${pageNum}`, {
+        api: '/api/tickets', method: 'GET', status: 200, action: 'Team Tickets Fetch Success',
+      });
     } catch (err) {
+      logger.error('TeamTickets', 'loadTickets', 'Failed to load team tickets', err, { api: '/api/tickets', method: 'GET', action: 'Team Tickets Fetch Failure' });
       console.error(err);
       toast.error('Failed to load tickets');
     }

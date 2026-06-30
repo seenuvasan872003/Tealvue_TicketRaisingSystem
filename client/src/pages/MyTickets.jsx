@@ -11,6 +11,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, X, Ticket } from 'lucide-react';
 import { getTickets } from '../services/ticketApi';
+import logger from '../utils/logger';
 
 const MyTickets = () => {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const MyTickets = () => {
   // [API] GET /api/tickets — load page with filters
   const load = useCallback(async () => {
     setLoading(true);
+    logger.info('MyTickets', 'load', `Fetching tickets — page: ${page}`, { api: '/api/tickets', method: 'GET', action: 'Tickets Load Start' });
     try {
       const params = { page, limit: LIMIT };
       if (filters.status)   params.status   = filters.status;
@@ -38,7 +40,9 @@ const MyTickets = () => {
       setTickets(data.tickets);
       setTotal(data.total);
       setPages(data.pages);
+      logger.info('MyTickets', 'load', `Tickets loaded — ${data.tickets.length} of ${data.total} total`, { api: '/api/tickets', method: 'GET', status: 200, action: 'Tickets Load Success' });
     } catch (e) {
+      logger.error('MyTickets', 'load', 'Failed to load tickets', e, { api: '/api/tickets', method: 'GET', action: 'Tickets Load Failure' });
       console.error('[MyTickets] load error:', e);
     } finally {
       setLoading(false);

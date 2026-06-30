@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff } from 'lucide-react';
 import { notificationApi } from '../services/notificationApi';
+import logger from '../utils/logger';
 
 const relativeTime = (date) => {
   const diff = Date.now() - new Date(date).getTime();
@@ -59,17 +60,20 @@ const NotificationBell = () => {
       const res = await notificationApi.getUnreadCount();
       setUnreadCount(res.data.count);
     } catch (err) {
+      logger.error('NotificationBell', 'fetchUnreadCount', 'Error fetching unread count', err, { api: '/api/notifications/unread-count', method: 'GET', action: 'Unread Count Fetch Failure' });
       console.error('Error fetching unread count:', err);
     }
   };
 
   const fetchNotifications = async () => {
+    logger.info('NotificationBell', 'fetchNotifications', 'Fetching notifications dropdown', { api: '/api/notifications', method: 'GET', action: 'Notification Bell Open' });
     try {
       setLoading(true);
       const res = await notificationApi.getAll(1);
       setNotifications(res.data.notifications || []);
       setUnreadCount(res.data.unreadCount || 0);
     } catch (err) {
+      logger.error('NotificationBell', 'fetchNotifications', 'Error fetching notifications', err, { api: '/api/notifications', method: 'GET', action: 'Notifications Fetch Failure' });
       console.error('Error fetching notifications:', err);
     } finally {
       setLoading(false);
@@ -86,11 +90,13 @@ const NotificationBell = () => {
 
   const handleMarkAllRead = async (e) => {
     e.stopPropagation();
+    logger.info('NotificationBell', 'handleMarkAllRead', 'Marking all notifications as read', { api: '/api/notifications/mark-all-read', method: 'PUT', action: 'Mark All Read' });
     try {
       await notificationApi.markAllRead();
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (err) {
+      logger.error('NotificationBell', 'handleMarkAllRead', 'Error marking all notifications read', err, { api: '/api/notifications/mark-all-read', method: 'PUT', action: 'Mark All Read Failure' });
       console.error('Error marking all read:', err);
     }
   };
@@ -103,12 +109,15 @@ const NotificationBell = () => {
           prev.map(n => n._id === notif._id ? { ...n, isRead: true } : n)
         );
         setUnreadCount(c => Math.max(0, c - 1));
+        logger.info('NotificationBell', 'handleItemClick', `Notification marked as read: ${notif._id}`, { api: `/api/notifications/${notif._id}/read`, method: 'PUT', action: 'Notification Mark Read' });
       }
       if (notif.ticketId) {
+        logger.info('NotificationBell', 'handleItemClick', `Navigating to ticket: ${notif.ticketId}`, { action: 'Notification Click Navigate' });
         navigate(`/tickets/${notif.ticketId}`);
       }
       setIsOpen(false);
     } catch (err) {
+      logger.error('NotificationBell', 'handleItemClick', 'Error handling notification click', err, { api: `/api/notifications/${notif._id}/read`, method: 'PUT', action: 'Notification Click Failure' });
       console.error('Error handling notification click:', err);
     }
   };

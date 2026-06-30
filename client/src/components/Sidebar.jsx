@@ -273,6 +273,10 @@ const Sidebar = ({ isOpen, onClose }) => {
               <FileText size={16} />
               Activity Logs
             </NavLink>
+            <NavLink to="/super-admin/client-logs" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+              <FileText size={16} />
+              Client Logs
+            </NavLink>
           </>
         )}
 

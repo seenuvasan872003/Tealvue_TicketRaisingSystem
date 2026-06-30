@@ -27,6 +27,7 @@ import UserActivity       from './pages/UserActivity';
 import Teams              from './pages/Teams';
 import Logs               from './pages/Logs';
 import TicketLogs         from './pages/TicketLogs';
+import ClientLogs         from './pages/ClientLogs';
 import TeamDashboard      from './pages/TeamDashboard';
 import TicketApproval     from './pages/TicketApproval';
 import CreateUserAccount  from './pages/CreateUserAccount';
@@ -282,6 +283,14 @@ const App = () => (
             element={
               <RoleGuard roles={['admin', 'super-admin']}>
                 <TicketLogs />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/super-admin/client-logs"
+            element={
+              <RoleGuard roles={['super-admin']}>
+                <ClientLogs />
               </RoleGuard>
             }
           />

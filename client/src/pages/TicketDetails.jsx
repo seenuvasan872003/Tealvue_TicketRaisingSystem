@@ -40,6 +40,7 @@ import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import { toast } from 'react-toastify';
 import TicketTimeline from '../components/TicketTimeline';
 import { io } from 'socket.io-client';
+import logger from '../utils/logger';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 const PRIORITIES  = ['low', 'medium', 'high', 'urgent'];
@@ -95,12 +96,15 @@ const TicketDetails = () => {
 
   const handleSetCategory = async (catVal) => {
     setUpdating(true);
+    logger.info('TicketDetails', 'handleSetCategory', `Setting category to: ${catVal} for ticket: ${id}`, { api: `/api/tickets/${id}/category`, method: 'PUT', action: 'Ticket Set Category Start' });
     try {
       const { data } = await setTicketCategory(id, catVal);
       setTicket(data.ticket);
       toast.success('Category set and ticket allocated successfully');
+      logger.info('TicketDetails', 'handleSetCategory', `Category set: ${catVal}`, { api: `/api/tickets/${id}/category`, method: 'PUT', status: 200, action: 'Ticket Set Category Success' });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to set category');
+      logger.error('TicketDetails', 'handleSetCategory', 'Failed to set category', err, { api: `/api/tickets/${id}/category`, method: 'PUT', status: err.response?.status, action: 'Ticket Set Category Failure' });
     } finally {
       setUpdating(false);
     }
@@ -137,14 +141,17 @@ const TicketDetails = () => {
       return;
     }
     setUpdating(true);
+    logger.info('TicketDetails', 'handleReallocateSubmit', `Reallocating ticket ${id} to category: ${reallocateCategory}`, { api: `/api/tickets/${id}/reallocate`, method: 'POST', action: 'Ticket Reallocate Start' });
     try {
       const { data } = await reallocateTicketTeam(id, reallocateCategory, reallocateReason);
       setTicket(data.ticket);
       setReallocateModal(false);
       setReallocateReason('');
       toast.success('Ticket reallocated successfully');
+      logger.info('TicketDetails', 'handleReallocateSubmit', `Ticket reallocated to: ${reallocateCategory}`, { api: `/api/tickets/${id}/reallocate`, method: 'POST', status: 200, action: 'Ticket Reallocate Success' });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to reallocate ticket');
+      logger.error('TicketDetails', 'handleReallocateSubmit', 'Ticket reallocation FAILED', err, { api: `/api/tickets/${id}/reallocate`, method: 'POST', status: err.response?.status, action: 'Ticket Reallocate Failure' });
     } finally {
       setUpdating(false);
     }
@@ -157,20 +164,24 @@ const TicketDetails = () => {
       return;
     }
     setUpdating(true);
+    logger.info('TicketDetails', 'handleTransferSubmit', `Transferring ticket ${id} back to admin`, { api: `/api/tickets/${id}/transfer`, method: 'POST', action: 'Ticket Transfer Start' });
     try {
       const { data } = await transferTicketToAdmin(id, transferReason);
       setTicket(data.ticket);
       setTransferModal(false);
       setTransferReason('');
       toast.success('Ticket transferred back to admin');
+      logger.info('TicketDetails', 'handleTransferSubmit', `Ticket ${id} transferred to admin successfully`, { api: `/api/tickets/${id}/transfer`, method: 'POST', status: 200, action: 'Ticket Transfer Success' });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to transfer ticket');
+      logger.error('TicketDetails', 'handleTransferSubmit', 'Ticket transfer FAILED', err, { api: `/api/tickets/${id}/transfer`, method: 'POST', status: err.response?.status, action: 'Ticket Transfer Failure' });
     } finally {
       setUpdating(false);
     }
   };
 
   const load = async () => {
+    logger.info('TicketDetails', 'load', `Loading ticket details for ID: ${id}`, { api: `/api/tickets/${id}`, method: 'GET', action: 'Ticket Details Load Start' });
     try {
       const [tRes, cRes] = await Promise.all([
         getTicketById(id),
@@ -184,7 +195,9 @@ const TicketDetails = () => {
       });
       setDueDateInput(tRes.data.dueDate ? tRes.data.dueDate.split('T')[0] : '');
       setComments(cRes.data);
+      logger.info('TicketDetails', 'load', `Ticket loaded: "${tRes.data.title}" | status: ${tRes.data.status}`, { api: `/api/tickets/${id}`, method: 'GET', status: 200, action: 'Ticket Details Load Success' });
     } catch {
+      logger.error('TicketDetails', 'load', `Ticket not found or access denied — ID: ${id}`, new Error('Ticket load failed'), { api: `/api/tickets/${id}`, method: 'GET', action: 'Ticket Details Load Failure' });
       setError('Ticket not found or you do not have access.');
     } finally {
       setLoading(false);
@@ -231,7 +244,7 @@ const TicketDetails = () => {
   }, []);
   
   useEffect(() => { 
-    if (user?.role === 'admin') {
+    if (user?.role === 'admin' || user?.role === 'team_admin' || user?.role === 'team_user') {
       loadTeams(); 
     }
   }, [user]);
@@ -449,7 +462,17 @@ const TicketDetails = () => {
   );
   if (error) return (
     <div className="page-body fade-in">
-      <button className="btn btn-ghost btn-sm" style={{ marginBottom: 20 }} onClick={() => navigate('/tickets')}>
+      <button 
+        className="btn btn-ghost btn-sm" 
+        style={{ marginBottom: 20 }} 
+        onClick={() => {
+          if (user?.role === 'super-admin') navigate('/super-admin/dashboard');
+          else if (user?.role === 'admin') navigate('/admin/dashboard');
+          else if (user?.role === 'team_admin') navigate('/team-admin/dashboard');
+          else if (user?.role === 'team_user') navigate('/team-user/dashboard');
+          else navigate('/tickets');
+        }}
+      >
         <ArrowLeft size={14} /> Back
       </button>
       <div style={{ background: 'rgba(248,81,73,0.08)', border: '1px solid rgba(248,81,73,0.2)', borderRadius: 12, padding: '40px 32px', textAlign: 'center' }}>
@@ -464,7 +487,17 @@ const TicketDetails = () => {
   if (user?.role === 'user' && ticket.approvalStatus === 'rejected') {
     return (
       <div className="page-body fade-in">
-        <button className="btn btn-ghost btn-sm" style={{ marginBottom: 20 }} onClick={() => navigate('/tickets')}>
+        <button 
+          className="btn btn-ghost btn-sm" 
+          style={{ marginBottom: 20 }} 
+          onClick={() => {
+            if (user?.role === 'super-admin') navigate('/super-admin/dashboard');
+            else if (user?.role === 'admin') navigate('/admin/dashboard');
+            else if (user?.role === 'team_admin') navigate('/team-admin/dashboard');
+            else if (user?.role === 'team_user') navigate('/team-user/dashboard');
+            else navigate('/tickets');
+          }}
+        >
           <ArrowLeft size={14} /> Back to tickets
         </button>
         <div style={{
@@ -532,7 +565,17 @@ const TicketDetails = () => {
   return (
     <>
       <div className="page-body fade-in">
-      <button className="btn btn-ghost btn-sm" style={{ marginBottom: 20 }} onClick={() => navigate('/tickets')}>
+      <button 
+        className="btn btn-ghost btn-sm" 
+        style={{ marginBottom: 20 }} 
+        onClick={() => {
+          if (user?.role === 'super-admin') navigate('/super-admin/dashboard');
+          else if (user?.role === 'admin') navigate('/admin/dashboard');
+          else if (user?.role === 'team_admin') navigate('/team-admin/dashboard');
+          else if (user?.role === 'team_user') navigate('/team-user/dashboard');
+          else navigate('/tickets');
+        }}
+      >
         <ArrowLeft size={14} /> Back to tickets
       </button>
 
@@ -1298,10 +1341,10 @@ const TicketDetails = () => {
                   {teams
                     .filter(t => {
                       if (!t.isActive) return false;
-                      const currentTeamId = ticket.teamId?._id || ticket.teamId;
-                      const isCurrent = t._id === currentTeamId;
-                      const oldTeamId = ticket.reallocatedFromTeamId?._id || ticket.reallocatedFromTeamId;
-                      const isOld = oldTeamId && t._id === oldTeamId;
+                      const currentTeamId = (ticket.teamId?._id || ticket.teamId || '').toString();
+                      const isCurrent = t._id.toString() === currentTeamId;
+                      const oldTeamId = (ticket.reallocatedFromTeamId?._id || ticket.reallocatedFromTeamId || '').toString();
+                      const isOld = oldTeamId && t._id.toString() === oldTeamId;
                       return !isCurrent && !isOld;
                     })
                     .map(t => (

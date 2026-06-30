@@ -1879,6 +1879,10 @@ const reallocateTicket = async (req, res) => {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
 
+    if (ticket.status === 'closed') {
+      return res.status(400).json({ message: 'Cannot reallocate a closed ticket' });
+    }
+
     const newTeam = await Team.findOne({ categories: newCategory, isActive: true });
     if (!newTeam) {
       return res.status(400).json({ message: `No active team found for category: ${newCategory}` });

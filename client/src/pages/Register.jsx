@@ -13,6 +13,7 @@ import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import tealvueLogo from '../assets/tealvue1.png';
+import logger from '../utils/logger';
 
 const Register = () => {
   const { register } = useAuth();
@@ -29,18 +30,30 @@ const Register = () => {
     // [VALIDATION] Minimum password length
     if (form.password.length < 6) {
       setError('Password must be at least 6 characters');
+      logger.warn('Register', 'handleSubmit', 'Form validation failed — password too short', {
+        action: 'Register Form Validation Failure',
+      });
       return;
     }
     setLoading(true);
+    logger.info('Register', 'handleSubmit', `Registration attempt for: ${form.email}`, { action: 'Register Form Submit' });
     try {
       // [API] POST /api/auth/register
       await register(form.name, form.email, form.password, form.role);
       toast.success('Account created! Welcome to Tealue.');
+      logger.info('Register', 'handleSubmit', `Registration SUCCESS → navigating to /dashboard`, {
+        api: '/api/auth/register', method: 'POST', status: 200, action: 'Register Success + Navigate',
+      });
       navigate('/dashboard');
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed';
       setError(msg);
       toast.error(msg);
+      logger.error('Register', 'handleSubmit', `Registration FAILED — ${msg}`, err, {
+        api: '/api/auth/register', method: 'POST',
+        status: err.response?.status,
+        action: 'Register Failure',
+      });
     } finally {
       setLoading(false);
     }

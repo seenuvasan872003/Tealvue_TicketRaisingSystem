@@ -16,6 +16,7 @@ import API from '../services/authApi';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
+import logger from '../utils/logger';
 
 const TeamDashboard = () => {
   const { isSuperAdmin } = useAuth();
@@ -31,11 +32,14 @@ const TeamDashboard = () => {
   const [modalLoading, setModalLoading] = useState(false);
 
   const fetchDashboardData = async () => {
+    logger.info('TeamDashboard', 'fetchDashboardData', 'Loading team dashboard statistics', { api: '/api/teams/dashboard', method: 'GET', action: 'Team Dashboard Load Start' });
     try {
       setLoading(true);
       const { data } = await getTeamsDashboard();
       setData(data);
+      logger.info('TeamDashboard', 'fetchDashboardData', `Team dashboard loaded — ${(data.teams || []).length} teams`, { api: '/api/teams/dashboard', method: 'GET', status: 200, action: 'Team Dashboard Load Success' });
     } catch (err) {
+      logger.error('TeamDashboard', 'fetchDashboardData', 'Failed to load team dashboard stats', err, { api: '/api/teams/dashboard', method: 'GET', action: 'Team Dashboard Load Failure' });
       toast.error('Failed to load team dashboard stats');
       console.error(err);
     } finally {

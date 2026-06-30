@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import { toast } from 'react-toastify';
+import logger from '../utils/logger';
 
 const ACTION_ICONS = {
   TICKET_CREATED: { Icon: Plus, color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
@@ -129,10 +130,13 @@ const UserActivity = () => {
 
   useEffect(() => {
     const fetchActivity = async () => {
+      logger.info('UserActivity', 'fetchActivity', `Loading activity for user ID: ${id}`, { api: `/api/users/${id}/activity`, method: 'GET', action: 'User Activity Load Start' });
       try {
         const { data } = await getUserActivity(id);
         setActivityData(data);
+        logger.info('UserActivity', 'fetchActivity', `User activity loaded for: ${data?.user?.email || id}`, { api: `/api/users/${id}/activity`, method: 'GET', status: 200, action: 'User Activity Load Success' });
       } catch (err) {
+        logger.error('UserActivity', 'fetchActivity', 'Failed to load user activity trail', err, { api: `/api/users/${id}/activity`, method: 'GET', action: 'User Activity Load Failure' });
         toast.error('Failed to load user activity trail.');
         navigate('/admin/users');
       } finally {
