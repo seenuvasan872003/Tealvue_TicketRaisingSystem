@@ -442,7 +442,8 @@ const getTeamsDashboard = async (req, res) => {
     const result = [];
     
     let totalTickets = 0;
-    let sumCompletionRate = 0;
+    let totalClosed = 0;
+    let totalActive = 0;
 
     for (const team of teams) {
       const [total, open, inProgress, closed, transferred] = await Promise.all([
@@ -453,9 +454,10 @@ const getTeamsDashboard = async (req, res) => {
         Ticket.countDocuments({ $or: [{ teamId: team._id, allocationStatus: 'transferred_to_admin' }, { reallocatedFromTeamId: team._id }] }),
       ]);
       const activeTotal = open + inProgress + closed;
-      const completionRate = activeTotal > 0 ? Math.round((closed / activeTotal) * 100) : 100;
+      const completionRate = activeTotal > 0 ? Math.round((closed / activeTotal) * 100) : 0;
       totalTickets += total;
-      sumCompletionRate += completionRate;
+      totalClosed += closed;
+      totalActive += activeTotal;
 
       result.push({
         teamId: team._id,
@@ -476,7 +478,8 @@ const getTeamsDashboard = async (req, res) => {
     }
 
     const autoAllocatedCount = await Ticket.countDocuments({ autoAllocated: true });
-    const avgCompletionRate = teams.length > 0 ? Math.round(sumCompletionRate / teams.length) : 0;
+    // Average completion rate based on active tickets in teams: Total Closed / Total Active across teams
+    const avgCompletionRate = totalActive > 0 ? Math.round((totalClosed / totalActive) * 100) : 0;
     
     res.json({
       teams: result,

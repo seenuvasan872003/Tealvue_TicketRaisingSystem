@@ -25,9 +25,11 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', token); // Ensure standard token key matches
         logger.info('AuthContext', 'restore', 'Restoring session from stored token', { action: 'Session Restore' });
         try {
-          const { data } = await fetchProfile();
-          setUser(data);
-          logger.info('AuthContext', 'restore', `Session restored for user: ${data.email} (${data.role})`, { action: 'Session Restore Success' });
+          const [profileRes] = await Promise.all([
+            fetchProfile()
+          ]);
+          setUser(profileRes.data);
+          logger.info('AuthContext', 'restore', `Session restored for user: ${profileRes.data.email} (${profileRes.data.role})`, { action: 'Session Restore Success' });
         } catch (err) {
           logger.error('AuthContext', 'restore', 'Session restore failed — token invalid or expired', err, {
             api: '/api/auth/profile', method: 'GET', action: 'Session Restore Failure',

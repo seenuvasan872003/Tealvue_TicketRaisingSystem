@@ -91,10 +91,10 @@ const TeamDashboard = () => {
           {isSuperAdmin && (
             <button 
               className="btn btn-primary"
-              onClick={() => navigate('/super-admin/teams')}
+              onClick={() => navigate('/super-admin/categories')}
               style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              Create & Manage Teams
+              Manage Categories
             </button>
           )}
           <button 

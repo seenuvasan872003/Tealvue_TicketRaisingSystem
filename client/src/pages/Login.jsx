@@ -74,7 +74,7 @@ const Login = () => {
         {/* ── Logo ──────────────────────────────────── */}
         <div className="auth-logo">
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
-            <img src={tealvueLogo} alt="Tealvue Logo" style={{ height: 66, width: 'auto' }} />
+            <img src={tealvueLogo} alt="Tealvue Logo" width="66" height="66" style={{ height: 66, width: 66 }} />
           </div>
           <h1>Tealvue</h1>
           <p>Sign in to your account</p>

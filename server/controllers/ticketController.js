@@ -143,9 +143,8 @@ const getTicketById = async (req, res) => {
         return res.status(403).json({ message: 'Access denied' });
       }
     } else if (req.user.role === 'admin') {
-      if (ticket.approvalStatus !== 'approved') {
-        return res.status(403).json({ message: 'Access denied — ticket is suspended or rejected' });
-      }
+      // Allow admins to view tickets regardless of approvalStatus (matching super-admin capabilities)
+      // No strict approvalStatus block here so they can review flagged tickets
     } else if (req.user.role === 'team_admin') {
       const team = await Team.findOne({ teamAdmin: req.user._id });
       if (!team) {

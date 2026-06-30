@@ -52,9 +52,11 @@ const Dashboard = () => {
   const [memberPage, setMemberPage] = useState(1);
   const membersPerPage = 4;
 
+  const [chartsLoaded, setChartsLoaded] = useState(false);
+
   useEffect(() => {
-    const load = async () => {
-      logger.info('Dashboard', 'load', `Loading dashboard data for role: ${user?.role}`, { action: 'Dashboard Data Load Start' });
+    const loadCriticalData = async () => {
+      logger.info('Dashboard', 'loadCriticalData', `Loading critical dashboard data for role: ${user?.role}`, { action: 'Dashboard Critical Load Start' });
       try {
         if (user?.role === 'team_admin' || user?.role === 'team_user') {
           const [ticketsRes, teamRes] = await Promise.all([
@@ -65,18 +67,13 @@ const Dashboard = () => {
           const myTeam = teamRes?.data;
           const myTeamId = myTeam?._id;
 
-          // Filter to only include tickets that actively belong to this team (not transferred to admin, and not reallocated away)
+          // Filter to only include tickets that actively belong to this team
           const activeTickets = ticketsList.filter(t => {
             const tTeamId = t.teamId?._id || t.teamId;
             const tReallocatedFrom = t.reallocatedFromTeamId?._id || t.reallocatedFromTeamId;
             
-            // Exclude transferred tickets
             if (t.allocationStatus === 'transferred_to_admin') return false;
-            
-            // Exclude tickets reallocated away from this team
             if (myTeamId && tReallocatedFrom === myTeamId && tTeamId !== myTeamId) return false;
-            
-            // Must belong to this team
             return myTeamId ? tTeamId === myTeamId : true;
           });
           
@@ -129,13 +126,7 @@ const Dashboard = () => {
                 'Active Tickets': m.activeCount,
                 'Resolved Tickets': m.resolvedCount,
               })));
-              logger.info('Dashboard', 'load', `Team members loaded — ${membersList.length} member(s)`, {
-                api: `/api/teams/${myTeam._id}/members`, method: 'GET', action: 'Team Members Load Success',
-              });
             } catch (err) {
-              logger.error('Dashboard', 'load', 'Team members load error', err, {
-                api: `/api/teams/${myTeam._id}/members`, method: 'GET', action: 'Team Members Load Failure',
-              });
               console.error('[Dashboard] Team members load error:', err);
             }
           }
@@ -146,34 +137,43 @@ const Dashboard = () => {
           ]);
           setStats(statsRes.data);
           setRecent(ticketsRes.data.tickets);
-
-          if (isAdminLevel) {
-            const [gRes, pRes] = await Promise.all([
-              getGrowthData(), getStatusBreakdown()
-            ]);
-            setGrowthData(gRes.data);
-            
-            // Format Pie Chart
-            const rawPie = pRes.data || [];
-            setPieData([
-              { name: 'Open', value: rawPie.find(x => x.status === 'open' || x._id === 'open')?.count || 0, color: '#3fb950' },
-              { name: 'In Progress', value: rawPie.find(x => x.status === 'in-progress' || x._id === 'in-progress')?.count || 0, color: '#d29922' },
-              { name: 'Closed', value: rawPie.find(x => x.status === 'closed' || x._id === 'closed')?.count || 0, color: '#6e7681' },
-              { name: 'Declined', value: rawPie.find(x => x.status === 'declined' || x._id === 'declined')?.count || 0, color: '#f85149' },
-            ].filter(x => x.value > 0));
-          }
         }
       } catch (e) {
-        logger.error('Dashboard', 'load', 'Dashboard data load failed', e, {
-          action: 'Dashboard Data Load Failure',
-        });
         console.error('[Dashboard] load error:', e);
       } finally {
         setLoading(false);
       }
     };
-    load();
+    loadCriticalData();
   }, [isAdminLevel, user]);
+
+  useEffect(() => {
+    if (loading || !isAdminLevel || user?.role === 'team_admin' || user?.role === 'team_user') return;
+
+    const loadNonCriticalCharts = async () => {
+      try {
+        const [gRes, pRes] = await Promise.all([
+          getGrowthData(), getStatusBreakdown()
+        ]);
+        setGrowthData(gRes.data);
+        
+        const rawPie = pRes.data || [];
+        setPieData([
+          { name: 'Open', value: rawPie.find(x => x.status === 'open' || x._id === 'open')?.count || 0, color: '#3fb950' },
+          { name: 'In Progress', value: rawPie.find(x => x.status === 'in-progress' || x._id === 'in-progress')?.count || 0, color: '#d29922' },
+          { name: 'Closed', value: rawPie.find(x => x.status === 'closed' || x._id === 'closed')?.count || 0, color: '#6e7681' },
+          { name: 'Declined', value: rawPie.find(x => x.status === 'declined' || x._id === 'declined')?.count || 0, color: '#f85149' },
+        ].filter(x => x.value > 0));
+        setChartsLoaded(true);
+      } catch (err) {
+        console.error('[Dashboard] Non-critical charts load error:', err);
+      }
+    };
+
+    // Delay chart api calls slightly to give main thread breathing room
+    const timer = setTimeout(loadNonCriticalCharts, 500);
+    return () => clearTimeout(timer);
+  }, [loading, isAdminLevel, user]);
 
   if (loading) return <div style={{ padding: 60, textAlign: 'center' }}><div className="spinner" /></div>;
 

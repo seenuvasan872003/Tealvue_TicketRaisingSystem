@@ -187,7 +187,7 @@ const ClientLogs = () => {
                   )}
                 </div>
 
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 11, color: 'var(--color-text-muted)' }}>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 11, color: 'var(--color-text-muted)', marginTop: 8 }}>
                   <span>
                     <strong>User:</strong>{' '}
                     {log.userId && typeof log.userId === 'object'
@@ -200,9 +200,37 @@ const ClientLogs = () => {
                   {log.userId && typeof log.userId === 'object' && log.userId._id && (
                     <span><strong>User ID:</strong> {log.userId._id}</span>
                   )}
-                  <span><strong>File:</strong> {log.file}</span>
+                  <span>
+                    <strong>File Location:</strong>{' '}
+                    {(() => {
+                      if (log.stack && log.stack !== '—') {
+                        // Extract file name and line number from the first stack frame containing http://localhost:5173
+                        const lines = log.stack.split('\n');
+                        for (let line of lines) {
+                          if (line.includes('http://localhost:5173')) {
+                            const match = line.match(/\/src\/([^\?]+)\?t=\d+:(\d+):\d+/);
+                            if (match) {
+                              return `${match[1]} (Line: ${match[2]})`;
+                            }
+                            const matchFallback = line.match(/\/src\/([^:]+):(\d+)/);
+                            if (matchFallback) {
+                              return `${matchFallback[1]} (Line: ${matchFallback[2]})`;
+                            }
+                          }
+                        }
+                      }
+                      return log.file || 'Unknown';
+                    })()}
+                  </span>
                   <span><strong>Route:</strong> {log.route}</span>
-                  {log.api && log.api !== '—' && <span><strong>API:</strong> {log.method} {log.api} (Status: {log.status})</span>}
+                  {log.action && log.action !== '—' && (
+                    <span><strong>User Action:</strong> {log.action}</span>
+                  )}
+                  {log.api && log.api !== '—' && (
+                    <span style={{ color: log.status >= 400 ? '#f85149' : 'var(--color-teal)' }}>
+                      <strong>API Trigger:</strong> {log.method} {log.api} (Status: {log.status})
+                    </span>
+                  )}
                 </div>
               </div>
             );

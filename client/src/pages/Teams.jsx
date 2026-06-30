@@ -444,24 +444,57 @@ const Teams = () => {
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6, marginBottom: 12 }}>
                       {categoryOptions.map((cat) => {
                         const isSelected = categories.includes(cat);
+                        const isSuperAdminUser = window.localStorage.getItem('token') && JSON.parse(atob(window.localStorage.getItem('token').split('.')[1])).role === 'super-admin';
+                        const defaultCategories = ['General', 'Technical', 'Billing', 'HR', 'Other'];
+                        const isDeletable = isSuperAdminUser && !defaultCategories.includes(cat);
                         return (
-                          <button
-                            key={cat}
-                            type="button"
-                            onClick={() => handleCategoryToggle(cat)}
-                            style={{
-                              padding: '6px 12px',
-                              borderRadius: 6,
-                              border: isSelected ? '1px solid var(--color-teal)' : '1px solid var(--color-border)',
-                              background: isSelected ? 'var(--color-teal-dark)' : 'var(--color-surface)',
-                              color: '#fff',
-                              cursor: 'pointer',
-                              fontSize: 12,
-                              transition: 'all 0.2s',
-                            }}
-                          >
-                            {cat}
-                          </button>
+                          <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: 2, background: isSelected ? 'var(--color-teal-dark)' : 'var(--color-surface)', border: isSelected ? '1px solid var(--color-teal)' : '1px solid var(--color-border)', borderRadius: 6, paddingRight: isDeletable ? 4 : 0 }}>
+                            <button
+                              type="button"
+                              onClick={() => handleCategoryToggle(cat)}
+                              style={{
+                                padding: '6px 12px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                fontSize: 12,
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              {cat}
+                            </button>
+                            {isDeletable && (
+                              <button
+                                type="button"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Delete category "${cat}"?`)) {
+                                    try {
+                                      // Call API to delete category if endpoint exists or filter local options
+                                      setCategoryOptions(prev => prev.filter(c => c !== cat));
+                                      setCategories(prev => prev.filter(c => c !== cat));
+                                      toast.success(`Category "${cat}" removed`);
+                                    } catch (err) {
+                                      toast.error('Failed to delete category');
+                                    }
+                                  }
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#f87171',
+                                  cursor: 'pointer',
+                                  padding: '2px 6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                }}
+                                title="Delete Category"
+                              >
+                                <X size={12} />
+                              </button>
+                            )}
+                          </div>
                         );
                       })}
                     </div>

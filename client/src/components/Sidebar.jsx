@@ -90,7 +90,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* ── Logo ─────────────────────────────────────── */}
       <div className="sidebar-logo" style={{ justifyContent: 'space-between', borderBottom: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src={tealvueLogo} alt="Tealvue Logo" style={{ height: 28, width: 'auto' }} />
+          <img src={tealvueLogo} alt="Tealvue Logo" width="28" height="28" style={{ height: 28, width: 28 }} />
           <span>Teal<span style={{ color: 'var(--color-teal)' }}>vue</span></span>
         </div>
         {/* Mobile close button */}
@@ -185,7 +185,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* User-only navigation */}
         {user?.role === 'user' && (
           <>
-            <NavLink to="/tickets" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+            <NavLink to="/tickets/my" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
               <Ticket size={16} />
               My Tickets
             </NavLink>
@@ -204,13 +204,13 @@ const Sidebar = ({ isOpen, onClose }) => {
         {user?.role === 'admin' && (
           <>
             <span className="nav-section-label" style={{ marginTop: 8 }}>Tickets</span>
-            <NavLink to="/admin/tickets" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+            <NavLink to="/tickets/all" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
               <Ticket size={16} />
               All Tickets
             </NavLink>
 
             <span className="nav-section-label" style={{ marginTop: 8 }}>Management</span>
-            <NavLink to="/super-admin/users" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+            <NavLink to="/admin/users" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
               <Users size={16} />
               All Users
             </NavLink>
@@ -237,13 +237,13 @@ const Sidebar = ({ isOpen, onClose }) => {
         {user?.role === 'super-admin' && (
           <>
             <span className="nav-section-label" style={{ marginTop: 8 }}>Ticket Management</span>
-            <NavLink to="/super-admin/tickets" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+            <NavLink to="/admin/ticket-approvals" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
               <Ticket size={16} />
               Ticket Approval
             </NavLink>
 
             <span className="nav-section-label" style={{ marginTop: 8 }}>Management</span>
-            <NavLink to="/super-admin/users" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+            <NavLink to="/admin/users" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
               <Users size={16} />
               All Users
             </NavLink>
@@ -303,7 +303,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         {user?.role === 'team_user' && (
           <>
             <span className="nav-section-label" style={{ marginTop: 8 }}>My Work</span>
-            <NavLink to="/team-user/tickets" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+            <NavLink to="/team-user/assigned-tickets" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
               <Ticket size={16} />
               Assigned Tickets
             </NavLink>

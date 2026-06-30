@@ -28,15 +28,26 @@ import logger from './utils/logger.js'
 import * as Sentry from '@sentry/react';
 import LogRocket from 'logrocket';
 
-// Initialize Sentry for production error tracking
-Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN || "https://placeholder-dsn@sentry.io/placeholder",
-  integrations: [],
-  tracesSampleRate: 1.0,
-});
+// Defer initialization of heavyweight monitoring SDKs to improve Total Blocking Time (TBT)
+const initMonitoring = () => {
+  // Initialize Sentry for production error tracking
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN || "https://placeholder-dsn@sentry.io/placeholder",
+    integrations: [],
+    tracesSampleRate: 1.0,
+  });
 
-// Initialize LogRocket for session replay
-LogRocket.init(import.meta.env.VITE_LOGROCKET_PROJECT_ID || 'tealvue/ticket-raising-system');
+  // Initialize LogRocket for session replay
+  LogRocket.init(import.meta.env.VITE_LOGROCKET_PROJECT_ID || 'tealvue/ticket-raising-system');
+};
+
+if (typeof window !== 'undefined') {
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => initMonitoring());
+  } else {
+    setTimeout(initMonitoring, 2000);
+  }
+}
 
 
 // ── Global unhandled error listeners ──────────────────────────
