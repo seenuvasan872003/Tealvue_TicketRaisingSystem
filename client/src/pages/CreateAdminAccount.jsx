@@ -64,8 +64,14 @@ const CreateAdminAccount = () => {
       const e = { ...errors };
       if (!val) {
         e.password = 'Password is required';
-      } else if (val.length < 6) {
-        e.password = 'Password must be at least 6 characters';
+      } else if (val.length < 8) {
+        e.password = 'Password must be at least 8 characters';
+      } else if (!/[A-Z]/.test(val)) {
+        e.password = 'Must contain at least one uppercase letter (A-Z)';
+      } else if (!/[0-9]/.test(val)) {
+        e.password = 'Must contain at least one number (0-9)';
+      } else if (!/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(val)) {
+        e.password = 'Must contain at least one special character (!@# etc.)';
       } else {
         delete e.password;
       }
@@ -121,7 +127,19 @@ const CreateAdminAccount = () => {
       setErrors({});
       navigate('/admin/users');
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to create account');
+      const serverMessage = err?.response?.data?.message || 'Failed to create account';
+      const errorsList = err?.response?.data?.errors;
+      if (Array.isArray(errorsList) && errorsList.length > 0) {
+        errorsList.forEach(e => {
+          toast.error(`${e.path || 'Field'}: ${e.msg}`);
+        });
+      } else if (typeof errorsList === 'object' && errorsList !== null) {
+        Object.keys(errorsList).forEach(k => {
+          toast.error(`${k}: ${errorsList[k]}`);
+        });
+      } else {
+        toast.error(serverMessage);
+      }
       logger.error('CreateAdminAccount', 'handleSubmit', 'Admin account creation FAILED', err, { api: '/api/users/create-admin', method: 'POST', status: err?.response?.status, action: 'Admin Account Create Failure' });
     } finally {
       setLoading(false);
@@ -189,7 +207,23 @@ const CreateAdminAccount = () => {
               </button>
             </div>
             {errors.password && <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>{errors.password}</span>}
-            {formData.password && !errors.password && <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>✓ Password is valid</span>}
+            <div style={{ marginTop: 6, padding: 8, background: '#161b22', borderRadius: 6, border: '1px solid var(--color-border)' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }}>Password Requirements:</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 8px', fontSize: 10 }}>
+                <span style={{ color: formData.password.length >= 8 ? 'var(--color-teal)' : '#acacac' }}>
+                  {formData.password.length >= 8 ? '✓' : '•'} Min 8 chars
+                </span>
+                <span style={{ color: /[A-Z]/.test(formData.password) ? 'var(--color-teal)' : '#acacac' }}>
+                  {/[A-Z]/.test(formData.password) ? '✓' : '•'} 1 Uppercase (A-Z)
+                </span>
+                <span style={{ color: /[0-9]/.test(formData.password) ? 'var(--color-teal)' : '#acacac' }}>
+                  {/[0-9]/.test(formData.password) ? '✓' : '•'} 1 Number (0-9)
+                </span>
+                <span style={{ color: /[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(formData.password) ? 'var(--color-teal)' : '#acacac' }}>
+                  {/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(formData.password) ? '✓' : '•'} 1 Special symbol
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className="field-group">
@@ -219,13 +253,7 @@ const CreateAdminAccount = () => {
             {formData.confirmPassword && !errors.confirmPassword && <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>✓ Passwords match</span>}
           </div>
 
-          <div className="field-group">
-            <label>Role</label>
-            <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
-              <option value="admin">Admin</option>
-              <option value="super-admin">Super Admin (Max 2 total)</option>
-            </select>
-          </div>
+
 
           <div style={{ marginTop: 24 }}>
             <button 

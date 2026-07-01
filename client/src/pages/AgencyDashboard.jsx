@@ -133,12 +133,16 @@ const AgencyDashboard = () => {
             const openVal = agency.open || 0;
             const progressVal = agency.inProgress || 0;
             const closedVal = agency.closed || 0;
+            const underReviewVal = agency.underReview || 0;
+            const declinedVal = agency.declined || 0;
             const totalVal = agency.total || 0;
             
             // Percentage calculations for segment bars
             const pctOpen = totalVal > 0 ? (openVal / totalVal) * 100 : 0;
             const pctProgress = totalVal > 0 ? (progressVal / totalVal) * 100 : 0;
             const pctClosed = totalVal > 0 ? (closedVal / totalVal) * 100 : 0;
+            const pctReview = totalVal > 0 ? (underReviewVal / totalVal) * 100 : 0;
+            const pctDeclined = totalVal > 0 ? (declinedVal / totalVal) * 100 : 0;
 
             return (
               <div key={agency.agencyId} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -172,30 +176,40 @@ const AgencyDashboard = () => {
                   </div>
                 </div>
 
-                {/* Segments mini-bar: open(green)/in-progress(yellow)/closed(gray) */}
+                {/* Segments mini-bar: open(green)/in-progress(yellow)/closed(gray)/under-review(orange)/declined(red) */}
                 <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', background: '#252525' }}>
                   {openVal > 0 && <div style={{ width: `${pctOpen}%`, background: '#3fb950' }} title={`Open: ${openVal}`} />}
                   {progressVal > 0 && <div style={{ width: `${pctProgress}%`, background: '#d29922' }} title={`In Progress: ${progressVal}`} />}
                   {closedVal > 0 && <div style={{ width: `${pctClosed}%`, background: '#6e7681' }} title={`Closed: ${closedVal}`} />}
+                  {underReviewVal > 0 && <div style={{ width: `${pctReview}%`, background: '#fb923c' }} title={`Under Review: ${underReviewVal}`} />}
+                  {declinedVal > 0 && <div style={{ width: `${pctDeclined}%`, background: '#f85149' }} title={`Declined: ${declinedVal}`} />}
                 </div>
 
                 {/* Stats Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, padding: '8px 0', borderTop: '1px solid #252525', borderBottom: '1px solid #252525', textAlign: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 4, padding: '8px 0', borderTop: '1px solid #252525', borderBottom: '1px solid #252525', textAlign: 'center' }}>
                   <div>
-                    <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Total</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginTop: 2 }}>{agency.total}</div>
+                    <div style={{ fontSize: 9, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Total</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginTop: 2 }}>{agency.total}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 10, color: '#3fb950' }}>Open</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#3fb950', marginTop: 2 }}>{agency.open}</div>
+                    <div style={{ fontSize: 9, color: '#3fb950', whiteSpace: 'nowrap' }}>Open</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#3fb950', marginTop: 2 }}>{agency.open}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 10, color: '#d29922' }}>In Progress</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#d29922', marginTop: 2 }}>{agency.inProgress}</div>
+                    <div style={{ fontSize: 9, color: '#d29922', whiteSpace: 'nowrap' }}>Progress</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#d29922', marginTop: 2 }}>{agency.inProgress}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 10, color: '#6e7681' }}>Closed</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#6e7681', marginTop: 2 }}>{agency.closed}</div>
+                    <div style={{ fontSize: 9, color: '#6e7681', whiteSpace: 'nowrap' }}>Closed</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#6e7681', marginTop: 2 }}>{agency.closed}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 9, color: '#fb923c', whiteSpace: 'nowrap' }}>Review</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#fb923c', marginTop: 2 }}>{agency.underReview || 0}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 9, color: '#f85149', whiteSpace: 'nowrap' }}>Declined</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#f85149', marginTop: 2 }}>{agency.declined || 0}</div>
                   </div>
                 </div>
 

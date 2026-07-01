@@ -27,12 +27,21 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    // [VALIDATION] Minimum password length
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      logger.warn('Register', 'handleSubmit', 'Form validation failed — password too short', {
-        action: 'Register Form Validation Failure',
-      });
+    // [VALIDATION] Password policy checks
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+    if (!/[A-Z]/.test(form.password)) {
+      setError('Password must contain at least one uppercase letter.');
+      return;
+    }
+    if (!/[0-9]/.test(form.password)) {
+      setError('Password must contain at least one number.');
+      return;
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(form.password)) {
+      setError('Password must contain at least one special character (!@#$).');
       return;
     }
     setLoading(true);
@@ -48,7 +57,19 @@ const Register = () => {
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed';
       setError(msg);
-      toast.error(msg);
+      
+      const errorsList = err?.response?.data?.errors;
+      if (Array.isArray(errorsList) && errorsList.length > 0) {
+        errorsList.forEach(e => {
+          toast.error(`${e.path || 'Field'}: ${e.msg}`);
+        });
+      } else if (typeof errorsList === 'object' && errorsList !== null) {
+        Object.keys(errorsList).forEach(k => {
+          toast.error(`${k}: ${errorsList[k]}`);
+        });
+      } else {
+        toast.error(msg);
+      }
       logger.error('Register', 'handleSubmit', `Registration FAILED — ${msg}`, err, {
         api: '/api/auth/register', method: 'POST',
         status: err.response?.status,

@@ -90,8 +90,16 @@ const Teams = () => {
       }
     }
     if (field === 'adminPassword') {
-      if (val && val.length < 6) {
-        err = 'Password must be at least 6 characters';
+      if (val) {
+        if (val.length < 8) {
+          err = 'Password must be at least 8 characters';
+        } else if (!/[A-Z]/.test(val)) {
+          err = 'Must contain at least one uppercase letter (A-Z)';
+        } else if (!/[0-9]/.test(val)) {
+          err = 'Must contain at least one number (0-9)';
+        } else if (!/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(val)) {
+          err = 'Must contain at least one special symbol (!@# etc.)';
+        }
       }
     }
     if (field === 'description') {
@@ -313,7 +321,22 @@ const Teams = () => {
                         {team.teamAdmin?.email && (
                           <div style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'flex', flexDirection: 'column', gap: 2 }}>
                             <div>Email: {team.teamAdmin.email}</div>
-                            <div>Password: <span style={{ color: '#eac253', fontFamily: 'monospace' }}>{team.teamAdminPassword || 'password123'}</span></div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span>Password:</span>
+                              <span style={{ color: '#eac253', fontFamily: 'monospace' }}>
+                                {team._showPw ? (team.teamAdminPassword || 'password123') : '••••••••'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTeams(prev => prev.map(t => t.teamId === team.teamId ? { ...t, _showPw: !t._showPw } : t));
+                                }}
+                                style={{ background: 'none', border: 'none', padding: 0, color: '#888', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
+                              >
+                                {team._showPw ? <EyeOff size={12} /> : <Eye size={12} />}
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -606,6 +629,23 @@ const Teams = () => {
                           </button>
                         </div>
                         {errors.adminPassword && <span style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{errors.adminPassword}</span>}
+                        <div style={{ marginTop: 6, padding: 8, background: '#161b22', borderRadius: 6, border: '1px solid var(--color-border)' }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }}>Password Requirements:</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 8px', fontSize: 10 }}>
+                            <span style={{ color: adminPassword.length >= 8 ? 'var(--color-teal)' : '#acacac' }}>
+                              {adminPassword.length >= 8 ? '✓' : '•'} Min 8 chars
+                            </span>
+                            <span style={{ color: /[A-Z]/.test(adminPassword) ? 'var(--color-teal)' : '#acacac' }}>
+                              {/[A-Z]/.test(adminPassword) ? '✓' : '•'} 1 Uppercase (A-Z)
+                            </span>
+                            <span style={{ color: /[0-9]/.test(adminPassword) ? 'var(--color-teal)' : '#acacac' }}>
+                              {/[0-9]/.test(adminPassword) ? '✓' : '•'} 1 Number (0-9)
+                            </span>
+                            <span style={{ color: /[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(adminPassword) ? 'var(--color-teal)' : '#acacac' }}>
+                              {/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(adminPassword) ? '✓' : '•'} 1 Special symbol
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}

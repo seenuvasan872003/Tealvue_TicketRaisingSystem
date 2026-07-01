@@ -38,8 +38,8 @@
   --color-low-bg:      rgba(63,185,80,0.1);
 
   /* Shadows */
-  --shadow-card:  0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
-  --shadow-popup: 0 8px 32px rgba(0,0,0,0.6);
+  --shadow-card:  0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.035);
+  --shadow-popup: 0 12px 40px rgba(0,0,0,0.7);
 
   /* Gold accent (kept for gradient references) */
   --gold:           #d3a73c;

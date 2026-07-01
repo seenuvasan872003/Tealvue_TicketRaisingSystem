@@ -23,17 +23,54 @@ import {
 } from 'recharts';
 import logger from '../utils/logger';
 
-const StatCard = ({ label, value, color, Icon }) => (
-  <div className={`stat-card ${color}`}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-      <div>
-        <div className="stat-label">{label}</div>
-        <div className="stat-value">{value ?? '—'}</div>
+const StatCard = ({ label, value, color, Icon }) => {
+  // Map color to a modern gradient background
+  const colorsMap = {
+    teal: { bg: 'linear-gradient(135deg, rgba(20,160,125,0.06) 0%, rgba(20,160,125,0.02) 100%)', border: 'rgba(20,160,125,0.3)', text: 'var(--color-teal)' },
+    green: { bg: 'linear-gradient(135deg, rgba(63,185,80,0.06) 0%, rgba(63,185,80,0.02) 100%)', border: 'rgba(63,185,80,0.3)', text: 'var(--color-open)' },
+    yellow: { bg: 'linear-gradient(135deg, rgba(210,153,34,0.06) 0%, rgba(210,153,34,0.02) 100%)', border: 'rgba(210,153,34,0.3)', text: 'var(--color-progress)' },
+    gray: { bg: 'linear-gradient(135deg, rgba(110,118,129,0.06) 0%, rgba(110,118,129,0.02) 100%)', border: 'rgba(110,118,129,0.3)', text: 'var(--color-closed)' },
+    red: { bg: 'linear-gradient(135deg, rgba(248,81,73,0.06) 0%, rgba(248,81,73,0.02) 100%)', border: 'rgba(248,81,73,0.3)', text: 'var(--color-high)' },
+    orange: { bg: 'linear-gradient(135deg, rgba(251,146,60,0.06) 0%, rgba(251,146,60,0.02) 100%)', border: 'rgba(251,146,60,0.3)', text: '#fb923c' },
+  };
+
+  const styleSet = colorsMap[color] || colorsMap.teal;
+
+  return (
+    <div 
+      className="card" 
+      style={{ 
+        padding: '20px 24px', 
+        background: styleSet.bg, 
+        border: `1px solid ${styleSet.border}`, 
+        borderRadius: 12,
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        gap: 12
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = 'translateY(-3px)';
+        e.currentTarget.style.boxShadow = `0 8px 24px ${styleSet.border}20`;
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'none';
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)' }}>
+          {label}
+        </span>
+        <Icon size={18} style={{ color: styleSet.text, opacity: 0.8 }} />
       </div>
-      <Icon size={24} strokeWidth={1.5} style={{ opacity: 0.5 }} />
+      <div style={{ fontSize: 28, fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>
+        {value ?? 0}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const Dashboard = () => {
   const { user, isAdminLevel } = useAuth();
@@ -78,23 +115,27 @@ const Dashboard = () => {
           });
           
           const total = ticketsList.length;
-          const open = activeTickets.filter(t => t.status === 'open').length;
-          const inProgress = activeTickets.filter(t => t.status === 'in-progress').length;
-          const closed = activeTickets.filter(t => t.status === 'closed').length;
+          const open = activeTickets.filter(t => t.status === 'open' && t.approvalStatus !== 'suspended' && t.approvalStatus !== 'rejected').length;
+          const inProgress = activeTickets.filter(t => t.status === 'in-progress' && t.approvalStatus !== 'suspended' && t.approvalStatus !== 'rejected').length;
+          const closed = activeTickets.filter(t => t.status === 'closed' && t.approvalStatus !== 'suspended' && t.approvalStatus !== 'rejected').length;
           const transferred = total - activeTickets.length;
+          const underReview = activeTickets.filter(t => t.approvalStatus === 'suspended').length;
+          const declined = activeTickets.filter(t => t.approvalStatus === 'rejected').length;
           
-          const urgent = activeTickets.filter(t => t.priority === 'urgent').length;
-          const high = activeTickets.filter(t => t.priority === 'high').length;
-          const medium = activeTickets.filter(t => t.priority === 'medium').length;
-          const low = activeTickets.filter(t => t.priority === 'low').length;
+          const urgent = activeTickets.filter(t => t.priority === 'urgent' && t.approvalStatus !== 'suspended' && t.approvalStatus !== 'rejected').length;
+          const high = activeTickets.filter(t => t.priority === 'high' && t.approvalStatus !== 'suspended' && t.approvalStatus !== 'rejected').length;
+          const medium = activeTickets.filter(t => t.priority === 'medium' && t.approvalStatus !== 'suspended' && t.approvalStatus !== 'rejected').length;
+          const low = activeTickets.filter(t => t.priority === 'low' && t.approvalStatus !== 'suspended' && t.approvalStatus !== 'rejected').length;
 
-          setStats({ total, open, inProgress, closed, transferred, urgent, high, medium, low });
+          setStats({ total, open, inProgress, closed, transferred, underReview, declined, urgent, high, medium, low });
           setRecent(activeTickets.slice(0, 5));
 
           setPieData([
             { name: 'Open', value: open, color: '#3fb950' },
             { name: 'In Progress', value: inProgress, color: '#d29922' },
             { name: 'Closed', value: closed, color: '#6e7681' },
+            { name: 'Under Review', value: underReview, color: '#fb923c' },
+            { name: 'Declined', value: declined, color: '#f85149' },
           ].filter(x => x.value > 0));
 
           setPriorityChartData([
@@ -163,6 +204,7 @@ const Dashboard = () => {
           { name: 'In Progress', value: rawPie.find(x => x.status === 'in-progress' || x._id === 'in-progress')?.count || 0, color: '#d29922' },
           { name: 'Closed', value: rawPie.find(x => x.status === 'closed' || x._id === 'closed')?.count || 0, color: '#6e7681' },
           { name: 'Declined', value: rawPie.find(x => x.status === 'declined' || x._id === 'declined')?.count || 0, color: '#f85149' },
+          { name: 'Under Review', value: rawPie.find(x => x.status === 'suspended' || x._id === 'suspended')?.count || 0, color: '#fb923c' },
         ].filter(x => x.value > 0));
         setChartsLoaded(true);
       } catch (err) {
@@ -186,6 +228,9 @@ const Dashboard = () => {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
+  // Customize layout depending on role (Admins and standard users get Declined + Under Review)
+  const isTeamStaff = user?.role === 'team_admin' || user?.role === 'team_user';
+
   return (
     <div className="page-body fade-in">
       <div className="page-header">
@@ -198,15 +243,14 @@ const Dashboard = () => {
         )}
       </div>
 
-      <div className="stat-grid">
+      <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
         <StatCard label="Total Tickets" value={stats?.total} color="teal" Icon={Ticket} />
         <StatCard label="Open" value={stats?.open} color="green" Icon={CircleDot} />
         <StatCard label="In Progress" value={stats?.inProgress} color="yellow" Icon={RotateCcw} />
         <StatCard label="Closed" value={stats?.closed} color="gray" Icon={CheckCircle2} />
-        {(isAdminLevel || user?.role === 'user') && (
-          <StatCard label="Declined Tickets" value={stats?.declined} color="red" Icon={XCircle} />
-        )}
-        {(user?.role === 'team_admin' || user?.role === 'team_user') && (
+        <StatCard label="Declined Tickets" value={stats?.declined} color="red" Icon={XCircle} />
+        <StatCard label="Under Review" value={stats?.underReview} color="orange" Icon={AlertTriangle} />
+        {isTeamStaff && (
           <StatCard label="Transferred" value={stats?.transferred} color="red" Icon={XCircle} />
         )}
       </div>
@@ -440,7 +484,7 @@ const Dashboard = () => {
                 <tr key={t._id} onClick={() => navigate(`/tickets/${t._id}`)}>
                   <td style={{ color: 'var(--color-text-muted)', fontFamily: 'monospace', fontSize: 12 }}>{t._id.slice(-6).toUpperCase()}</td>
                   <td style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</td>
-                  <td><StatusBadge status={t.approvalStatus === 'rejected' ? 'rejected' : t.status} /></td>
+                  <td><StatusBadge status={t.approvalStatus === 'suspended' ? 'suspended' : t.approvalStatus === 'rejected' ? 'rejected' : t.status} /></td>
                   <td><PriorityBadge priority={t.priority} /></td>
                   <td style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>{new Date(t.createdAt).toLocaleDateString()}</td>
                   {isAdminLevel && <td style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>{t.user_id?.name}</td>}

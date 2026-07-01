@@ -30,6 +30,7 @@ const Teams              = lazy(() => import('./pages/Teams'));
 const Logs               = lazy(() => import('./pages/Logs'));
 const TicketLogs         = lazy(() => import('./pages/TicketLogs'));
 const ClientLogs         = lazy(() => import('./pages/ClientLogs'));
+const ApiFlowVisualizer  = lazy(() => import('./pages/ApiFlowVisualizer'));
 const Categories         = lazy(() => import('./pages/Categories'));
 const TeamDashboard      = lazy(() => import('./pages/TeamDashboard'));
 const TicketApproval     = lazy(() => import('./pages/TicketApproval'));
@@ -123,7 +124,7 @@ const App = () => (
 
           {/* Protected shell — ONE ProtectedRoute wraps the entire shell */}
           <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
-            <Route index                  element={<DashboardRouter />} />
+            <Route index element={<DashboardRouter />} />
             <Route
               path="/super-admin/dashboard"
               element={
@@ -222,6 +223,14 @@ const App = () => (
               }
             />
             <Route
+              path="/teams/:id/performance"
+              element={
+                <RoleGuard roles={['admin', 'super-admin']}>
+                  <PerformanceDetails />
+                </RoleGuard>
+              }
+            />
+            <Route
               path="/admin/ticket-approvals"
               element={
                 <RoleGuard roles={['admin', 'super-admin']}>
@@ -274,6 +283,14 @@ const App = () => (
               element={
                 <RoleGuard roles={['super-admin']}>
                   <ClientLogs />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/super-admin/api-flow"
+              element={
+                <RoleGuard roles={['super-admin']}>
+                  <ApiFlowVisualizer />
                 </RoleGuard>
               }
             />

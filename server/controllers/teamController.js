@@ -67,16 +67,12 @@ const createTeam = async (req, res) => {
     });
     await teamAdmin.save();
 
-    // 3. Create the Team
-    const salt = await bcrypt.genSalt(10);
-    const hashedTeamAdminPassword = await bcrypt.hash(teamAdminPassword, salt);
-
     const team = new Team({
       name,
       categories,
       description,
       teamAdmin: teamAdmin._id,
-      teamAdminPassword: hashedTeamAdminPassword,
+      teamAdminPassword: teamAdminPassword,
       members: [],
       isActive: true,
       createdBy: req.user._id,
@@ -446,12 +442,14 @@ const getTeamsDashboard = async (req, res) => {
     let totalActive = 0;
 
     for (const team of teams) {
-      const [total, open, inProgress, closed, transferred] = await Promise.all([
+      const [total, open, inProgress, closed, transferred, underReview, declined] = await Promise.all([
         Ticket.countDocuments({ $or: [{ teamId: team._id }, { reallocatedFromTeamId: team._id }] }),
-        Ticket.countDocuments({ teamId: team._id, status: 'open', allocationStatus: { $ne: 'transferred_to_admin' } }),
-        Ticket.countDocuments({ teamId: team._id, status: 'in-progress', allocationStatus: { $ne: 'transferred_to_admin' } }),
-        Ticket.countDocuments({ teamId: team._id, status: 'closed', allocationStatus: { $ne: 'transferred_to_admin' } }),
+        Ticket.countDocuments({ teamId: team._id, status: 'open', allocationStatus: { $ne: 'transferred_to_admin' }, approvalStatus: { $nin: ['rejected', 'suspended'] } }),
+        Ticket.countDocuments({ teamId: team._id, status: 'in-progress', allocationStatus: { $ne: 'transferred_to_admin' }, approvalStatus: { $nin: ['rejected', 'suspended'] } }),
+        Ticket.countDocuments({ teamId: team._id, status: 'closed', allocationStatus: { $ne: 'transferred_to_admin' }, approvalStatus: { $nin: ['rejected', 'suspended'] } }),
         Ticket.countDocuments({ $or: [{ teamId: team._id, allocationStatus: 'transferred_to_admin' }, { reallocatedFromTeamId: team._id }] }),
+        Ticket.countDocuments({ teamId: team._id, approvalStatus: 'suspended' }),
+        Ticket.countDocuments({ teamId: team._id, approvalStatus: 'rejected' }),
       ]);
       const activeTotal = open + inProgress + closed;
       const completionRate = activeTotal > 0 ? Math.round((closed / activeTotal) * 100) : 0;
@@ -473,6 +471,8 @@ const getTeamsDashboard = async (req, res) => {
         inProgress,
         closed,
         transferred,
+        underReview,
+        declined,
         completionRate,
       });
     }
@@ -526,11 +526,16 @@ const getCategories = async (req, res) => {
     // Find distinct categories defined in all teams
     const teamCategories = await Team.distinct('categories');
     
+    // Find categories in the Category model
+    const Category = require('../models/Category');
+    const customModels = await Category.find().distinct('name');
+
     // Merge, deduplicate, filter empty/null, and sort
     const allCategories = Array.from(
       new Set([
         ...defaultCategories,
-        ...teamCategories.filter(c => typeof c === 'string' && c.trim() !== '')
+        ...teamCategories.filter(c => typeof c === 'string' && c.trim() !== ''),
+        ...customModels
       ])
     ).sort((a, b) => a.localeCompare(b));
     

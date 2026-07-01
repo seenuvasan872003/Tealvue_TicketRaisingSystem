@@ -18,10 +18,10 @@ const connectDB = async () => {
     // [CONFIG] Uses MONGO_URI from .env — never hardcode here
     const conn = await mongoose.connect(process.env.MONGO_URI);
 
-    console.log(`✅  MongoDB connected → ${conn.connection.host} / ${conn.connection.name}`);
+    console.log(` MongoDB connected → ${conn.connection.host} / ${conn.connection.name}`);
   } catch (err) {
     // [IMPORTANT] Exit process on DB failure — server cannot run without DB
-    console.error(`❌  MongoDB connection failed: ${err.message}`);
+    console.error(`MongoDB connection failed: ${err.message}`);
     process.exit(1);
   }
 };

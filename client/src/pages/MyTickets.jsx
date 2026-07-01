@@ -183,7 +183,11 @@ const MyTickets = () => {
                     {t.category || 'General'}
                   </td>
                   <td style={{ padding: '13px 16px' }}>
-                    {t.approvalStatus === 'rejected' ? (
+                    {t.approvalStatus === 'suspended' ? (
+                      <span className="badge" style={{ background: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', border: '1px solid rgba(251, 146, 60, 0.2)' }}>
+                        Under Review
+                      </span>
+                    ) : t.approvalStatus === 'rejected' ? (
                       <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                         Declined
                       </span>

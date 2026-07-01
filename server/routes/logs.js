@@ -20,9 +20,16 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
-router.get('/', protect, requireAdmin, getActivityLogs);
+const requireAdminOrSuperAdmin = (req, res, next) => {
+  if (req.user && ['admin', 'super-admin'].includes(req.user.role)) {
+    return next();
+  }
+  return res.status(403).json({ message: 'Access denied — admin or super-admin only' });
+};
+
+router.get('/', protect, requireAdminOrSuperAdmin, getActivityLogs);
 router.post('/client', optionalAuth, saveClientLog);
-router.get('/client', protect, requireAdmin, getClientLogs);
+router.get('/client', protect, requireAdminOrSuperAdmin, getClientLogs);
 
 module.exports = router;
 

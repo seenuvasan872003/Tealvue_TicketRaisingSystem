@@ -18,6 +18,7 @@ const ClientLogs = () => {
   const logsPerPage = 12;
 
   const [filterType, setFilterType] = useState('all'); // 'all', 'login', 'initialized', 'warning', 'error'
+  const [statusCodeFilter, setStatusCodeFilter] = useState('all');
 
   const fetchClientLogs = async () => {
     logger.initialize('ClientLogs Module');
@@ -38,6 +39,15 @@ const ClientLogs = () => {
     fetchClientLogs();
   }, []);
 
+  // Compute unique status codes present in log dataset for filter select options
+  const availableStatusCodes = Array.from(
+    new Set(
+      logs
+        .map(l => l.status)
+        .filter(s => s !== undefined && s !== null && s !== '—' && s !== '')
+    )
+  ).sort();
+
   const filteredLogs = logs.filter(log => {
     const s = search.toLowerCase();
     
@@ -54,12 +64,18 @@ const ClientLogs = () => {
       if (log.level !== 'error') return false;
     }
 
+    // Status Code filtering
+    if (statusCodeFilter !== 'all') {
+      if (String(log.status) !== String(statusCodeFilter)) return false;
+    }
+
     return (
       log.message?.toLowerCase().includes(s) ||
       log.component?.toLowerCase().includes(s) ||
       log.file?.toLowerCase().includes(s) ||
       log.user?.toLowerCase().includes(s) ||
-      log.level?.toLowerCase().includes(s)
+      log.level?.toLowerCase().includes(s) ||
+      String(log.status).toLowerCase().includes(s)
     );
   });
 
@@ -77,24 +93,46 @@ const ClientLogs = () => {
           <h1 className="page-title">Client Database Logs</h1>
           <p className="page-subtitle">View active logs initialized by users, client events, and exceptions.</p>
         </div>
-        <div style={{ position: 'relative', width: '100%', maxWidth: 300 }}>
-          <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
-          <input
-            type="text"
-            placeholder="Search client logs..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', width: '100%', maxWidth: 460 }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+            <input
+              type="text"
+              placeholder="Search client logs..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              style={{
+                background: 'var(--color-card)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 8,
+                color: 'var(--color-text)',
+                fontSize: 13,
+                padding: '8px 12px 8px 36px',
+                width: '100%',
+                outline: 'none',
+              }}
+            />
+          </div>
+          <select
+            value={statusCodeFilter}
+            onChange={(e) => { setStatusCodeFilter(e.target.value); setCurrentPage(1); }}
             style={{
               background: 'var(--color-card)',
               border: '1px solid var(--color-border)',
               borderRadius: 8,
               color: 'var(--color-text)',
               fontSize: 13,
-              padding: '8px 12px 8px 36px',
-              width: '100%',
+              padding: '8px 12px',
+              width: 140,
               outline: 'none',
+              cursor: 'pointer'
             }}
-          />
+          >
+            <option value="all">All Status Codes</option>
+            {availableStatusCodes.map(code => (
+              <option key={code} value={code}>Status {code}</option>
+            ))}
+          </select>
         </div>
       </div>
 

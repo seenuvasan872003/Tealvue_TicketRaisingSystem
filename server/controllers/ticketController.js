@@ -570,19 +570,20 @@ const getStats = async (req, res) => {
   try {
     const baseQuery = {};
 
-    const [total, open, inProgress, closed, high, medium, low, urgent, declined] = await Promise.all([
+    const [total, open, inProgress, closed, high, medium, low, urgent, declined, underReview] = await Promise.all([
       Ticket.countDocuments(baseQuery),
-      Ticket.countDocuments({ ...baseQuery, status: 'open', approvalStatus: { $ne: 'rejected' } }),
-      Ticket.countDocuments({ ...baseQuery, status: 'in-progress', approvalStatus: { $ne: 'rejected' } }),
-      Ticket.countDocuments({ ...baseQuery, status: 'closed', approvalStatus: { $ne: 'rejected' } }),
-      Ticket.countDocuments({ ...baseQuery, priority: 'high', approvalStatus: { $ne: 'rejected' } }),
-      Ticket.countDocuments({ ...baseQuery, priority: 'medium', approvalStatus: { $ne: 'rejected' } }),
-      Ticket.countDocuments({ ...baseQuery, priority: 'low', approvalStatus: { $ne: 'rejected' } }),
-      Ticket.countDocuments({ ...baseQuery, priority: 'urgent', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ ...baseQuery, status: 'open', approvalStatus: { $nin: ['rejected', 'suspended'] } }),
+      Ticket.countDocuments({ ...baseQuery, status: 'in-progress', approvalStatus: { $nin: ['rejected', 'suspended'] } }),
+      Ticket.countDocuments({ ...baseQuery, status: 'closed', approvalStatus: { $nin: ['rejected', 'suspended'] } }),
+      Ticket.countDocuments({ ...baseQuery, priority: 'high', approvalStatus: { $nin: ['rejected', 'suspended'] } }),
+      Ticket.countDocuments({ ...baseQuery, priority: 'medium', approvalStatus: { $nin: ['rejected', 'suspended'] } }),
+      Ticket.countDocuments({ ...baseQuery, priority: 'low', approvalStatus: { $nin: ['rejected', 'suspended'] } }),
+      Ticket.countDocuments({ ...baseQuery, priority: 'urgent', approvalStatus: { $nin: ['rejected', 'suspended'] } }),
       Ticket.countDocuments({ ...baseQuery, approvalStatus: 'rejected' }),
+      Ticket.countDocuments({ ...baseQuery, approvalStatus: 'suspended' }),
     ]);
 
-    res.json({ total, open, inProgress, closed, high, medium, low, urgent, declined });
+    res.json({ total, open, inProgress, closed, high, medium, low, urgent, declined, underReview });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -592,14 +593,15 @@ const getStats = async (req, res) => {
 const getMyStats = async (req, res) => {
   try {
     const userId = req.user._id;
-    const [total, open, inProgress, closed, declined] = await Promise.all([
+    const [total, open, inProgress, closed, declined, underReview] = await Promise.all([
       Ticket.countDocuments({ user_id: userId }),
-      Ticket.countDocuments({ user_id: userId, status: 'open', approvalStatus: { $ne: 'rejected' } }),
-      Ticket.countDocuments({ user_id: userId, status: 'in-progress', approvalStatus: { $ne: 'rejected' } }),
-      Ticket.countDocuments({ user_id: userId, status: 'closed', approvalStatus: { $ne: 'rejected' } }),
+      Ticket.countDocuments({ user_id: userId, status: 'open', approvalStatus: { $nin: ['rejected', 'suspended'] } }),
+      Ticket.countDocuments({ user_id: userId, status: 'in-progress', approvalStatus: { $nin: ['rejected', 'suspended'] } }),
+      Ticket.countDocuments({ user_id: userId, status: 'closed', approvalStatus: { $nin: ['rejected', 'suspended'] } }),
       Ticket.countDocuments({ user_id: userId, approvalStatus: 'rejected' }),
+      Ticket.countDocuments({ user_id: userId, approvalStatus: 'suspended' }),
     ]);
-    res.json({ total, open, inProgress, closed, declined });
+    res.json({ total, open, inProgress, closed, declined, underReview });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -1322,7 +1324,28 @@ const suspendTicket = async (req, res) => {
       note: moderationNote || 'Suspended for review'
     });
 
-    // Removed email and notification stubs - no-ops for this step
+    // Email notification dispatch & In-app notifications
+    const ticketOwner = await User.findById(ticket.user_id);
+    if (ticketOwner) {
+      const { sendEmail } = require('../utils/email');
+      await sendEmail({
+        to: ticketOwner.email,
+        subject: `Your Tealvue Ticket Has Been Suspended`,
+        text: `Dear ${ticketOwner.name},\n\nYour ticket titled "${ticket.title}" has been suspended for content review.\n\nBest regards,\nTealvue moderation Team`
+      });
+      
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        recipientId: ticketOwner._id,
+        senderId: req.user._id,
+        senderName: req.user.name,
+        senderRole: req.user.role === 'super-admin' ? 'super_admin' : req.user.role,
+        type: 'TICKET_REJECTED', // Using valid enum type for notification trigger updates
+        ticketId: ticket._id,
+        ticketTitle: ticket.title,
+        message: `Your ticket "${ticket.title}" has been suspended for review.`,
+      });
+    }
 
     const populated = await Ticket.findById(ticket._id)
       .populate('user_id', 'name email avatar createdAt role')
@@ -1371,7 +1394,28 @@ const rejectTicket = async (req, res) => {
       note: moderationNote
     });
 
-    // Removed email and notification stubs - no-ops for this step
+    // Email notification dispatch & In-app notifications
+    const ticketOwner = await User.findById(ticket.user_id);
+    if (ticketOwner) {
+      const { sendEmail } = require('../utils/email');
+      await sendEmail({
+        to: ticketOwner.email,
+        subject: `Your Tealvue Ticket Has Been Declined`,
+        text: `Dear ${ticketOwner.name},\n\nYour ticket titled "${ticket.title}" has been declined and rejected.\n\nReason: ${moderationNote}\n\nBest regards,\nTealvue Moderation Team`
+      });
+      
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        recipientId: ticketOwner._id,
+        senderId: req.user._id,
+        senderName: req.user.name,
+        senderRole: req.user.role === 'super-admin' ? 'super_admin' : req.user.role,
+        type: 'TICKET_REJECTED',
+        ticketId: ticket._id,
+        ticketTitle: ticket.title,
+        message: `Your ticket "${ticket.title}" has been declined and rejected.`,
+      });
+    }
 
     const populated = await Ticket.findById(ticket._id)
       .populate('user_id', 'name email avatar createdAt role')
@@ -1841,6 +1885,17 @@ const declineTicket = async (req, res) => {
         note: reason
       }
     });
+
+    // Email notification dispatch & In-app notifications
+    const ticketOwner = await User.findById(ticket.user_id);
+    if (ticketOwner) {
+      const { sendEmail } = require('../utils/email');
+      await sendEmail({
+        to: ticketOwner.email,
+        subject: `Your Tealvue Ticket Has Been Declined`,
+        text: `Dear ${ticketOwner.name},\n\nYour ticket titled "${ticket.title}" has been declined and rejected.\n\nReason: ${reason}\n\nBest regards,\nTealvue Moderation Team`
+      });
+    }
 
     await notify({
       recipientIds: [ticket.user_id],

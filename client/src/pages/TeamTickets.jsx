@@ -224,7 +224,15 @@ const TeamTickets = () => {
                       </div>
                     </td>
                     <td>
-                      {activeTab === 'transferred' ? (
+                      {ticket.approvalStatus === 'suspended' ? (
+                        <span className="badge" style={{ background: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', border: '1px solid rgba(251, 146, 60, 0.2)', fontSize: 11 }}>
+                          Under Review
+                        </span>
+                      ) : ticket.approvalStatus === 'rejected' ? (
+                        <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: 11 }}>
+                          Declined
+                        </span>
+                      ) : activeTab === 'transferred' ? (
                         ticket.allocationStatus === 'transferred_to_admin' ? (
                           <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                             Transferred to Admin
@@ -249,7 +257,7 @@ const TeamTickets = () => {
                       )}
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
-                      {activeTab === 'transferred' ? (
+                      {activeTab === 'transferred' || ticket.approvalStatus === 'suspended' || ticket.approvalStatus === 'rejected' ? (
                         <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>Read-Only</span>
                       ) : (
                         <select

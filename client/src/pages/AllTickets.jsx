@@ -339,7 +339,7 @@ const AllTickets = () => {
                       </td>
                       <td style={{ padding: '13px 16px', textTransform: 'capitalize', fontSize: 12, color: '#acacac' }}>{t.category || 'General'}</td>
                       <td style={{ padding: '13px 16px' }} onClick={(e) => e.stopPropagation()}>
-                        {t.approvalStatus === 'rejected' || t.status === 'closed' ? (
+                        {t.approvalStatus === 'suspended' || t.approvalStatus === 'rejected' || t.status === 'closed' ? (
                           <span style={{ textTransform: 'capitalize', color: '#acacac' }}>{t.priority}</span>
                         ) : (
                           <select
@@ -360,7 +360,11 @@ const AllTickets = () => {
                         )}
                       </td>
                       <td style={{ padding: '13px 16px' }} onClick={(e) => e.stopPropagation()}>
-                        {t.approvalStatus === 'rejected' ? (
+                        {t.approvalStatus === 'suspended' ? (
+                          <span className="badge" style={{ background: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', border: '1px solid rgba(251, 146, 60, 0.2)', fontSize: 11 }}>
+                            Under Review
+                          </span>
+                        ) : t.approvalStatus === 'rejected' ? (
                           <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: 11 }}>
                             Declined
                           </span>
@@ -384,7 +388,7 @@ const AllTickets = () => {
                       </td>
                       <td style={{ padding: '13px 16px', fontSize: 12, color: '#acacac' }}>{t.user_id?.name || '—'}</td>
                       <td style={{ padding: '13px 16px', fontSize: 12, overflow: 'visible' }} onClick={(e) => e.stopPropagation()}>
-                        {t.approvalStatus === 'rejected' || t.status === 'closed' ? (
+                        {t.approvalStatus === 'suspended' || t.approvalStatus === 'rejected' || t.status === 'closed' ? (
                           <span style={{ color: '#fff', fontWeight: 500 }}>{currentTeam ? currentTeam.name : 'Unassigned'}</span>
                         ) : (
                           <div style={{ position: 'relative' }}>

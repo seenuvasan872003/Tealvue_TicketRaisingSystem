@@ -257,7 +257,7 @@ const UserManagement = () => {
                       </td>
                       <td style={{ padding: '14px 20px', textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
-                          {canEdit && !isSelf && (
+                           {canEdit && !isSelf && (
                             <>
                               {!u.isApproved ? (
                                 <div style={{ display: 'inline-flex', gap: 6 }}>
@@ -282,6 +282,29 @@ const UserManagement = () => {
                                 >
                                   {u.isActive ? <XCircle size={11} /> : <CheckCircle size={11} />}
                                   {u.isActive ? 'Suspend' : 'Unsuspend'}
+                                </button>
+                              )}
+                              
+                              {/* Super Admin Delete Option */}
+                              {isSuperAdmin && (
+                                <button
+                                  className="btn btn-danger "
+                                  style={{ padding: '4px 12px', fontSize: 11, height: 28, display: 'inline-flex', alignItems: 'center', gap: 4, background: '#ef4444', color: 'white', border: 'none' }}
+                                  onClick={async () => {
+                                    if (window.confirm(`Are you sure you want to permanently delete user "${u.name}"?`)) {
+                                      try {
+                                        const { deleteUser } = await import('../services/userApi');
+                                        await deleteUser(u._id);
+                                        toast.success('User deleted successfully');
+                                        loadUsers();
+                                        loadStats();
+                                      } catch (err) {
+                                        toast.error(err.response?.data?.message || 'Failed to delete user');
+                                      }
+                                    }
+                                  }}
+                                >
+                                  Delete
                                 </button>
                               )}
                             </>

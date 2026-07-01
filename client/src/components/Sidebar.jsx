@@ -27,6 +27,7 @@ import {
   FileText,
   Clock,
   CheckCircle,
+  Activity,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';

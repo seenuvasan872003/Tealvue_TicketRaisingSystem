@@ -12,7 +12,7 @@ import {
   ArrowLeft, Hash, Calendar, User, Target, Tag,
   MessageSquare, Send, Lock, ShieldCheck, Paperclip,
   Clock, FileText, Plus, Edit3, Save, X, Crown,
-  UserCheck, CheckCircle
+  UserCheck, CheckCircle, XCircle
 } from 'lucide-react';
 import {
   getTicketById,
@@ -872,8 +872,75 @@ const TicketDetails = () => {
             </div>
           )}
 
+          {/* Suspended & Declined Final State Card */}
+          {ticket.approvalStatus === 'suspended' && (
+            <div style={{
+              background: 'rgba(251,146,60,0.04)',
+              border: '1px solid rgba(251,146,60,0.18)',
+              borderRadius: 12,
+              padding: '20px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              gap: 12
+            }}>
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: 'rgba(251,146,60,0.1)',
+                color: '#fb923c',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Clock size={28} />
+              </div>
+              <div>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: 14, color: '#fb923c', fontWeight: 600 }}>Under Review</h4>
+                <p style={{ margin: 0, fontSize: 12, color: '#acacac', lineHeight: 1.5 }}>
+                  This ticket has been suspended for review. No further allocations or state updates are permitted.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {ticket.approvalStatus === 'rejected' && (
+            <div style={{
+              background: 'rgba(239,68,68,0.04)',
+              border: '1px solid rgba(239,68,68,0.18)',
+              borderRadius: 12,
+              padding: '20px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              gap: 12
+            }}>
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: 'rgba(239,68,68,0.1)',
+                color: '#f87171',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <XCircle size={28} />
+              </div>
+              <div>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: 14, color: '#f87171', fontWeight: 600 }}>Rejected & Declined</h4>
+                <p style={{ margin: 0, fontSize: 12, color: '#acacac', lineHeight: 1.5 }}>
+                  This ticket has been declined. No further allocations or state updates are permitted.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Admin Controls — only for standard admin */}
-          {user?.role === 'admin' && ticket.status !== 'closed' && (
+          {user?.role === 'admin' && ticket.status !== 'closed' && ticket.approvalStatus !== 'suspended' && ticket.approvalStatus !== 'rejected' && (
             <div style={card}>
               <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, color: '#e4e4e4' }}>
                 <ShieldCheck size={16} color="var(--color-teal)" /> Admin Controls
@@ -1010,7 +1077,7 @@ const TicketDetails = () => {
           )}
 
           {/* Team Admin Controls — only for own Team Admin */}
-          {user?.role === 'team_admin' && ticket.teamId && ticket.status !== 'closed' && !ticket?._isReadOnlyForTeam && (
+          {user?.role === 'team_admin' && ticket.teamId && ticket.status !== 'closed' && ticket.approvalStatus !== 'suspended' && ticket.approvalStatus !== 'rejected' && !ticket?._isReadOnlyForTeam && (
             <div style={card}>
               <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, color: '#e4e4e4' }}>
                 <ShieldCheck size={16} color="var(--color-teal)" /> Team Allocation
@@ -1039,7 +1106,7 @@ const TicketDetails = () => {
           )}
 
           {/* Team Agent Controls — only for assigned team_user */}
-          {user?.role === 'team_user' && ticket.assignedToUser?._id?.toString() === user?._id?.toString() && ticket.status === 'in-progress' && !ticket?._isReadOnlyForTeam && (
+          {user?.role === 'team_user' && ticket.assignedToUser?._id?.toString() === user?._id?.toString() && ticket.status === 'in-progress' && ticket.approvalStatus !== 'suspended' && ticket.approvalStatus !== 'rejected' && !ticket?._isReadOnlyForTeam && (
             <div style={card}>
               <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, color: '#e4e4e4' }}>
                 <CheckCircle size={16} color="var(--color-success)" /> Resolve Ticket
@@ -1058,7 +1125,9 @@ const TicketDetails = () => {
           {/* Staff Allocation Actions — for Team Admin or assigned Team Agent */}
           {((user?.role === 'team_admin') || 
             (user?.role === 'team_user' && ticket.assignedToUser?._id?.toString() === user?._id?.toString())) && 
-            ticket.status !== 'closed' && (
+            ticket.status !== 'closed' && 
+            ticket.approvalStatus !== 'suspended' && 
+            ticket.approvalStatus !== 'rejected' && (
               <div style={card}>
                 <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, color: '#e4e4e4' }}>
                   <ShieldCheck size={16} color="var(--color-teal)" /> Staff Actions

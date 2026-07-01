@@ -17,6 +17,7 @@ const StatusBadge = ({ status }) => {
     'closed':      { label: 'Closed',      cls: 'badge-closed',   Icon: CheckCircle2 },
     'declined':    { label: 'Declined',    cls: '',               Icon: AlertTriangle, style: { background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' } },
     'rejected':    { label: 'Declined',    cls: '',               Icon: AlertTriangle, style: { background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' } },
+    'suspended':   { label: 'Under Review', cls: '',               Icon: Clock, style: { background: 'rgba(251, 146, 60, 0.08)', color: '#fb923c', border: '1px solid rgba(251, 146, 60, 0.2)' } },
   };
 
   const s = map[status] || { label: status, cls: '', Icon: Circle };

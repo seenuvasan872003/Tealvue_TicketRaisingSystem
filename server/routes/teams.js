@@ -78,4 +78,72 @@ router.put('/:id', protect, requireSuperAdmin, updateTeam);
 // DELETE team - Super Admin only
 router.delete('/:id', protect, requireSuperAdmin, deleteTeam);
 
+// Custom Category routes (Super Admin only)
+const Category = require('../models/Category');
+router.post('/categories', protect, requireSuperAdmin, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ message: 'Category name is required' });
+    const formatted = name.trim().replace(/\b\w/g, l => l.toUpperCase());
+    
+    const exists = await Category.findOne({ name: formatted });
+    if (exists) return res.status(400).json({ message: 'Category already exists' });
+    
+    const cat = new Category({ name: formatted, createdBy: req.user._id });
+    await cat.save();
+    res.status(201).json(cat);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.put('/categories/:oldName', protect, requireSuperAdmin, async (req, res) => {
+  try {
+    const { oldName } = req.params;
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ message: 'Category name is required' });
+    const formatted = name.trim().replace(/\b\w/g, l => l.toUpperCase());
+
+    const cat = await Category.findOne({ name: oldName });
+    if (cat) {
+      cat.name = formatted;
+      await cat.save();
+    } else {
+      // Create if it doesn't exist yet (migrating a legacy category to model)
+      const newCat = new Category({ name: formatted, createdBy: req.user._id });
+      await newCat.save();
+    }
+    
+    // Dynamically update any teams matching oldName category
+    const Team = require('../models/Team');
+    await Team.updateMany(
+      { categories: oldName },
+      { $set: { "categories.$[elem]": formatted } },
+      { arrayFilters: [{ elem: oldName }] }
+    );
+
+    res.json({ message: 'Category updated successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.delete('/categories/:name', protect, requireSuperAdmin, async (req, res) => {
+  try {
+    const { name } = req.params;
+    await Category.deleteOne({ name });
+    
+    // Remove category option from teams
+    const Team = require('../models/Team');
+    await Team.updateMany(
+      { categories: name },
+      { $pull: { categories: name } }
+    );
+    
+    res.json({ message: 'Category deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

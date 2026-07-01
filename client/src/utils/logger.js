@@ -155,16 +155,17 @@ const log = (level, component, fn, message, error = null, meta = {}) => {
   // User Requests: Only show/store the FIRST Login and FIRST Initialized log in the DB per session.
   let isDbMatch = false;
   
-  if (level === 'error' || level === 'warn') {
+  if (level === 'error') {
+    // Error: Send all details for all users (Admin, Super Admin, User, Team Admin, Team User)
+    isDbMatch = true;
+  } else if (level === 'warn') {
+    // Warning: Send all warning events
     isDbMatch = true;
   } else if (meta.action === 'Login Success') {
-    // Only log the first login event in DB per session
-    if (!sessionStorage.getItem('db_logged_in')) {
-      sessionStorage.setItem('db_logged_in', 'true');
-      isDbMatch = true;
-    }
+    // Login: Send all user login events
+    isDbMatch = true;
   } else if (meta.action === 'App Initialization' || message.includes('Initialized') || message.includes('Initializing')) {
-    // Only log the first application initialization in DB per session
+    // Initialized: Only log on the first load of the session (not on every refresh, only when closing/opening browser session)
     if (!sessionStorage.getItem('db_initialized')) {
       sessionStorage.setItem('db_initialized', 'true');
       isDbMatch = true;

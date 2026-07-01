@@ -42,15 +42,7 @@ const Categories = () => {
     }
 
     try {
-      // Create team with custom category dummy to register it in db
-      await API.post('/teams', {
-        name: `${formatted} Dummy Team`,
-        description: `Auto-generated category placeholder for ${formatted}`,
-        categories: [formatted],
-        teamAdminName: `${formatted} Admin`,
-        teamAdminEmail: `${formatted.toLowerCase()}admin@tealvue.com`,
-        teamAdminPassword: 'DummyPassword123'
-      });
+      await API.post('/teams/categories', { name: formatted });
       setCategories([...categories, formatted].sort((a,b)=>a.localeCompare(b)));
       setNewCategory('');
       toast.success(`Category "${formatted}" created successfully`);
@@ -68,12 +60,7 @@ const Categories = () => {
     if (!window.confirm(`Are you sure you want to delete category "${cat}"?`)) return;
 
     try {
-      // Find team containing category and delete it
-      const { data: teams } = await API.get('/teams');
-      const targetTeam = (teams.teams || teams).find(t => t.categories.includes(cat));
-      if (targetTeam) {
-        await API.delete(`/teams/${targetTeam.teamId || targetTeam._id}`);
-      }
+      await API.delete(`/teams/categories/${cat}`);
       setCategories(prev => prev.filter(c => c !== cat));
       toast.success(`Category "${cat}" deleted successfully`);
     } catch (err) {
@@ -97,28 +84,19 @@ const Categories = () => {
     const formatted = trimmed.replace(/\b\w/g, l => l.toUpperCase());
 
     try {
-      const { data: teams } = await API.get('/teams');
-      const targetTeam = (teams.teams || teams).find(t => t.categories.includes(oldVal));
-      if (targetTeam) {
-        await API.put(`/teams/${targetTeam.teamId || targetTeam._id}`, {
-          name: targetTeam.name,
-          description: targetTeam.description,
-          categories: [formatted],
-          isActive: targetTeam.isActive
-        });
-      }
+      await API.put(`/teams/categories/${oldVal}`, { name: formatted });
       setCategories(prev => {
         const updated = [...prev];
         updated[index] = formatted;
         return updated.sort((a,b)=>a.localeCompare(b));
       });
       setEditingIndex(null);
+      setEditingValue('');
       toast.success('Category updated successfully');
     } catch (err) {
       toast.error('Failed to update category');
     }
   };
-
   const defaultCategories = ['General', 'Technical', 'Billing', 'HR', 'Other'];
 
   return (
