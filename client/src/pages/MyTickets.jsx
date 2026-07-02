@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Plus, X, Ticket } from 'lucide-react';
 import { getTickets } from '../services/ticketApi';
 import logger from '../utils/logger';
+import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 
 const MyTickets = () => {
   const navigate = useNavigate();
@@ -183,24 +184,10 @@ const MyTickets = () => {
                     {t.category || 'General'}
                   </td>
                   <td style={{ padding: '13px 16px' }}>
-                    {t.approvalStatus === 'suspended' ? (
-                      <span className="badge" style={{ background: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', border: '1px solid rgba(251, 146, 60, 0.2)' }}>
-                        Under Review
-                      </span>
-                    ) : t.approvalStatus === 'rejected' ? (
-                      <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                        Declined
-                      </span>
-                    ) : (
-                      <span className={`badge badge-${t.status}`}>
-                        {t.status === 'in-progress' ? 'In Progress' : t.status === 'open' ? 'Open' : 'Closed'}
-                      </span>
-                    )}
+                    <StatusBadge status={t.approvalStatus === 'suspended' ? 'suspended' : t.approvalStatus === 'rejected' ? 'rejected' : t.status} />
                   </td>
                   <td style={{ padding: '13px 16px' }}>
-                    <span className={`badge badge-${t.priority}`}>
-                      {t.priority}
-                    </span>
+                    <PriorityBadge priority={t.priority} />
                   </td>
                   <td style={{ padding: '13px 16px', fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
                     {new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}

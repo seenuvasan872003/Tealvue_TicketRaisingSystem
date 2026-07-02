@@ -89,7 +89,7 @@ const register = async (req, res) => {
       return res.status(403).json({ message: 'Not authorised to register' });
     }
 
-    // Public registration is ALWAYS 'user' role, isApproved: true
+    // Public registration is ALWAYS 'user' role,
     const user = await User.create({
       name,
       email,
@@ -100,6 +100,16 @@ const register = async (req, res) => {
     });
 
     const token = generateToken(user._id);
+
+    // Auto-create feature assignment with user role defaults
+    try {
+      const RoleFeature   = require('../models/RoleFeature');
+      const ROLE_DEFAULTS = require('../config/roleDefaults');
+      const defaults = ROLE_DEFAULTS['user'] || ['dashboard'];
+      await RoleFeature.create({ userId: user._id, role: 'user', features: defaults });
+    } catch (rfErr) {
+      console.error('[RoleFeature] Failed to auto-create on register:', rfErr.message);
+    }
 
     res.status(201).json({ token, user: userResponse(user) });
   } catch (err) {

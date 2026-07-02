@@ -80,13 +80,24 @@ const createTeam = async (req, res) => {
     await team.save();
 
     // 4. Log Action
-    const ActivityLog = require('../models/ActivityLog');
+    const ActivityLog  = require('../models/ActivityLog');
+    const RoleFeature  = require('../models/RoleFeature');
+    const ROLE_DEFAULTS = require('../config/roleDefaults');
+
     await ActivityLog.create({
       action: 'TEAM_CREATED',
       teamId: team._id,
       adminId: req.user._id,
       note: `Team "${team.name}" created with Team Admin "${teamAdmin.name}" by super admin: ${req.user.name}`
     });
+
+    // Auto-create feature assignment for new Team Admin
+    try {
+      const defaults = ROLE_DEFAULTS['team_admin'] || ['dashboard'];
+      await RoleFeature.create({ userId: teamAdmin._id, role: 'team_admin', features: defaults });
+    } catch (rfErr) {
+      console.error('[RoleFeature] Failed to auto-create for team admin:', rfErr.message);
+    }
 
     console.log(`[EMAIL] Welcome email with login credentials would be sent to Team Admin: ${teamAdmin.email}`);
 

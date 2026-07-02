@@ -19,6 +19,7 @@ const activityLogSchema = new mongoose.Schema(
         'TICKET_REJECTED',
         'TICKET_RESTORED',
         'USER_CREATED',
+        'FEATURE_UPDATED',
       ],
     },
     ticketId: {

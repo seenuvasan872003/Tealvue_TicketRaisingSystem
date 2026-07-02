@@ -39,6 +39,7 @@ const PerformanceDetails = lazy(() => import('./pages/PerformanceDetails'));
 const Notifications      = lazy(() => import('./pages/Notifications'));
 const Agencies           = lazy(() => import('./pages/Agencies'));
 const AgencyDashboard    = lazy(() => import('./pages/AgencyDashboard'));
+const RolesFeatures      = lazy(() => import('./pages/RolesFeatures'));
 
 const TeamTickets        = lazy(() => import('./pages/TeamTickets'));
 const TeamMembers        = lazy(() => import('./pages/TeamMembers'));
@@ -48,12 +49,20 @@ const TeamUserTickets    = lazy(() => import('./pages/TeamUserTickets'));
 import tealvueLogo from './assets/tealvue1.png';
 
 // ── Role Guard (used INSIDE the shell, not wrapping it) ─────
-const RoleGuard = ({ roles, children }) => {
-  const { user } = useAuth();
-  if (!user || !roles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+const RoleGuard = ({ roles, feature, children }) => {
+  const { user, hasFeature } = useAuth();
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
-  return children;
+  // If user has the feature enabled explicitly, allow access
+  if (feature && hasFeature(feature)) {
+    return children;
+  }
+  // Otherwise fallback to role validation check
+  if (roles && roles.includes(user.role)) {
+    return children;
+  }
+  return <Navigate to="/dashboard" replace />;
 };
 
 // ── App Shell — wraps all authenticated pages ──────────────
@@ -166,9 +175,25 @@ const App = () => (
               }
             />
             <Route path="/tickets/create" element={<CreateTicket />} />
-            <Route path="/tickets/my"     element={<MyTickets />} />
+            <Route path="/tickets/mytickets"     element={<MyTickets />} />
             <Route path="/tickets/states" element={<UserTicketStates />} />
             <Route path="/tickets/all"    element={<AllTickets />} />
+            <Route
+              path="/super-admin/tickets"
+              element={
+                <RoleGuard roles={['super-admin']}>
+                  <AllTickets />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/admin/tickets"
+              element={
+                <RoleGuard roles={['admin', 'super-admin']}>
+                  <AllTickets />
+                </RoleGuard>
+              }
+            />
             <Route path="/tickets/:id"    element={<TicketDetails />} />
             <Route path="/profile"        element={<Profile />} />
             <Route path="/notifications"  element={<Notifications />} />
@@ -185,7 +210,7 @@ const App = () => (
             <Route
               path="/super-admin/create-admin"
               element={
-                <RoleGuard roles={['super-admin']}>
+                <RoleGuard roles={['super-admin']} feature="create_admin">
                   <CreateAdminAccount />
                 </RoleGuard>
               }
@@ -193,7 +218,7 @@ const App = () => (
             <Route
               path="/super-admin/create-user"
               element={
-                <RoleGuard roles={['super-admin']}>
+                <RoleGuard roles={['super-admin']} feature="create_user">
                   <CreateUserAccount />
                 </RoleGuard>
               }
@@ -201,7 +226,7 @@ const App = () => (
             <Route
               path="/admin/users/:uid/activity"
               element={
-                <RoleGuard roles={['admin', 'super-admin']}>
+                <RoleGuard roles={['admin', 'super-admin']} feature="activity_logs">
                   <UserActivity />
                 </RoleGuard>
               }
@@ -209,7 +234,7 @@ const App = () => (
             <Route
               path="/super-admin/teams"
               element={
-                <RoleGuard roles={['super-admin']}>
+                <RoleGuard roles={['super-admin']} feature="teams_management">
                   <Teams />
                 </RoleGuard>
               }
@@ -217,7 +242,7 @@ const App = () => (
             <Route
               path="/admin/teams"
               element={
-                <RoleGuard roles={['admin', 'super-admin']}>
+                <RoleGuard roles={['admin', 'super-admin']} feature="team_dashboard">
                   <TeamDashboard />
                 </RoleGuard>
               }
@@ -225,7 +250,7 @@ const App = () => (
             <Route
               path="/teams/:id/performance"
               element={
-                <RoleGuard roles={['admin', 'super-admin']}>
+                <RoleGuard roles={['admin', 'super-admin']} feature="team_performance">
                   <PerformanceDetails />
                 </RoleGuard>
               }
@@ -233,7 +258,7 @@ const App = () => (
             <Route
               path="/admin/ticket-approvals"
               element={
-                <RoleGuard roles={['admin', 'super-admin']}>
+                <RoleGuard roles={['admin', 'super-admin']} feature="ticket_approval">
                   <TicketApproval />
                 </RoleGuard>
               }
@@ -265,7 +290,7 @@ const App = () => (
             <Route
               path="/logs"
               element={
-                <RoleGuard roles={['admin', 'super-admin']}>
+                <RoleGuard roles={['admin', 'super-admin']} feature="activity_logs">
                   <Logs />
                 </RoleGuard>
               }
@@ -273,7 +298,7 @@ const App = () => (
             <Route
               path="/admin/ticket-logs"
               element={
-                <RoleGuard roles={['admin', 'super-admin']}>
+                <RoleGuard roles={['admin', 'super-admin']} feature="ticket_lifecycle_logs">
                   <TicketLogs />
                 </RoleGuard>
               }
@@ -281,7 +306,7 @@ const App = () => (
             <Route
               path="/super-admin/client-logs"
               element={
-                <RoleGuard roles={['super-admin']}>
+                <RoleGuard roles={['admin', 'super-admin']} feature="client_logs">
                   <ClientLogs />
                 </RoleGuard>
               }
@@ -299,6 +324,14 @@ const App = () => (
               element={
                 <RoleGuard roles={['super-admin']}>
                   <Categories />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/super-admin/roles"
+              element={
+                <RoleGuard roles={['super-admin']} feature="roles_features">
+                  <RolesFeatures />
                 </RoleGuard>
               }
             />

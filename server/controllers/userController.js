@@ -171,13 +171,20 @@ const createAdminAccount = async (req, res) => {
       isActive:   true,
     });
 
-    const ActivityLog = require('../models/ActivityLog');
+    const ActivityLog  = require('../models/ActivityLog');
+    const RoleFeature  = require('../models/RoleFeature');
+    const ROLE_DEFAULTS = require('../config/roleDefaults');
+
     await ActivityLog.create({
       action: 'ADMIN_CREATED',
       userId: user._id,
       adminId: req.user._id,
       note: `${role === 'super-admin' ? 'Super Admin' : 'Admin'} account created for: ${user.name} (${user.email}) by super admin: ${req.user.name}`
     });
+
+    // Auto-create feature assignment with role defaults
+    const defaults = ROLE_DEFAULTS[role] || ['dashboard'];
+    await RoleFeature.create({ userId: user._id, role, features: defaults });
 
     res.status(201).json({
       message: `${role === 'super-admin' ? 'Super Admin' : 'Admin'} account created successfully`,
@@ -300,13 +307,20 @@ const createUserAccount = async (req, res) => {
       isActive: true,
     });
 
-    const ActivityLog = require('../models/ActivityLog');
+    const ActivityLog  = require('../models/ActivityLog');
+    const RoleFeature  = require('../models/RoleFeature');
+    const ROLE_DEFAULTS = require('../config/roleDefaults');
+
     await ActivityLog.create({
-      action: 'ADMIN_CREATED',
+      action: 'USER_CREATED',
       userId: user._id,
       adminId: req.user._id,
       note: `User account created for: ${user.name} (${user.email}) by super admin: ${req.user.name}`
     });
+
+    // Auto-create feature assignment with role defaults
+    const defaults = ROLE_DEFAULTS['user'] || ['dashboard'];
+    await RoleFeature.create({ userId: user._id, role: 'user', features: defaults });
 
     res.status(201).json({
       message: 'User account created successfully',

@@ -297,9 +297,9 @@ const AllTickets = () => {
           <p>Try adjusting your filters.</p>
         </div>
       ) : (
-        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'visible' }}>
-          <div className="table-wrap" style={{ overflow: 'visible' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'hidden' }}>
+          <div className="table-wrap" style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 800 }}>
               <thead>
                 <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--color-border)' }}>
                   <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>#ID</th>

@@ -100,6 +100,7 @@ app.use('/api/users',         require('./routes/users'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/teams',         require('./routes/teams'));
 app.use('/api/logs',          require('./routes/logs'));
+app.use('/api/role-features', require('./routes/roleFeatures'));
 
 // ─── Health Check ─────────────────────────────────────────
 app.get('/', (req, res) =>

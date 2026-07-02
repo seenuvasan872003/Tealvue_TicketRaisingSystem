@@ -5,20 +5,36 @@
 //    isSuperAdmin  — user.role === 'super-admin'
 //    isAdminLevel  — admin OR super-admin
 //    updateProfile — PUT /api/auth/profile (multipart for avatar)
+//    features      — array of enabled feature ids for this user
+//    hasFeature    — (featureId) => boolean
 // ============================================================
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { loginUser, registerUser, fetchProfile, updateProfileApi } from '../services/authApi';
 import logger from '../utils/logger';
+import API from '../services/authApi';
+import { ROLE_DEFAULTS } from '../config/roleDefaults';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user,    setUser]    = useState(null);
-  const [token,   setToken]   = useState(() => localStorage.getItem('tealue_token'));
-  const [loading, setLoading] = useState(true);
+  const [user,     setUser]     = useState(null);
+  const [token,    setToken]    = useState(() => localStorage.getItem('tealue_token'));
+  const [loading,  setLoading]  = useState(true);
+  const [features, setFeatures] = useState([]);
 
-  // ── Restore session on page refresh ───────────────────
+  // ── Fetch user features from API ──────────────────────────
+  const fetchFeatures = async (role) => {
+    try {
+      const res = await API.get('/role-features/me');
+      setFeatures(res.data.features || []);
+    } catch (err) {
+      // Fallback to role defaults if API unreachable
+      setFeatures(ROLE_DEFAULTS[role] || ['dashboard']);
+    }
+  };
+
+  // ── Restore session on page refresh ───────────────────────
   useEffect(() => {
     const restore = async () => {
       if (token) {
@@ -30,6 +46,8 @@ export const AuthProvider = ({ children }) => {
           ]);
           setUser(profileRes.data);
           logger.info('AuthContext', 'restore', `Session restored for user: ${profileRes.data.email} (${profileRes.data.role})`, { action: 'Session Restore Success' });
+          // Fetch features after restoring session
+          await fetchFeatures(profileRes.data.role);
         } catch (err) {
           logger.error('AuthContext', 'restore', 'Session restore failed — token invalid or expired', err, {
             api: '/api/auth/profile', method: 'GET', action: 'Session Restore Failure',
@@ -43,7 +61,7 @@ export const AuthProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Login ──────────────────────────────────────────────
+  // ── Login ──────────────────────────────────────────────────
   const login = async (email, password) => {
     logger.api('AuthContext', 'login', 'POST', '/api/auth/login', 'START');
     try {
@@ -53,6 +71,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('tealue_token', data.token);
       setToken(data.token);
       setUser(data.user);
+      // Fetch features after login
+      await fetchFeatures(data.user.role);
       logger.login(data.user.name, data.user._id, `User ${data.user.name} logged in successfully.`);
       return data.user;
     } catch (err) {
@@ -65,7 +85,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ── Register (public — always 'user' role) ─────────────
+  // ── Register (public — always 'user' role) ─────────────────
   const register = async (name, email, password) => {
     logger.api('AuthContext', 'register', 'POST', '/api/auth/register', 'START');
     try {
@@ -73,6 +93,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('tealue_token', data.token);
       setToken(data.token);
       setUser(data.user);
+      await fetchFeatures(data.user.role);
       logger.info('AuthContext', 'register', `Registration SUCCESS — user: ${data.user.email}`, {
         api: '/api/auth/register', method: 'POST', status: 200, action: 'Register Success',
       });
@@ -87,7 +108,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ── Update own profile (name, department, avatar) ──────
+  // ── Update own profile (name, department, avatar) ──────────
   const updateProfile = async (formData) => {
     logger.api('AuthContext', 'updateProfile', 'PUT', '/api/auth/profile', 'START');
     try {
@@ -107,24 +128,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ── Logout ──────────────────────────────────────────────
+  // ── Logout ──────────────────────────────────────────────────
   const logout = () => {
     logger.info('AuthContext', 'logout', `User logged out${user ? ` — was: ${user.email}` : ''}`, { action: 'Logout' });
     localStorage.removeItem('tealue_token');
     setToken(null);
     setUser(null);
+    setFeatures([]);
   };
 
-  // ── Role helpers ───────────────────────────────────────
+  // ── Role helpers ───────────────────────────────────────────
   const isSuperAdmin  = user?.role === 'super-admin';
   const isAdminLevel  = user?.role === 'admin' || user?.role === 'super-admin';
   const isUser        = user?.role === 'user';
 
+  // ── Feature helper ─────────────────────────────────────────
+  const hasFeature = (featureId) => features.includes(featureId);
+
   return (
     <AuthContext.Provider value={{
-      user, token, loading,
+      user, token, loading, features,
       login, register, logout, updateProfile,
       isSuperAdmin, isAdminLevel, isUser,
+      hasFeature,
     }}>
       {children}
     </AuthContext.Provider>
