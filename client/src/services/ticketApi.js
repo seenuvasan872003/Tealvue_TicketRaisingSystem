@@ -3,6 +3,8 @@
 // ============================================================
 
 import API from './authApi';
+import { callFeatureApi } from './apiResolver';
+import { getFeatureApiPath } from '../config/featureHelpers';
 
 // ── Tickets ────────────────────────────────────────────────
 export const getTickets    = (params) => API.get('/tickets', { params });
@@ -21,13 +23,40 @@ export const deleteTicket = (id)       => API.delete(`/tickets/${id}`);
 export const addInternalNote = (id, data) => API.post(`/tickets/${id}/notes`, data);
 
 // ── Stats ──────────────────────────────────────────────────
-export const getAdminStats = () => API.get('/tickets/stats');
+export const getAdminStats = () => {
+  const role = localStorage.getItem('user_role') || 'user';
+  const apiPath = getFeatureApiPath('activity_logs', role);
+  if (!apiPath) return Promise.reject(new Error('No API path found'));
+  const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+  return API.get(`${relativePath}/stats`);
+};
+
 export const getMyStats    = () => API.get('/tickets/my-stats');
 
-// ── Chart data (Phase 2 backend endpoints) ──────────────────
-export const getGrowthData      = () => API.get('/tickets/growth');
-export const getStatusBreakdown = () => API.get('/tickets/breakdown');
-export const getAdminWorkload   = () => API.get('/tickets/workload');
+// ── Chart data ──────────────────
+export const getGrowthData = () => {
+  const role = localStorage.getItem('user_role') || 'user';
+  const apiPath = getFeatureApiPath('activity_logs', role);
+  if (!apiPath) return Promise.reject(new Error('No API path found'));
+  const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+  return API.get(`${relativePath}/growth`);
+};
+
+export const getStatusBreakdown = () => {
+  const role = localStorage.getItem('user_role') || 'user';
+  const apiPath = getFeatureApiPath('activity_logs', role);
+  if (!apiPath) return Promise.reject(new Error('No API path found'));
+  const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+  return API.get(`${relativePath}/breakdown`);
+};
+
+export const getAdminWorkload = () => {
+  const role = localStorage.getItem('user_role') || 'user';
+  const apiPath = getFeatureApiPath('activity_logs', role);
+  if (!apiPath) return Promise.reject(new Error('No API path found'));
+  const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+  return API.get(`${relativePath}/workload`);
+};
 
 // ── Comments ───────────────────────────────────────────────
 export const getComments = (ticketId) => API.get(`/comments/${ticketId}`);
@@ -40,7 +69,7 @@ export const getTeamById          = (id) => API.get(`/teams/${id}`);
 export const createTeam           = (data) => API.post('/teams', data);
 export const updateTeam           = (id, data) => API.put(`/teams/${id}`, data);
 export const deleteTeam           = (id) => API.delete(`/teams/${id}`);
-export const getTeamsDashboard    = () => API.get('/teams/dashboard');
+export const getTeamsDashboard    = () => callFeatureApi('team_dashboard', null, 'GET');
 export const getTeamMembers       = (teamId) => API.get(`/teams/${teamId}/members`);
 export const addTeamMember        = (teamId, data) => API.post(`/teams/${teamId}/members`, data);
 export const deleteTeamMember     = (teamId, uid) => API.delete(`/teams/${teamId}/members/${uid}`);
@@ -57,7 +86,7 @@ export const updateTicketPriority = (id, priority) => API.put(`/tickets/${id}/pr
 // ── Lifecycle Logs & Time Tracking ────────────────────────
 export const getTicketLogs        = (id) => API.get(`/tickets/${id}/logs`);
 export const getTicketTimeSummary = (id) => API.get(`/tickets/${id}/time-summary`);
-export const getAllTicketLogs     = ()   => API.get('/tickets/logs/all');
+export const getAllTicketLogs     = ()   => callFeatureApi('ticket_lifecycle_logs', null, 'GET');
 
 export const setTicketCategory    = (id, category) => API.put(`/tickets/${id}/set-category`, { category });
 export const declineTicket        = (id, reason) => API.put(`/tickets/${id}/decline`, { reason });

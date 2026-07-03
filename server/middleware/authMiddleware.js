@@ -37,6 +37,17 @@ const protect = async (req, res, next) => {
       return res.status(403).json({ message: 'Account suspended — please contact support' });
     }
 
+    // [CHECK] Security route violations block (24h)
+    if (req.user.securityBlockUntil && req.user.securityBlockUntil > new Date()) {
+      const remainingMs = req.user.securityBlockUntil.getTime() - Date.now();
+      const remainingHours = Math.ceil(remainingMs / (1000 * 60 * 60));
+      return res.status(403).json({
+        message: `Account temporarily blocked due to multiple unauthorized route violations. Try again in ${remainingHours} hours or contact Super Admin to unblock.`,
+        isSecurityBlocked: true,
+        blockedUntil: req.user.securityBlockUntil
+      });
+    }
+
     // [CHECK] Pending approval (admins created by Super Admin start unapproved)
     if (!req.user.isApproved) {
       return res.status(403).json({ message: 'Account pending approval — please wait for Super Admin approval' });

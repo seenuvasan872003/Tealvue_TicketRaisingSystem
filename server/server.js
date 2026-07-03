@@ -29,6 +29,8 @@ dotenv.config();
 
 // [IMPORTANT] DB connection — extracted to config/db.js
 const connectDB = require('./config/db');
+const { protect } = require('./middleware/authMiddleware');
+const { requireRolePrefix } = require('./middleware/requireRolePrefix');
 
 const app = express();
 const server = http.createServer(app);
@@ -100,7 +102,42 @@ app.use('/api/users',         require('./routes/users'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/teams',         require('./routes/teams'));
 app.use('/api/logs',          require('./routes/logs'));
-app.use('/api/role-features', require('./routes/roleFeatures'));
+app.get('/api/role-features/me', protect, require('./controllers/roleFeatureController').getMyFeatures);
+app.post('/api/role-features/violation', protect, require('./controllers/roleFeatureController').logViolation);
+
+// ─── Role-Based Feature API Routes ─────────────────────────
+app.use('/api/super-admin',   protect, requireRolePrefix, require('./routes/superAdmin/createAdmin'));
+app.use('/api/admin',         protect, requireRolePrefix, require('./routes/admin/createAdmin'));
+
+app.use('/api/super-admin',   protect, requireRolePrefix, require('./routes/superAdmin/createUser'));
+app.use('/api/admin',         protect, requireRolePrefix, require('./routes/admin/createUser'));
+app.use('/api/team-admin',    protect, requireRolePrefix, require('./routes/teamAdmin/createUser'));
+
+app.use('/api/super-admin',   protect, requireRolePrefix, require('./routes/superAdmin/allUsers'));
+app.use('/api/admin',         protect, requireRolePrefix, require('./routes/admin/allUsers'));
+
+app.use('/api/super-admin',   protect, requireRolePrefix, require('./routes/superAdmin/tickets'));
+app.use('/api/admin',         protect, requireRolePrefix, require('./routes/admin/tickets'));
+
+app.use('/api/super-admin',   protect, requireRolePrefix, require('./routes/superAdmin/teamDashboard'));
+app.use('/api/admin',         protect, requireRolePrefix, require('./routes/admin/teamDashboard'));
+app.use('/api/team-admin',    protect, requireRolePrefix, require('./routes/teamAdmin/teamDashboard'));
+
+app.use('/api/super-admin',   protect, requireRolePrefix, require('./routes/superAdmin/ticketLogs'));
+app.use('/api/admin',         protect, requireRolePrefix, require('./routes/admin/ticketLogs'));
+app.use('/api/team-admin',    protect, requireRolePrefix, require('./routes/teamAdmin/ticketLogs'));
+app.use('/api/team-user',     protect, requireRolePrefix, require('./routes/teamUser/ticketLogs'));
+
+app.use('/api/super-admin/activity-logs', protect, requireRolePrefix, require('./routes/superAdmin/activityLogs'));
+app.use('/api/admin/activity-logs',       protect, requireRolePrefix, require('./routes/admin/activityLogs'));
+app.use('/api/team-admin/activity-logs',  protect, requireRolePrefix, require('./routes/teamAdmin/activityLogs'));
+
+app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/ticketApproval'));
+app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/roleFeatures'));
+
+app.use('/api/user',                      protect, requireRolePrefix, require('./routes/user/myTickets'));
+app.use('/api/user',                      protect, requireRolePrefix, require('./routes/user/createTicket'));
+app.use('/api/user',                      protect, requireRolePrefix, require('./routes/user/ticketStates'));
 
 // ─── Health Check ─────────────────────────────────────────
 app.get('/', (req, res) =>

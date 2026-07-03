@@ -7,12 +7,14 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createAdminAccount } from '../services/userApi';
+import { callFeatureApi } from '../services/apiResolver';
+import { useAuth } from '../context/AuthContext';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
 
 const CreateAdminAccount = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -114,7 +116,7 @@ const CreateAdminAccount = () => {
     setLoading(true);
     logger.info('CreateAdminAccount', 'handleSubmit', `Creating ${formData.role} account for: ${formData.email}`, { api: '/api/users/create-admin', method: 'POST', action: 'Admin Account Create Start' });
     try {
-      await createAdminAccount(formData);
+      await callFeatureApi('create_admin', user.role, 'POST', formData);
       toast.success(`${formData.role === 'super-admin' ? 'Super Admin' : 'Admin'} account created successfully`);
       logger.info('CreateAdminAccount', 'handleSubmit', `${formData.role} account created for: ${formData.email}`, { api: '/api/users/create-admin', method: 'POST', status: 201, action: 'Admin Account Create Success' });
       setFormData({

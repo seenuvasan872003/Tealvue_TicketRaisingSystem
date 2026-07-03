@@ -68,6 +68,15 @@ const userSchema = new mongoose.Schema(
       trim:    true,
       default: null,
     },
+    // ── Security block fields ─────────────────────────────
+    securityFlags: {
+      type:    Number,
+      default: 0,
+    },
+    securityBlockUntil: {
+      type:    Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

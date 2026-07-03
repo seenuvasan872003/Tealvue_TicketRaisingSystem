@@ -28,13 +28,34 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
+import { getVisibleFeatures } from '../config/featureHelpers';
 import tealvueLogo from '../assets/tealvue1.png';
 import API from '../services/authApi';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
+const ICON_MAP = {
+  'ti-layout-dashboard': LayoutDashboard,
+  'ti-ticket': Ticket,
+  'ti-plus': Plus,
+  'ti-chart-pie': Clock,
+  'ti-clipboard-check': Ticket,
+  'ti-user-shield': UserPlus,
+  'ti-user-plus': UserPlus,
+  'ti-users': Users,
+  'ti-building': ShieldCheck,
+  'ti-shield-check': Layers,
+  'ti-chart-bar': LayoutDashboard,
+  'ti-chart-line': LayoutDashboard,
+  'ti-clipboard-list': Ticket,
+  'ti-circle-check': CheckCircle,
+  'ti-timeline': FileText,
+  'ti-activity': FileText,
+  'ti-terminal': FileText
+};
+
 const Sidebar = ({ isOpen, onClose }) => {
-  const { user, logout, isAdminLevel, isSuperAdmin, hasFeature } = useAuth();
+  const { user, logout, features } = useAuth();
   const navigate = useNavigate();
   const [teamName, setTeamName] = useState('');
 
@@ -59,17 +80,6 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const closeMobile = () => onClose && onClose();
-  
-  const getDashboardLink = () => {
-    if (!user) return '/login';
-    switch (user.role) {
-      case 'super-admin': return '/super-admin/dashboard';
-      case 'admin': return '/admin/dashboard';
-      case 'team_admin': return '/team-admin/dashboard';
-      case 'team_user': return '/team-user/dashboard';
-      default: return '/dashboard';
-    }
-  };
 
   // Role display helpers
   const roleName  = user?.role === 'super-admin' ? 'Super Admin' :
@@ -82,6 +92,17 @@ const Sidebar = ({ isOpen, onClose }) => {
   const roleColor = user?.role === 'super-admin' ? 'var(--color-progress)' :
                     user?.role === 'admin'        ? 'var(--color-teal)' :
                     user?.role === 'team_admin'   ? 'var(--color-teal)' : 'var(--color-text-muted)';
+
+  const visibleItems = getVisibleFeatures(features || [], user?.role || '');
+
+  const grouped = visibleItems.reduce((acc, item) => {
+    if (!acc[item.section]) acc[item.section] = [];
+    acc[item.section].push({
+      ...item,
+      resolvedPath: item.paths[user.role]
+    });
+    return acc;
+  }, {});
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
@@ -173,176 +194,24 @@ const Sidebar = ({ isOpen, onClose }) => {
 
       {/* ── Navigation ───────────────────────────────── */}
       <nav className="sidebar-nav" onClick={closeMobile}>
-        <span className="nav-section-label">Main</span>
-
-        {/* Dashboard — all roles */}
-        {hasFeature('dashboard') && (
-          <NavLink to={getDashboardLink()} className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-            <LayoutDashboard size={16} />
-            Dashboard
-          </NavLink>
-        )}
-
-        {/* ── User Navigation ─────────────────────────── */}
-        {(hasFeature('my_tickets') || hasFeature('create_ticket') || hasFeature('ticket_states') || hasFeature('all_tickets')) && (
-          <>
-            <span className="nav-section-label" style={{ marginTop: 8 }}>Tickets</span>
-            {hasFeature('my_tickets') && (
-              <NavLink to="/tickets/mytickets" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <Ticket size={16} />
-                My Tickets
-              </NavLink>
-            )}
-            {hasFeature('create_ticket') && (
-              <NavLink to="/tickets/create" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <Plus size={16} />
-                Create Ticket
-              </NavLink>
-            )}
-            {hasFeature('ticket_states') && (
-              <NavLink to="/tickets/states" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <Clock size={16} />
-                Show Ticket States
-              </NavLink>
-            )}
-            {hasFeature('all_tickets') && (
-              <NavLink to="/tickets/all" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <Ticket size={16} />
-                All Tickets
-              </NavLink>
-            )}
-          </>
-        )}
-
-        {/* ── Management ────────────────────────────── */}
-        {(hasFeature('all_users') || hasFeature('create_user') || hasFeature('create_admin') || hasFeature('roles_features')) && (
-          <>
-            <span className="nav-section-label" style={{ marginTop: 8 }}>Management</span>
-            {hasFeature('all_users') && (
-              <NavLink to="/admin/users" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <Users size={16} />
-                All Users
-              </NavLink>
-            )}
-            {hasFeature('create_user') && (
-              <NavLink to="/super-admin/create-user" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <UserPlus size={16} />
-                Create User
-              </NavLink>
-            )}
-            {hasFeature('create_admin') && (
-              <NavLink to="/super-admin/create-admin" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <UserPlus size={16} />
-                Create Admin
-              </NavLink>
-            )}
-            {hasFeature('roles_features') && (
-              <NavLink to="/super-admin/roles" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <Layers size={16} />
-                Roles & Features
-              </NavLink>
-            )}
-          </>
-        )}
-        
-        {/* ── Teams ─────────────────────────────────── */}
-        {(hasFeature('team_dashboard') || hasFeature('teams_management')) && (
-          <>
-            <span className="nav-section-label" style={{ marginTop: 8 }}>Teams</span>
-            {hasFeature('team_dashboard') && (
-              <NavLink to="/admin/teams" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <LayoutDashboard size={16} />
-                Team Dashboard
-              </NavLink>
-            )}
-            {hasFeature('teams_management') && (
-              <NavLink to="/super-admin/teams" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <ShieldCheck size={16} />
-                Teams
-              </NavLink>
-            )}
-          </>
-        )}
-
-        {/* ── Ticket Management ─────────────────────── */}
-        {hasFeature('ticket_approval') && (
-          <>
-            <span className="nav-section-label" style={{ marginTop: 8 }}>Ticket Management</span>
-            <NavLink to="/admin/ticket-approvals" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-              <Ticket size={16} />
-              Ticket Approval
-            </NavLink>
-          </>
-        )}
-        
-        {/* ── Team Admin Navigation ───────────────────── */}
-        {(hasFeature('team_tickets') || hasFeature('team_members') || hasFeature('team_performance')) && (
-          <>
-            <span className="nav-section-label" style={{ marginTop: 8 }}>Team Management</span>
-            {hasFeature('team_tickets') && (
-              <NavLink to="/team-admin/tickets" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <Ticket size={16} />
-                Team Tickets
-              </NavLink>
-            )}
-            {hasFeature('team_members') && (
-              <NavLink to="/team-admin/members" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <Users size={16} />
-                Team Members
-              </NavLink>
-            )}
-            {hasFeature('team_performance') && (
-              <NavLink to="/team-admin/performance" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <LayoutDashboard size={16} />
-                Team Performance
-              </NavLink>
-            )}
-          </>
-        )}
-
-        {/* ── Team User (Agent) Navigation ────────────── */}
-        {(hasFeature('assigned_tickets') || hasFeature('finished_tickets')) && (
-          <>
-            <span className="nav-section-label" style={{ marginTop: 8 }}>My Work</span>
-            {hasFeature('assigned_tickets') && (
-              <NavLink to="/team-user/assigned-tickets" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <Ticket size={16} />
-                Assigned Tickets
-              </NavLink>
-            )}
-            {hasFeature('finished_tickets') && (
-              <NavLink to="/team-user/finished-tickets" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <CheckCircle size={16} />
-                Finished Tickets
-              </NavLink>
-            )}
-          </>
-        )}
-
-        {/* ── Combined Monitoring Navigation ────────── */}
-        {(hasFeature('ticket_lifecycle_logs') || hasFeature('activity_logs') || hasFeature('client_logs')) && (
-          <>
-            <span className="nav-section-label" style={{ marginTop: 8 }}>Monitoring</span>
-            {hasFeature('ticket_lifecycle_logs') && (
-              <NavLink to="/admin/ticket-logs" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <FileText size={16} />
-                Ticket Lifecycle Logs
-              </NavLink>
-            )}
-            {hasFeature('activity_logs') && (
-              <NavLink to="/logs" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <FileText size={16} />
-                Activity Logs
-              </NavLink>
-            )}
-            {hasFeature('client_logs') && (
-              <NavLink to="/super-admin/client-logs" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <FileText size={16} />
-                Client Logs
-              </NavLink>
-            )}
-          </>
-        )}
+        {Object.entries(grouped).map(([section, items]) => (
+          <div key={section} style={{ display: 'contents' }}>
+            <span className="nav-section-label" style={{ marginTop: 8 }}>{section}</span>
+            {items.map(item => {
+              const IconComp = ICON_MAP[item.icon] || Ticket;
+              return (
+                <NavLink 
+                  key={item.id} 
+                  to={item.resolvedPath} 
+                  className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+                >
+                  <IconComp size={16} />
+                  {item.label}
+                </NavLink>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* ── Footer — Logout Only ────────── */}

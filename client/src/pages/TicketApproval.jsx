@@ -25,12 +25,16 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import API from '../services/authApi';
+import { callFeatureApi } from '../services/apiResolver';
+import { getFeatureApiPath } from '../config/featureHelpers';
+import { useAuth } from '../context/AuthContext';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import logger from '../utils/logger';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 const TicketApproval = () => {
+  const { user } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [activeTab, setActiveTab] = useState('all'); // all | suspended | rejected
   const [loading, setLoading] = useState(true);
@@ -83,7 +87,7 @@ const TicketApproval = () => {
         startDate,
         endDate
       };
-      const { data } = await API.get('/tickets/all', { params });
+      const { data } = await callFeatureApi('ticket_approval', user?.role, 'GET', null, params);
       setTickets(data.tickets || []);
       setTotal(data.total || 0);
       setPages(data.pages || 1);
@@ -144,18 +148,20 @@ const TicketApproval = () => {
 
   const handleSingleAction = async (id, action, note = '') => {
     try {
+      const apiPath = getFeatureApiPath('ticket_approval', user?.role);
+      const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
       if (action === 'suspend') {
-        const { data } = await API.put(`/tickets/${id}/suspend`, { moderationNote: note });
+        const { data } = await API.put(`${relativePath}/${id}/suspend`, { moderationNote: note });
         toast.success('Ticket suspended successfully');
         setTickets(prev => prev.map(t => t._id === id ? data.ticket : t));
         if (detailTicket && detailTicket._id === id) setDetailTicket(data.ticket);
       } else if (action === 'reject') {
-        const { data } = await API.put(`/tickets/${id}/reject`, { moderationNote: note });
+        const { data } = await API.put(`${relativePath}/${id}/reject`, { moderationNote: note });
         toast.success('Ticket rejected successfully');
         setTickets(prev => prev.map(t => t._id === id ? data.ticket : t));
         if (detailTicket && detailTicket._id === id) setDetailTicket(data.ticket);
       } else if (action === 'restore') {
-        const { data } = await API.put(`/tickets/${id}/restore`);
+        const { data } = await API.put(`${relativePath}/${id}/restore`);
         toast.success('Ticket restored to active flow');
         setTickets(prev => prev.map(t => t._id === id ? data.ticket : t));
         if (detailTicket && detailTicket._id === id) setDetailTicket(data.ticket);
@@ -170,7 +176,9 @@ const TicketApproval = () => {
   const handleBulkAction = async (action, note = '') => {
     if (selectedIds.length === 0) return;
     try {
-      await API.put('/tickets/bulk-moderate', {
+      const apiPath = getFeatureApiPath('ticket_approval', user?.role);
+      const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+      await API.put(`${relativePath}/bulk-moderate`, {
         ids: selectedIds,
         action,
         moderationNote: note

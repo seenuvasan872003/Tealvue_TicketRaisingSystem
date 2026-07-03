@@ -17,6 +17,8 @@ const {
   getUserFeatures,
   updateUserFeatures,
   updateRoleFeatures,
+  unblockUser,
+  logViolation,
 } = require('../controllers/roleFeatureController');
 
 const { protect }         = require('../middleware/authMiddleware');
@@ -31,8 +33,12 @@ router.put('/role/:role',      protect, requireSuperAdmin, updateRoleFeatures);
 // All users features list (super-admin only)
 router.get('/',                protect, requireSuperAdmin, getAllUserFeatures);
 
+// Log frontend route violation (all users)
+router.post('/violation',      protect,                    logViolation);
+
 // Single user features
 router.get('/:userId',         protect, requireSuperAdmin, getUserFeatures);
 router.put('/:userId',         protect, requireSuperAdmin, updateUserFeatures);
+router.put('/unblock/:userId',  protect, requireSuperAdmin, unblockUser);
 
 module.exports = router;

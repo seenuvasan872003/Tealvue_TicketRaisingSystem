@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }) => {
             fetchProfile()
           ]);
           setUser(profileRes.data);
+          localStorage.setItem('user_role', profileRes.data.role);
           logger.info('AuthContext', 'restore', `Session restored for user: ${profileRes.data.email} (${profileRes.data.role})`, { action: 'Session Restore Success' });
           // Fetch features after restoring session
           await fetchFeatures(profileRes.data.role);
@@ -71,6 +72,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('tealue_token', data.token);
       setToken(data.token);
       setUser(data.user);
+      localStorage.setItem('user_role', data.user.role);
       // Fetch features after login
       await fetchFeatures(data.user.role);
       logger.login(data.user.name, data.user._id, `User ${data.user.name} logged in successfully.`);
@@ -93,6 +95,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('tealue_token', data.token);
       setToken(data.token);
       setUser(data.user);
+      localStorage.setItem('user_role', data.user.role);
       await fetchFeatures(data.user.role);
       logger.info('AuthContext', 'register', `Registration SUCCESS — user: ${data.user.email}`, {
         api: '/api/auth/register', method: 'POST', status: 200, action: 'Register Success',
@@ -132,9 +135,23 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     logger.info('AuthContext', 'logout', `User logged out${user ? ` — was: ${user.email}` : ''}`, { action: 'Logout' });
     localStorage.removeItem('tealue_token');
+    localStorage.removeItem('user_role');
     setToken(null);
     setUser(null);
     setFeatures([]);
+  };
+
+  // ── Refresh user from API ───────────────────────────────────
+  const refreshUser = async () => {
+    try {
+      const res = await fetchProfile();
+      setUser(res.data);
+      localStorage.setItem('user_role', res.data.role);
+    } catch (err) {
+      logger.error('AuthContext', 'refreshUser', 'Failed to refresh user', err, {
+        action: 'Refresh User Failure'
+      });
+    }
   };
 
   // ── Role helpers ───────────────────────────────────────────
@@ -148,7 +165,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{
       user, token, loading, features,
-      login, register, logout, updateProfile,
+      login, register, logout, updateProfile, refreshUser,
       isSuperAdmin, isAdminLevel, isUser,
       hasFeature,
     }}>

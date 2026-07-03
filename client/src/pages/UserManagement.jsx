@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllUsers, updateUserStatus, getUserStats } from '../services/userApi';
 import { useAuth } from '../context/AuthContext';
-import { ShieldCheck, User, Search, RefreshCw, XCircle, CheckCircle, Crown, Eye, Users, ShieldAlert, Check } from 'lucide-react';
+import { ShieldCheck, User, Search, RefreshCw, XCircle, CheckCircle, Crown, Eye, Users, ShieldAlert, Check, Unlock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
 
@@ -240,7 +240,11 @@ const UserManagement = () => {
                       <td style={{ padding: '14px 20px' }}>{getRoleBadge(u.role)}</td>
                       <td style={{ padding: '14px 20px' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
-                          {!u.isApproved ? (
+                          {u.securityFlags >= 5 || (u.securityBlockUntil && new Date(u.securityBlockUntil) > new Date()) ? (
+                            <span className="status-blocked" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '4px 8px', borderRadius: 6, fontSize: 11, border: '1px solid rgba(239,68,68,0.2)' }}>
+                              <ShieldAlert size={11} /> Blocked
+                            </span>
+                          ) : !u.isApproved ? (
                             <span className="status-pending" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(251,146,60,0.1)', color: '#fb923c', padding: '4px 8px', borderRadius: 6, fontSize: 11, border: '1px solid rgba(251,146,60,0.2)' }}>
                               <RefreshCw size={11} className="spin" /> Pending Approval
                             </span>
@@ -285,27 +289,49 @@ const UserManagement = () => {
                                 </button>
                               )}
                               
-                              {/* Super Admin Delete Option */}
+                              {/* Super Admin Actions */}
                               {isSuperAdmin && (
-                                <button
-                                  className="btn btn-danger "
-                                  style={{ padding: '4px 12px', fontSize: 11, height: 28, display: 'inline-flex', alignItems: 'center', gap: 4, background: '#ef4444', color: 'white', border: 'none' }}
-                                  onClick={async () => {
-                                    if (window.confirm(`Are you sure you want to permanently delete user "${u.name}"?`)) {
-                                      try {
-                                        const { deleteUser } = await import('../services/userApi');
-                                        await deleteUser(u._id);
-                                        toast.success('User deleted successfully');
-                                        loadUsers();
-                                        loadStats();
-                                      } catch (err) {
-                                        toast.error(err.response?.data?.message || 'Failed to delete user');
+                                <>
+                                  {(u.securityFlags >= 5 || (u.securityBlockUntil && new Date(u.securityBlockUntil) > new Date())) && (
+                                    <button
+                                      className="btn btn-secondary"
+                                      style={{ padding: '4px 12px', fontSize: 11, height: 28, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}
+                                      onClick={async () => {
+                                        if (window.confirm(`Are you sure you want to unblock user "${u.name}"?`)) {
+                                          try {
+                                            const { unblockUser } = await import('../services/userApi');
+                                            await unblockUser(u._id);
+                                            toast.success('User unblocked successfully');
+                                            loadUsers();
+                                          } catch (err) {
+                                            toast.error(err.response?.data?.message || 'Failed to unblock user');
+                                          }
+                                        }
+                                      }}
+                                    >
+                                      <Unlock size={11} /> Unblock
+                                    </button>
+                                  )}
+                                  <button
+                                    className="btn btn-danger"
+                                    style={{ padding: '4px 12px', fontSize: 11, height: 28, display: 'inline-flex', alignItems: 'center', gap: 4, background: '#ef4444', color: 'white', border: 'none' }}
+                                    onClick={async () => {
+                                      if (window.confirm(`Are you sure you want to permanently delete user "${u.name}"?`)) {
+                                        try {
+                                          const { deleteUser } = await import('../services/userApi');
+                                          await deleteUser(u._id);
+                                          toast.success('User deleted successfully');
+                                          loadUsers();
+                                          loadStats();
+                                        } catch (err) {
+                                          toast.error(err.response?.data?.message || 'Failed to delete user');
+                                        }
                                       }
-                                    }
-                                  }}
-                                >
-                                  Delete
-                                </button>
+                                    }}
+                                  >
+                                    Delete
+                                  </button>
+                                </>
                               )}
                             </>
                           )}

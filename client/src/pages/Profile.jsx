@@ -201,6 +201,11 @@ const Profile = () => {
                       Suspended
                     </span>
                   )}
+                  {user?.securityFlags > 0 && (
+                    <span className="badge" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)', fontSize: 11 }}>
+                      Security Flags: {user.securityFlags}/5
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 6 }}>
                   <Mail size={11} style={{ marginRight: 5, verticalAlign: 'middle' }} />

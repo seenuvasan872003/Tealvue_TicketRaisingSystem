@@ -1,8 +1,13 @@
+// ============================================================
+//  server/routes/logs.js  —  Activity & Client Logs
+//  Layer 3 feature guards: requireFeature('feature_id')
+// ============================================================
+
 const express = require('express');
 const router = express.Router();
 const { getActivityLogs, saveClientLog, getClientLogs } = require('../controllers/logController');
 const { protect } = require('../middleware/authMiddleware');
-const { requireAdmin } = require('../middleware/roleMiddleware');
+const { requireFeature } = require('../middleware/roleMiddleware');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
@@ -27,9 +32,15 @@ const requireAdminOrSuperAdmin = (req, res, next) => {
   return res.status(403).json({ message: 'Access denied — admin or super-admin only' });
 };
 
-router.get('/', protect, requireAdminOrSuperAdmin, getActivityLogs);
+// Activity logs — feature: activity_logs
+router.get('/', protect, requireFeature('activity_logs'), getActivityLogs);
+
+// Client log posting — no feature guard (public-ish, linked to user if logged in)
 router.post('/client', optionalAuth, saveClientLog);
-router.get('/client', protect, requireAdminOrSuperAdmin, getClientLogs);
+
+// Client logs view — feature: client_logs
+router.get('/client', protect, requireFeature('client_logs'), getClientLogs);
 
 module.exports = router;
+
 

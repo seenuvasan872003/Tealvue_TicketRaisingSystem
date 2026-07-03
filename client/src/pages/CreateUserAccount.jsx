@@ -9,10 +9,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
-import API from '../services/authApi';
+import { callFeatureApi } from '../services/apiResolver';
+import { useAuth } from '../context/AuthContext';
 import logger from '../utils/logger';
 
 const CreateUserAccount = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -113,7 +115,7 @@ const CreateUserAccount = () => {
     setLoading(true);
     logger.info('CreateUserAccount', 'handleSubmit', `Creating user account for: ${formData.email}`, { api: '/api/users/create-user', method: 'POST', action: 'User Account Create Start' });
     try {
-      await API.post('/users/create-user', {
+      await callFeatureApi('create_user', user.role, 'POST', {
         name: formData.name,
         email: formData.email,
         password: formData.password,

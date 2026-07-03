@@ -2,6 +2,7 @@
 //  server/routes/tickets.js  —  Ticket Routes
 // ============================================================
 //  Includes Phase 1 + Phase 2 chart endpoints
+//  Layer 3 feature guards: requireFeature('feature_id')
 // ============================================================
 
 const express = require('express');
@@ -40,25 +41,25 @@ const {
 } = require('../controllers/ticketController');
 
 const { protect }             = require('../middleware/authMiddleware');
-const { requireAdmin, requireSuperAdmin, requireAdminOrSuperAdmin } = require('../middleware/roleMiddleware');
+const { requireAdmin, requireSuperAdmin, requireAdminOrSuperAdmin, requireFeature } = require('../middleware/roleMiddleware');
 const { uploadTicketFiles }   = require('../config/multer');
 
 const { ticketValidator } = require('../middleware/validationMiddleware');
 
 // ── Named stat/chart routes — MUST come before /:id ──────
-router.get('/stats',     protect, requireAdmin,      getStats);
-router.get('/my-stats',  protect,                    getMyStats);
-router.get('/growth',    protect, requireAdmin,      getGrowthData);
-router.get('/breakdown', protect, requireAdmin,      getStatusBreakdown);
-router.get('/workload',  protect, requireAdmin, getAdminWorkload);
-router.get('/logs/all',  protect, requireAdmin, getAllTicketLogs);
+router.get('/stats',     protect, requireFeature('activity_logs'),            getStats);
+router.get('/my-stats',  protect,                                                            getMyStats);
+router.get('/growth',    protect, requireFeature('activity_logs'),            getGrowthData);
+router.get('/breakdown', protect, requireFeature('activity_logs'),            getStatusBreakdown);
+router.get('/workload',  protect, requireFeature('activity_logs'),            getAdminWorkload);
+router.get('/logs/all',  protect, requireFeature('ticket_lifecycle_logs'),    getAllTicketLogs);
 
 // ── Content Moderation routes ─────────────────────────────
-router.get('/all', protect, requireSuperAdmin, getAllTicketsAdmin);
-router.put('/bulk-moderate', protect, requireSuperAdmin, bulkModerateTickets);
-router.put('/:id/suspend', protect, requireSuperAdmin, suspendTicket);
-router.put('/:id/reject', protect, requireSuperAdmin, rejectTicket);
-router.put('/:id/restore', protect, requireAdminOrSuperAdmin, restoreTicket);
+router.get('/all',           protect, requireFeature('all_tickets'),  getAllTicketsAdmin);
+router.put('/bulk-moderate', protect, requireFeature('all_tickets'),  bulkModerateTickets);
+router.put('/:id/suspend',   protect, requireFeature('all_tickets'),  suspendTicket);
+router.put('/:id/reject',    protect, requireFeature('all_tickets'),  rejectTicket);
+router.put('/:id/restore',   protect, requireFeature('all_tickets'),  restoreTicket);
 
 // ── CRUD ──────────────────────────────────────────────────
 router.get('/',    protect, getTickets);
@@ -86,3 +87,4 @@ router.delete('/:id', protect, deleteTicket);
 router.post('/:id/notes', protect, requireAdmin, addInternalNote);
 
 module.exports = router;
+

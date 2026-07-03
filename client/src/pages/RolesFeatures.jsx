@@ -17,6 +17,7 @@ import FeatureChecklist from '../components/FeatureChecklist';
 import { useAuth } from '../context/AuthContext';
 import { FEATURES } from '../config/featureList';
 import { ROLE_DEFAULTS } from '../config/roleDefaults';
+import { getFeatureApiPath } from '../config/featureHelpers';
 
 const TOTAL_FEATURES = FEATURES.length;
 
@@ -152,7 +153,10 @@ const RoleSection = ({ role, users, currentUserId, onSaved }) => {
     setBulkLoading(true);
     try {
       const defaults = ROLE_DEFAULTS[role] || ['dashboard'];
-      await API.put(`/role-features/role/${role}`, { features: defaults });
+      const activeRole = localStorage.getItem('user_role') || 'super-admin';
+      const apiPath = getFeatureApiPath('roles_features', activeRole);
+      const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+      await API.put(`${relativePath}/role/${role}`, { features: defaults });
       toast.success(`All ${meta.label} accounts reset to defaults!`);
       // Notify parent to refetch
       onSaved && onSaved(role, defaults);
@@ -213,7 +217,9 @@ const RolesFeatures = () => {
     const fetchAll = async () => {
       setLoading(true);
       try {
-        const res = await API.get('/role-features');
+        const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+        const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+        const res = await API.get(relativePath);
         setAllUsers(res.data || []);
       } catch (err) {
         toast.error('Failed to load user features');

@@ -49,15 +49,17 @@ const sanitizeText = (str) => {
 
 // Build safe user response object
 const userResponse = (user) => ({
-  _id:        user._id,
-  name:       user.name,
-  email:      user.email,
-  role:       user.role,
-  isApproved: user.isApproved,
-  isActive:   user.isActive,
-  avatar:     user.avatar,
-  department: user.department,
-  createdAt:  user.createdAt,
+  _id:                user._id,
+  name:               user.name,
+  email:              user.email,
+  role:               user.role,
+  isApproved:         user.isApproved,
+  isActive:           user.isActive,
+  avatar:             user.avatar,
+  department:         user.department,
+  securityFlags:      user.securityFlags || 0,
+  securityBlockUntil: user.securityBlockUntil || null,
+  createdAt:          user.createdAt,
 });
 
 // ── Register ──────────────────────────────────────────────

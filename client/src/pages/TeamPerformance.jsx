@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getMyTeam, getTeamPerformance } from '../services/ticketApi';
+import { getMyTeam, getTeamPerformance, getTeams } from '../services/ticketApi';
 import { toast } from 'react-toastify';
+import { useAuth } from '../context/AuthContext';
 import {
   TrendingUp,
   CheckCircle2,
@@ -13,25 +14,54 @@ import {
 import logger from '../utils/logger';
 
 const TeamPerformance = () => {
+  const { user } = useAuth();
+  const [teams, setTeams] = useState([]);
   const [team, setTeam] = useState(null);
   const [performance, setPerformance] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadPerformanceData = async () => {
+  const loadPerformanceData = async (selectedTeamId = null) => {
     logger.info('TeamPerformance', 'loadPerformanceData', 'Loading team performance data', { action: 'Team Performance Load Start' });
     try {
       setLoading(true);
-      const teamRes = await getMyTeam();
-      setTeam(teamRes.data);
+      let activeTeamId = selectedTeamId;
+      let activeTeam = team;
 
-      const perfRes = await getTeamPerformance(teamRes.data._id);
-      setPerformance(perfRes.data);
-      logger.info('TeamPerformance', 'loadPerformanceData', `Performance data loaded for team: ${teamRes.data.name}`, {
-        api: `/api/teams/${teamRes.data._id}/performance`, method: 'GET', action: 'Team Performance Load Success',
-      });
+      if (user?.role === 'super-admin') {
+        const teamsRes = await getTeams();
+        const allTeams = teamsRes.data || [];
+        setTeams(allTeams);
+
+        if (allTeams.length > 0) {
+          if (!activeTeamId) {
+            activeTeam = allTeams[0];
+            activeTeamId = allTeams[0]._id;
+          } else {
+            activeTeam = allTeams.find(t => t._id === activeTeamId) || allTeams[0];
+          }
+          setTeam(activeTeam);
+        } else {
+          setTeam(null);
+          setPerformance(null);
+          return;
+        }
+      } else {
+        const teamRes = await getMyTeam();
+        activeTeam = teamRes.data;
+        activeTeamId = teamRes.data._id;
+        setTeam(activeTeam);
+      }
+
+      if (activeTeamId) {
+        const perfRes = await getTeamPerformance(activeTeamId);
+        setPerformance(perfRes.data);
+        logger.info('TeamPerformance', 'loadPerformanceData', `Performance data loaded for team: ${activeTeam.name}`, {
+          api: `/api/teams/${activeTeamId}/performance`, method: 'GET', action: 'Team Performance Load Success',
+        });
+      }
     } catch (err) {
       logger.error('TeamPerformance', 'loadPerformanceData', 'Failed to load team performance analytics', err, {
-        api: '/api/teams/mine', method: 'GET', action: 'Team Performance Load Failure',
+        action: 'Team Performance Load Failure',
       });
       console.error(err);
       toast.error('Failed to load team performance analytics');
@@ -42,12 +72,29 @@ const TeamPerformance = () => {
 
   useEffect(() => {
     loadPerformanceData();
-  }, []);
+  }, [user]);
 
   if (loading && !performance) {
     return (
       <div style={{ padding: 60, textAlign: 'center' }}>
         <div className="spinner" />
+      </div>
+    );
+  }
+
+  if (!loading && !team) {
+    return (
+      <div className="page-body fade-in">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Team Performance</h1>
+            <p className="page-subtitle">No teams found in the system.</p>
+          </div>
+        </div>
+        <div className="card empty-state" style={{ padding: 40, textAlign: 'center' }}>
+          <h3>No teams created yet</h3>
+          <p>Please create a team first to view performance analytics.</p>
+        </div>
       </div>
     );
   }
@@ -59,11 +106,26 @@ const TeamPerformance = () => {
 
   return (
     <div className="page-body fade-in">
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1 className="page-title">Team Performance</h1>
           <p className="page-subtitle">Analyze ticket resolution rates, agent workloads, and performance trends for <strong>{team?.name}</strong>.</p>
         </div>
+        {user?.role === 'super-admin' && teams.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, color: 'var(--color-text-muted)', fontWeight: 500 }}>Select Team:</span>
+            <select
+              value={team?._id || ''}
+              onChange={(e) => loadPerformanceData(e.target.value)}
+              className="select"
+              style={{ width: 200, padding: '6px 12px', fontSize: 13, height: 36 }}
+            >
+              {teams.map(t => (
+                <option key={t._id} value={t._id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Summary Cards */}

@@ -13,6 +13,8 @@ import { Check, X, RotateCcw, Save, AlertCircle, CheckCircle, XCircle } from 'lu
 import { FEATURES }       from '../config/featureList';
 import { ROLE_DEFAULTS }  from '../config/roleDefaults';
 import API from '../services/authApi';
+import { useAuth } from '../context/AuthContext';
+import { getFeatureApiPath } from '../config/featureHelpers';
 
 // Group ALL features by category
 const ALL_GROUPED = (() => {
@@ -27,6 +29,7 @@ const ALL_GROUPED = (() => {
 const TOTAL_FEATURES = FEATURES.length;
 
 const FeatureChecklist = ({ userId, role, features: savedFeatures, onSaved, onClose, isSelf }) => {
+  const { user: currentUser } = useAuth();
   const [local,  setLocal]  = useState([...(savedFeatures || [])]);
   const [saving, setSaving] = useState(false);
 
@@ -41,7 +44,8 @@ const FeatureChecklist = ({ userId, role, features: savedFeatures, onSaved, onCl
 
   // ── Diff badges ────────────────────────────────────────────
   const added   = useMemo(() => local.filter(f => !(savedFeatures || []).includes(f)), [local, savedFeatures]);
-  const removed = useMemo(() => (savedFeatures || []).filter(f => !local.includes(f)), [local, savedFeatures]);
+  const textFeatures = savedFeatures || [];
+  const removed = useMemo(() => textFeatures.filter(f => !local.includes(f)), [local, textFeatures]);
 
   // Get default features for this user's role that are locked/immutable
   const defaultFeatures = useMemo(() => {
@@ -86,7 +90,9 @@ const FeatureChecklist = ({ userId, role, features: savedFeatures, onSaved, onCl
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await API.put(`/role-features/${userId}`, { features: local });
+      const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+      const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+      const res = await API.put(`${relativePath}/${userId}`, { features: local });
       toast.success('Features updated successfully!');
       onSaved && onSaved(res.data.features);
     } catch (err) {

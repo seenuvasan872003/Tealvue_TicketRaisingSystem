@@ -36,7 +36,7 @@ const getMyFeatures = async (req, res) => {
 const getAllUserFeatures = async (req, res) => {
   try {
     const users = await User.find({ isActive: true })
-      .select('_id name email role avatar')
+      .select('_id name email role avatar securityFlags securityBlockUntil')
       .sort({ role: 1, name: 1 });
 
     const featureDocs = await RoleFeature.find({
@@ -57,6 +57,8 @@ const getAllUserFeatures = async (req, res) => {
         avatar:      user.avatar,
         features,
         lastUpdated: doc?.updatedAt || null,
+        securityFlags: user.securityFlags || 0,
+        securityBlockUntil: user.securityBlockUntil || null,
       };
     });
 
@@ -167,10 +169,94 @@ const updateRoleFeatures = async (req, res) => {
   }
 };
 
+// ── Unblock User account (super-admin) ───────────────────
+const unblockUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.securityFlags = 0;
+    user.securityBlockUntil = null;
+    await user.save();
+
+    await ActivityLog.create({
+      action:  'FEATURE_UPDATED',
+      userId:  user._id,
+      adminId: req.user._id,
+      note:    `Security block cleared and flags reset to 0 for ${user.name} by ${req.user.name}`,
+    });
+
+    res.json({ message: 'User security flags cleared and account unblocked successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Log frontend route violation ─────────────────────────────
+const logViolation = async (req, res) => {
+  try {
+    const { featureId, route } = req.body;
+    
+    const User = require('../models/User');
+    const ClientLog = require('../models/ClientLog');
+    
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    let isBlocked = false;
+    let blockUntilDate = null;
+    let newFlagsCount = 0;
+    
+    user.securityFlags = (user.securityFlags || 0) + 1;
+    newFlagsCount = user.securityFlags;
+    if (user.securityFlags >= 5) {
+      isBlocked = true;
+      blockUntilDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      user.securityBlockUntil = blockUntilDate;
+    }
+    await user.save();
+    
+    const message = `Unauthorized Frontend Route Access Attempt on feature: '${featureId}'. User flags count: ${newFlagsCount}/5.${isBlocked ? ' USER BLOCKED FOR 24 HOURS.' : ''}`;
+    
+    const formatTimestamp = () => {
+      const now = new Date();
+      const dd   = String(now.getDate()).padStart(2, '0');
+      const mm   = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const hrs  = now.getHours();
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const ampm = hrs >= 12 ? 'PM' : 'AM';
+      const h12  = hrs % 12 || 12;
+      return `${dd}-${mm}-${yyyy} ${String(h12).padStart(2, '0')}:${mins} ${ampm}`;
+    };
+    
+    await ClientLog.create({
+      level: 'error',
+      timestamp: formatTimestamp(),
+      file: 'client/src/App.jsx',
+      component: 'Frontend RoleGuard',
+      function: 'logViolation',
+      api: 'Frontend Route',
+      method: 'GET',
+      status: '403',
+      message: message,
+      route: route || 'unknown',
+      action: 'FRONTEND_FEATURE_VIOLATION',
+      userId: req.user._id,
+    });
+    
+    res.json({ flags: newFlagsCount, isBlocked });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   getMyFeatures,
   getAllUserFeatures,
   getUserFeatures,
   updateUserFeatures,
   updateRoleFeatures,
+  unblockUser,
+  logViolation,
 };

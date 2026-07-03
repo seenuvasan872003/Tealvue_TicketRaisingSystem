@@ -1,17 +1,11 @@
 // ============================================================
 //  client/src/routes/ProtectedRoute.jsx  —  Route Guards
 // ============================================================
-//  EXPORTS:
-//    ProtectedRoute    — any logged-in user (redirect to /login if not)
-//    AdminRoute        — admin OR super-admin (redirect to /dashboard if user)
-//    SuperAdminRoute   — super-admin only (redirect to /dashboard if admin/user)
-// ============================================================
 
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import logger from '../utils/logger';
+import FEATURES from '../config/featureList';
 
-// ── Loading spinner ────────────────────────────────────────
 const LoadingScreen = () => (
   <div style={{
     minHeight: '100vh',
@@ -24,24 +18,49 @@ const LoadingScreen = () => (
   </div>
 );
 
-const ProtectedRoute = ({ children, roles }) => {
-  const { user, loading } = useAuth();
+const ProtectedRoute = ({ children, featureId, pathRole }) => {
+  const { user, features, loading } = useAuth();
+
   if (loading) return <LoadingScreen />;
+
   if (!user) {
-    logger.warn('ProtectedRoute', 'ProtectedRoute', 'Access denied — no authenticated user, redirecting to /login', {
-      action: 'Protected Route Guard — Unauthenticated',
-    });
     return <Navigate to="/login" replace />;
   }
-  if (roles && !roles.includes(user.role)) {
-    logger.warn('ProtectedRoute', 'ProtectedRoute', `Access denied — user role "${user.role}" not in allowed roles [${roles.join(', ')}]`, {
-      action: 'Protected Route Guard — Insufficient Role',
-    });
-    return <Navigate to="/dashboard" replace />;
+
+  // Normalize super-admin matching format
+  const normalizedUserRole = user.role === 'super-admin' ? 'super-admin' : user.role;
+  const normalizedPathRole = pathRole === 'super-admin' ? 'super-admin' : pathRole;
+
+  if (normalizedPathRole && normalizedUserRole !== normalizedPathRole) {
+    return (
+      <Navigate
+        to="/access-denied"
+        state={{ reason: 'WRONG_ROLE', featureId }}
+        replace
+      />
+    );
   }
-  logger.info('ProtectedRoute', 'ProtectedRoute', `Route access granted — user: ${user.email} | role: ${user.role}`, {
-    action: 'Protected Route Guard — Access Granted',
-  });
+
+  if (!featureId) {
+    return children;
+  }
+
+  const feature = FEATURES.find(f => f.id === featureId);
+
+  if (!feature) {
+    return <Navigate to="/access-denied" replace />;
+  }
+
+  if (!features.includes(featureId)) {
+    return (
+      <Navigate
+        to="/access-denied"
+        state={{ reason: 'FEATURE_NOT_ASSIGNED', featureId }}
+        replace
+      />
+    );
+  }
+
   return children;
 };
 
