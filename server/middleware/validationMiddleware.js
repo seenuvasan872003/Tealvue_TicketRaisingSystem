@@ -3,12 +3,14 @@ const sanitizeHtml = require('sanitize-html');
 
 const runValidation = (req, res, next) => {
   const errors = validationResult(req);
+  // for store error in database
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array().map(e => ({ field: e.path, message: e.msg })) });
   }
   next();
 };
 
+//register validation
 const registerValidator = [
   body('name')
     .trim()

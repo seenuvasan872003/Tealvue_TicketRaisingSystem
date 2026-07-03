@@ -20,6 +20,8 @@ const Login        = lazy(() => import('./pages/Login'));
 const Register     = lazy(() => import('./pages/Register'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
 const Profile      = lazy(() => import('./pages/Profile'));
+const TicketDetails = lazy(() => import('./pages/TicketDetails'));
+const PerformanceDetails = lazy(() => import('./pages/PerformanceDetails'));
 
 // ── App Shell — wraps all authenticated pages ──────────────
 const AppShell = () => {
@@ -119,6 +121,8 @@ const App = () => {
             <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
               <Route index element={<DashboardRouter />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/tickets/:id" element={<TicketDetails />} />
+              <Route path="/teams/:id/performance" element={<PerformanceDetails />} />
               {dynamicRoutes}
             </Route>
 

@@ -187,7 +187,7 @@ const updateProfile = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     // Only allow updating personal fields
-    let { name, department } = req.body;
+    let { name, department, password } = req.body;
     name       = sanitizeText(name);
     department = sanitizeText(department);
 
@@ -198,6 +198,12 @@ const updateProfile = async (req, res) => {
       user.name = name;
     }
     if (department !== undefined) user.department = department || null;
+
+    if (password) {
+      const pwError = validatePassword(password);
+      if (pwError) return res.status(400).json({ message: pwError });
+      user.password = password;
+    }
 
     // Handle avatar uploaded via multer (if present in this request)
     if (req.file) {

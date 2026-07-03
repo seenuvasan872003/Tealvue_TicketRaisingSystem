@@ -169,7 +169,6 @@ const Profile = () => {
                 ) : (
                   <div className="avatar-initials">{user?.name?.[0]?.toUpperCase()}</div>
                 )}
-                {(user?.role === 'admin' || user?.role === 'super-admin') && (
                   <>
                     <button
                       type="button"
@@ -187,7 +186,6 @@ const Profile = () => {
                       onChange={handleAvatarPick}
                     />
                   </>
-                )}
               </div>
 
               <div>
@@ -227,7 +225,6 @@ const Profile = () => {
                 onChange={(e) => { setName(e.target.value); setNameErr(''); }}
                 placeholder="Your name"
                 maxLength={50}
-                disabled={user?.role !== 'admin' && user?.role !== 'super-admin'}
               />
               {nameErr && <div className="form-error">{nameErr}</div>}
             </div>
@@ -245,7 +242,6 @@ const Profile = () => {
                 onChange={(e) => setDepartment(e.target.value)}
                 placeholder="e.g. Engineering, Support"
                 maxLength={80}
-                disabled={user?.role !== 'admin' && user?.role !== 'super-admin'}
               />
             </div>
 
@@ -265,17 +261,15 @@ const Profile = () => {
             </div>
 
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-              {(user?.role === 'admin' || user?.role === 'super-admin') && (
-                <button
-                  id="profile-save"
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={saving}
-                >
-                  <Save size={14} />
-                  {saving ? 'Saving…' : 'Save Changes'}
-                </button>
-              )}
+              <button
+                id="profile-save"
+                type="submit"
+                className="btn btn-primary"
+                disabled={saving}
+              >
+                <Save size={14} />
+                {saving ? 'Saving…' : 'Save Changes'}
+              </button>
               {user?.role === 'user' && (
                 <button type="button" className="btn btn-primary" onClick={() => navigate('/tickets/create')}>
                   <Plus size={14} /> New Ticket

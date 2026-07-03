@@ -1,14 +1,16 @@
+// Check User is assigned the Feature
 const RoleFeature = require('../models/RoleFeature');
 const User = require('../models/User');
 const ClientLog = require('../models/ClientLog');
 
 const requireFeature = (featureId) => {
+  // this function is used to check if the user has the required feature
   return async (req, res, next) => {
     try {
       const roleFeature = await RoleFeature.findOne({
         userId: req.user._id
       });
-
+      // No features assigned
       if (!roleFeature) {
         return res.status(403).json({
           success: false,
@@ -17,6 +19,7 @@ const requireFeature = (featureId) => {
         });
       }
 
+      // Check if feature is assigned
       if (!roleFeature.features.includes(featureId)) {
         // Enforce flag & logging system on violation
         const user = await User.findById(req.user._id);
@@ -35,6 +38,7 @@ const requireFeature = (featureId) => {
           await user.save();
         }
 
+        // Format Timestamp
         const formatTimestamp = () => {
           const now = new Date();
           const dd   = String(now.getDate()).padStart(2, '0');
@@ -47,8 +51,10 @@ const requireFeature = (featureId) => {
           return `${dd}-${mm}-${yyyy} ${String(h12).padStart(2, '0')}:${mins} ${ampm}`;
         };
 
+        // Define log message
         const message = `Unauthorized API Access Attempt on feature: '${featureId}'. User flags count: ${newFlagsCount}/5.${isBlocked ? ' USER BLOCKED FOR 24 HOURS.' : ''}`;
 
+        // add log to client logs
         await ClientLog.create({
           level: 'error',
           timestamp: formatTimestamp(),
@@ -64,6 +70,7 @@ const requireFeature = (featureId) => {
           userId: req.user._id,
         });
 
+        // Send error response
         return res.status(403).json({
           success: false,
           code: 'FEATURE_NOT_ASSIGNED',
@@ -76,6 +83,7 @@ const requireFeature = (featureId) => {
         });
       }
 
+      //move to next middleware
       next();
     } catch (err) {
       console.error('requireFeature middleware error:', err);

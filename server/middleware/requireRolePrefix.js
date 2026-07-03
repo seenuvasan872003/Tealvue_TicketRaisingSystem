@@ -1,3 +1,4 @@
+// Check Prefix belongs to Role
 const ROLE_PREFIX = {
   super_admin: '/api/super-admin',
   admin:       '/api/admin',
@@ -14,6 +15,7 @@ const requireRolePrefix = (req, res, next) => {
   const allowed = ROLE_PREFIX[role];
   const actual  = req.originalUrl;
 
+  // Check if role is allowed
   if (!allowed) {
     return res.status(403).json({
       success: false,
@@ -22,6 +24,7 @@ const requireRolePrefix = (req, res, next) => {
     });
   }
 
+  // Check if URL starts with the allowed prefix
   if (!actual.startsWith(allowed)) {
     return res.status(403).json({
       success: false,
@@ -30,6 +33,7 @@ const requireRolePrefix = (req, res, next) => {
     });
   }
 
+  // Move to the next middleware or route handler
   next();
 };
 

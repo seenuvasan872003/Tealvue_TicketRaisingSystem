@@ -9,7 +9,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import {
   Search, ChevronDown, ChevronUp, Crown, ShieldCheck,
-  User, Users, RefreshCw, Layers, Filter, AlertCircle,
+  User, Users, RefreshCw, Layers, Filter, AlertCircle, ShieldAlert, Unlock
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import API from '../services/authApi';
@@ -59,6 +59,8 @@ const UserAvatar = ({ user }) => {
 const UserCard = ({ userRecord, currentUserId, onSaved }) => {
   const [expanded, setExpanded] = useState(false);
   const [localFeatures, setLocalFeatures] = useState(userRecord.features || []);
+  const [unblocking, setUnblocking] = useState(false);
+  const [flags, setFlags] = useState(userRecord.securityFlags || 0);
 
   const meta         = ROLE_META[userRecord.role] || ROLE_META['user'];
   const enabledCount = localFeatures.length;          // out of ALL 20 features
@@ -70,6 +72,24 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
   const handleSaved = (newFeatures) => {
     setLocalFeatures(newFeatures);
     onSaved && onSaved(userRecord.userId, newFeatures);
+  };
+
+  const handleUnblock = async () => {
+    if (!window.confirm(`Clear security flags for ${userRecord.name}?`)) return;
+    setUnblocking(true);
+    try {
+      const activeRole = localStorage.getItem('user_role') || 'super-admin';
+      const apiPath = getFeatureApiPath('roles_features', activeRole);
+      const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+      
+      await API.put(`${relativePath}/unblock/${userRecord.userId}`);
+      toast.success('Security flags cleared successfully');
+      setFlags(0);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to clear security flags');
+    } finally {
+      setUnblocking(false);
+    }
   };
 
   return (
@@ -85,18 +105,45 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
           <UserAvatar user={userRecord} />
 
           <div className="flex-1 overflow-hidden min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-bold text-[var(--color-text)] text-[14px] truncate">
                 {userRecord.name}
               </span>
               {userRecord.userId === currentUserId && (
                 <span className="bg-[rgba(20,184,166,0.15)] text-[var(--color-teal)] border border-[rgba(20,184,166,0.3)] rounded-[20px] px-2 py-[1px] text-[10px] font-bold shrink-0">YOU</span>
               )}
+              {flags >= 5 && (
+                <span className="status-blocked" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '4px 8px', borderRadius: 6, fontSize: 11, border: '1px solid rgba(239,68,68,0.2)' }}>
+                  <ShieldAlert size={11} /> Blocked
+                </span>
+              )}
+              {flags > 0 && flags < 5 && (
+                <span className="status-blocked" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '4px 8px', borderRadius: 6, fontSize: 11, border: '1px solid rgba(239,68,68,0.2)' }}>
+                  <ShieldAlert size={11} /> Flags: {flags}
+                </span>
+              )}
             </div>
-            <div className="text-[12px] text-[var(--color-text-muted)] mt-[2px] truncate">
-              {userRecord.email}
+            <div className="flex items-center gap-3 mt-[2px]">
+              <div className="text-[12px] text-[var(--color-text-muted)] truncate">
+                {userRecord.email}
+              </div>
             </div>
           </div>
+
+          {/* Clear Flags Button - placed between Name/Email and Progress Bar on desktop */}
+          {flags > 0 && (
+            <div className="mt-2 sm:mt-0 sm:mr-2 flex shrink-0">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ padding: '4px 12px', fontSize: 11, height: 28, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)', cursor: 'pointer', zIndex: 10 }}
+                onClick={(e) => { e.stopPropagation(); handleUnblock(); }}
+                disabled={unblocking}
+              >
+                <Unlock size={11} /> {unblocking ? 'Clearing...' : 'Clear Flags'}
+              </button>
+            </div>
+          )}
 
           {/* Chevron always on the right of row 1 */}
           <div className="sm:hidden text-[var(--color-text-muted)] shrink-0">

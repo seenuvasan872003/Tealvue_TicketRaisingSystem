@@ -6,6 +6,7 @@ const requirePathOwnership = (featureId) => {
     const feature     = FEATURES.find(f => f.id === featureId);
     const requestPath = req.originalUrl.split('?')[0];
 
+    // Check if feature exists
     if (!feature) {
       return res.status(403).json({
         success: false,
@@ -14,11 +15,14 @@ const requirePathOwnership = (featureId) => {
       });
     }
 
+    
+    // Check if Role is Assigned the Feature
     let allowedApiPath = feature.apiPaths[role];
     if (!allowedApiPath && role === 'super-admin') {
       allowedApiPath = feature.apiPaths['super_admin'];
     }
 
+    //reject for no paths found for role
     if (!allowedApiPath) {
       return res.status(403).json({
         success: false,
@@ -27,6 +31,7 @@ const requirePathOwnership = (featureId) => {
       });
     }
 
+    // reject for wrong paths for roles
     if (!requestPath.startsWith(allowedApiPath)) {
       return res.status(403).json({
         success: false,
@@ -35,6 +40,7 @@ const requirePathOwnership = (featureId) => {
       });
     }
 
+    // allow the request to proceed
     next();
   };
 };
