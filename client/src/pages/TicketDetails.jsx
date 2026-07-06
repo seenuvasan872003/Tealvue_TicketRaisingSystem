@@ -556,7 +556,7 @@ const TicketDetails = () => {
         <ArrowLeft size={14} /> Back to tickets
       </button>
 
-      <div className="ticket-details-grid grid gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5 items-start w-full max-w-full">
 
         {/* ── Left column: ticket body + comments */}
         <div className="flex flex-col gap-4">

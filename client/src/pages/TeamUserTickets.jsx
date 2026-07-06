@@ -193,16 +193,16 @@ const TeamUserTickets = () => {
       {/* Tickets List */}
       <div className="card p-0 overflow-hidden">
         <div className="table-wrap">
-          <table className="w-full border-collapse text-[13px] min-w-[800px]">
+          <table className="w-full border-collapse text-[13px] min-w-[950px]">
             <thead>
               <tr>
                 <th className="w-[80px]">ID</th>
                 <th className="w-[220px] min-w-[220px]">Ticket Title</th>
                 <th className="w-[100px]">Category</th>
                 <th className="w-[100px]">Priority</th>
-                <th className="w-[120px]">Due Date</th>
+                <th className="w-[150px]">Due Date</th>
                 <th className="w-[120px]">Status</th>
-                <th className="w-[150px]">Action</th>
+                <th className="w-[230px]">Action</th>
               </tr>
             </thead>
             <tbody>
