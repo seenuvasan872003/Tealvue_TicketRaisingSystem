@@ -302,6 +302,20 @@ export const FEATURES = [
   },
 
   {
+    id:       'manage_categories',
+    label:    'Manage Categories',
+    section:  'MANAGEMENT',
+    icon:     'ti-tags',
+    roles:    ['super-admin'],
+    paths: {
+      'super-admin': '/super-admin/categories'
+    },
+    apiPaths: {
+      'super-admin': '/api/teams/categories'
+    }
+  },
+
+  {
     id:       'team_dashboard',
     label:    'Team Dashboard',
     section:  'TEAMS',

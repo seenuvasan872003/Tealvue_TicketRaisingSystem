@@ -157,6 +157,9 @@ const PAGE_MAP = {
     user:        lazy(() => import('../pages/ClientLogs')),
     team_admin:  lazy(() => import('../pages/ClientLogs')),
     team_user:   lazy(() => import('../pages/ClientLogs'))
+  },
+  manage_categories: {
+    'super-admin': lazy(() => import('../pages/Categories'))
   }
 };
 

@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, BellOff } from 'lucide-react';
+import { Bell, BellOff, X } from 'lucide-react';
 import { notificationApi } from '../services/notificationApi';
 import logger from '../utils/logger';
 
@@ -145,23 +145,22 @@ const NotificationBell = () => {
           {/* Header row */}
           <div className="notif-header">
             <span>Notifications {unreadCount > 0 && `(${unreadCount})`}</span>
-            {unreadCount > 0 && (
+            <div className="flex gap-3 items-center">
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllRead}
+                  className="bg-transparent border-none text-[11px] text-[#d3a73c] cursor-pointer p-0 font-medium outline-none"
+                >
+                  Mark all read
+                </button>
+              )}
               <button
-                onClick={handleMarkAllRead}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '11px',
-                  color: '#d3a73c',
-                  cursor: 'pointer',
-                  padding: 0,
-                  fontWeight: 500,
-                  outline: 'none',
-                }}
+                className="notif-close-mobile bg-transparent border-none text-[#acacac] cursor-pointer p-0 flex items-center"
+                onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
               >
-                Mark all read
+                <X size={16} />
               </button>
-            )}
+            </div>
           </div>
 
           {/* List container */}
@@ -170,11 +169,11 @@ const NotificationBell = () => {
               <div className="notif-empty">Loading...</div>
             ) : notifications.length === 0 ? (
               /* Empty state */
-              <div className="notif-empty" style={{ padding: '32px 16px', textAlign: 'center' }}>
-                <div style={{ color: '#2d2d2d', fontSize: '32px', marginBottom: '8px' }}>
-                  <BellOff size={32} color="#2d2d2d" style={{ margin: '0 auto' }} />
+              <div className="notif-empty py-8 px-4 text-center">
+                <div className="text-[#2d2d2d] text-3xl mb-2">
+                  <BellOff size={32} color="#2d2d2d" className="mx-auto" />
                 </div>
-                <div style={{ color: '#555', fontSize: '13px' }}>
+                <div className="text-[#555] text-[13px]">
                   No notifications yet
                 </div>
               </div>
@@ -183,40 +182,28 @@ const NotificationBell = () => {
                 /* Notification item */
                 <div
                   key={n._id}
-                  className={`notif-item ${!n.isRead ? 'unread' : ''}`}
+                  className={`notif-item flex gap-[10px] items-start ${!n.isRead ? 'unread border-l-2 border-[#d3a73c]' : 'border-l-2 border-transparent'}`}
                   onClick={() => handleItemClick(n)}
-                  style={{
-                    display: 'flex',
-                    gap: '10px',
-                    alignItems: 'flex-start',
-                    borderLeft: n.isRead ? '2px solid transparent' : '2px solid #d3a73c',
-                  }}
                 >
                   {/* Left: color dot */}
                   <div
-                    style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      backgroundColor: typeColorMap[n.type] || '#666',
-                      marginTop: '3px',
-                      flexShrink: 0,
-                    }}
+                    className="w-3 h-3 rounded-full mt-[3px] shrink-0"
+                    style={{ backgroundColor: typeColorMap[n.type] || '#666' }}
                   />
 
                   {/* Middle: text and metadata */}
-                  <div style={{ flex: 1 }}>
-                    <div className="notif-item-msg" style={{ fontSize: '12px', color: '#e4e4e4', lineHeight: 1.5, wordBreak: 'break-word' }}>
+                  <div className="flex-1">
+                    <div className="notif-item-msg text-xs text-[#e4e4e4] leading-relaxed break-words">
                       {n.message}
                     </div>
-                    <div className="notif-item-time" style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                    <div className="notif-item-time text-[11px] text-[#666] mt-1">
                       by {n.senderName || 'System'} · {relativeTime(n.createdAt)}
                     </div>
                   </div>
 
                   {/* Right: unread dot */}
                   {!n.isRead && (
-                    <div className="notif-dot" style={{ backgroundColor: '#d3a73c', flexShrink: 0 }} />
+                    <div className="notif-dot bg-[#d3a73c] shrink-0" />
                   )}
                 </div>
               ))
@@ -224,29 +211,13 @@ const NotificationBell = () => {
           </div>
 
           {/* Footer */}
-          <div
-            style={{
-              padding: '10px 16px',
-              textAlign: 'center',
-              borderTop: '0.5px solid #2d2d2d',
-              background: '#111',
-            }}
-          >
+          <div className="px-4 py-2.5 text-center border-t border-[#2d2d2d] bg-[#111]">
             <button
               onClick={() => {
                 navigate('/notifications');
                 setIsOpen(false);
               }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#d3a73c',
-                fontSize: '12px',
-                cursor: 'pointer',
-                fontWeight: 500,
-                padding: 0,
-                outline: 'none',
-              }}
+              className="bg-transparent border-none text-[#d3a73c] text-xs cursor-pointer font-medium p-0 outline-none"
             >
               View all notifications
             </button>

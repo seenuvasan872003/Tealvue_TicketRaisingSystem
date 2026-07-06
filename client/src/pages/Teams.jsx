@@ -250,14 +250,15 @@ const Teams = () => {
 
   if (loading && teams.length === 0) {
     return (
-      <div style={{ padding: 60, textAlign: 'center' }}>
+      <div className="p-[60px] text-center">
         <div className="spinner" />
       </div>
     );
   }
 
   return (
-    <div className="page-body fade-in">
+    <>
+      <div className="page-body fade-in">
       <div className="page-header">
         <div>
           <h1 className="page-title">Team Management</h1>
@@ -269,7 +270,7 @@ const Teams = () => {
       </div>
 
       {/* Stats row */}
-      <div className="stat-grid" style={{ marginBottom: 28 }}>
+      <div className="stat-grid mb-7">
         <div className="stat-card teal">
           <div className="stat-label">Total Teams</div>
           <div className="stat-value">{totalTeams}</div>
@@ -284,24 +285,24 @@ const Teams = () => {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card p-0 overflow-hidden">
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Team Name</th>
-                <th>Team Admin</th>
-                <th>Categories</th>
-                <th>Members Count</th>
-                <th>Status</th>
-                <th>Tickets Handled</th>
-                <th>Actions</th>
+                <th className="min-w-[200px]">Team Name</th>
+                <th className="min-w-[260px]">Team Admin</th>
+                <th className="min-w-[200px]">Categories</th>
+                <th className="min-w-[140px]">Members Count</th>
+                <th className="min-w-[120px]">Status</th>
+                <th className="min-w-[140px]">Tickets Handled</th>
+                <th className="min-w-[100px]">Actions</th>
               </tr>
             </thead>
             <tbody>
               {teams.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: 24, color: 'var(--color-text-muted)' }}>
+                  <td colSpan="7" className="text-center p-6 text-[var(--color-text-muted)]">
                     No teams found.
                   </td>
                 </tr>
@@ -309,21 +310,21 @@ const Teams = () => {
                 teams.map((team) => (
                   <tr key={team.teamId}>
                     <td>
-                      <div style={{ fontWeight: 600, color: '#fff' }}>{team.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>{team.description || 'No description'}</div>
+                      <div className="font-semibold text-white">{team.name}</div>
+                      <div className="text-[11px] text-[var(--color-text-muted)]">{team.description || 'No description'}</div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <Shield size={12} className="text-teal" style={{ color: 'var(--color-teal)' }} />
-                          <span style={{ fontWeight: 600 }}>{team.teamAdmin?.name || 'Unassigned'}</span>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-[6px]">
+                          <Shield size={12} className="text-[var(--color-teal)]" />
+                          <span className="font-semibold">{team.teamAdmin?.name || 'Unassigned'}</span>
                         </div>
                         {team.teamAdmin?.email && (
-                          <div style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <div className="text-[11px] text-[var(--color-text-muted)] flex flex-col gap-0.5">
                             <div>Email: {team.teamAdmin.email}</div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div className="flex items-center gap-[6px]">
                               <span>Password:</span>
-                              <span style={{ color: '#eac253', fontFamily: 'monospace' }}>
+                              <span className="text-[#eac253] font-mono">
                                 {team._showPw ? (team.teamAdminPassword || 'password123') : '••••••••'}
                               </span>
                               <button
@@ -332,7 +333,7 @@ const Teams = () => {
                                   e.stopPropagation();
                                   setTeams(prev => prev.map(t => t.teamId === team.teamId ? { ...t, _showPw: !t._showPw } : t));
                                 }}
-                                style={{ background: 'none', border: 'none', padding: 0, color: '#888', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
+                                className="bg-transparent border-none p-0 text-[#888] cursor-pointer inline-flex items-center"
                               >
                                 {team._showPw ? <EyeOff size={12} /> : <Eye size={12} />}
                               </button>
@@ -342,17 +343,11 @@ const Teams = () => {
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                      <div className="flex gap-1 flex-wrap">
                         {team.categories.map((cat, idx) => (
                           <span
                             key={idx}
-                            style={{
-                              padding: '2px 8px',
-                              fontSize: 10,
-                              borderRadius: 4,
-                              background: 'var(--color-border)',
-                              color: 'var(--color-text)',
-                            }}
+                            className="py-0.5 px-2 text-[10px] rounded bg-[var(--color-border)] text-[var(--color-text)]"
                           >
                             {cat}
                           </span>
@@ -360,52 +355,41 @@ const Teams = () => {
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Users size={14} style={{ color: 'var(--color-text-muted)' }} />
+                      <div className="flex items-center gap-[6px]">
+                        <Users size={14} className="text-[var(--color-text-muted)]" />
                         <span>{team.membersCount || 0} agents</span>
                       </div>
                     </td>
                     <td>
                       <button
                         onClick={() => handleToggleStatus(team)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          fontSize: 12,
-                          color: team.isActive ? 'var(--color-success)' : 'var(--color-error)',
-                        }}
+                        className={`bg-transparent border-none cursor-pointer flex items-center gap-[6px] text-xs ${team.isActive ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}`}
                       >
                         {team.isActive ? (
                           <>
-                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-success)' }} />
+                            <span className="w-2 h-2 rounded-full bg-[var(--color-success)]" />
                             Active
                           </>
                         ) : (
                           <>
-                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-error)' }} />
+                            <span className="w-2 h-2 rounded-full bg-[var(--color-error)]" />
                             Inactive
                           </>
                         )}
                       </button>
                     </td>
-                    <td style={{ fontWeight: 600 }}>{team.total}</td>
+                    <td className="font-semibold">{team.total}</td>
                     <td>
-                      <div style={{ display: 'flex', gap: 12 }}>
+                      <div className="flex gap-3">
                         <button
-                          className="btn btn-ghost"
-                          style={{ padding: 6 }}
+                          className="btn btn-ghost p-1.5"
                           onClick={() => openEditModal(team)}
                           title="Edit"
                         >
                           <Edit size={14} />
                         </button>
                         <button
-                          className="btn btn-ghost"
-                          style={{ padding: 6, color: 'var(--color-error)' }}
+                          className="btn btn-ghost p-1.5 text-[var(--color-error)]"
                           onClick={() => handleDelete(team.teamId)}
                           title="Delete"
                         >
@@ -421,19 +405,21 @@ const Teams = () => {
         </div>
       </div>
 
+      </div>
+
       {/* Add / Edit Modal */}
       {showModal && (
         <div className="modal-backdrop">
-          <div className="modal-content" style={{ maxWidth: 540, height: 650, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div className="modal-header" style={{ flexShrink: 0, padding: '20px 28px 16px 28px', borderBottom: '1px solid var(--color-border)' }}>
-              <h3 style={{ margin: 0 }}>{editingTeam ? 'Edit Team Details' : 'Add New Support Team'}</h3>
+          <div className="modal-content max-w-[540px] h-[650px] max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="modal-header shrink-0 pt-5 px-7 pb-4 border-b border-[var(--color-border)]">
+              <h3 className="m-0">{editingTeam ? 'Edit Team Details' : 'Add New Support Team'}</h3>
               <button onClick={() => setShowModal(false)} className="modal-close">
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-              <div className="modal-body" style={{ overflowY: 'auto', flex: 1, padding: '24px 28px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <form onSubmit={handleSave} className="flex flex-col flex-1 overflow-hidden">
+              <div className="modal-body overflow-y-auto flex-1 py-6 px-7">
+                <div className="flex flex-col gap-4">
                   <div className="form-group">
                     <label>Team Name *</label>
                     <input
@@ -444,7 +430,7 @@ const Teams = () => {
                       placeholder="e.g. Technical Support Team"
                       required
                     />
-                    {errors.name && <span style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>{errors.name}</span>}
+                    {errors.name && <span className="text-xs text-[#f87171] mt-1">{errors.name}</span>}
                   </div>
 
                   <div className="form-group">
@@ -456,34 +442,33 @@ const Teams = () => {
                       onChange={(e) => handleFieldChange('description', e.target.value)}
                       placeholder="Describe this team's primary role..."
                     />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>
-                      <span>{errors.description && <span style={{ color: '#f87171' }}>{errors.description}</span>}</span>
+                    <div className="flex justify-between text-[11px] text-[var(--color-text-muted)] mt-1">
+                      <span>{errors.description && <span className="text-[#f87171]">{errors.description}</span>}</span>
                       <span>{description.length}/500</span>
                     </div>
                   </div>
 
                   <div className="form-group">
                     <label>Auto-Allocation Support Categories *</label>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6, marginBottom: 12 }}>
+                    <div className="flex gap-2 flex-wrap mt-1.5 mb-3">
                       {categoryOptions.map((cat) => {
                         const isSelected = categories.includes(cat);
                         const isSuperAdminUser = window.localStorage.getItem('token') && JSON.parse(atob(window.localStorage.getItem('token').split('.')[1])).role === 'super-admin';
                         const defaultCategories = ['General', 'Technical', 'Billing', 'HR', 'Other'];
                         const isDeletable = isSuperAdminUser && !defaultCategories.includes(cat);
                         return (
-                          <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: 2, background: isSelected ? 'var(--color-teal-dark)' : 'var(--color-surface)', border: isSelected ? '1px solid var(--color-teal)' : '1px solid var(--color-border)', borderRadius: 6, paddingRight: isDeletable ? 4 : 0 }}>
+                          <div 
+                            key={cat} 
+                            className={`flex items-center gap-0.5 rounded-md ${isDeletable ? 'pr-1' : 'pr-0'}`} 
+                            style={{ 
+                              background: isSelected ? 'var(--color-teal-dark)' : 'var(--color-surface)', 
+                              border: isSelected ? '1px solid var(--color-teal)' : '1px solid var(--color-border)' 
+                            }}
+                          >
                             <button
                               type="button"
                               onClick={() => handleCategoryToggle(cat)}
-                              style={{
-                                padding: '6px 12px',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#fff',
-                                cursor: 'pointer',
-                                fontSize: 12,
-                                transition: 'all 0.2s',
-                              }}
+                              className="py-1.5 px-3 bg-transparent border-none text-white cursor-pointer text-xs transition-all duration-200"
                             >
                               {cat}
                             </button>
@@ -503,15 +488,7 @@ const Teams = () => {
                                     }
                                   }
                                 }}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: '#f87171',
-                                  cursor: 'pointer',
-                                  padding: '2px 6px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                }}
+                                className="bg-transparent border-none text-[#f87171] cursor-pointer py-0.5 px-1.5 flex items-center"
                                 title="Delete Category"
                               >
                                 <X size={12} />
@@ -523,21 +500,13 @@ const Teams = () => {
                     </div>
 
                     {/* Add Custom Category Input */}
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
+                    <div className="flex gap-2 items-center mt-2">
                       <input
                         type="text"
                         placeholder="Enter new custom category..."
                         value={customCategory}
                         onChange={(e) => setCustomCategory(e.target.value)}
-                        style={{
-                          flex: 1,
-                          padding: '6px 10px',
-                          borderRadius: 6,
-                          border: '1px solid var(--color-border)',
-                          background: 'var(--color-surface)',
-                          color: '#fff',
-                          fontSize: 12,
-                        }}
+                        className="flex-1 py-1.5 px-2.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-white text-xs"
                       />
                       <button
                         type="button"
@@ -554,16 +523,7 @@ const Teams = () => {
                           setCustomCategory('');
                           toast.success(`Category "${capitalized}" added and selected`);
                         }}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: 6,
-                          border: '1px solid var(--color-teal)',
-                          background: 'rgba(20,160,125,0.1)',
-                          color: 'var(--color-teal)',
-                          cursor: 'pointer',
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
+                        className="py-1.5 px-3 rounded-md border border-[var(--color-teal)] bg-[rgba(20,160,125,0.1)] text-[var(--color-teal)] cursor-pointer text-xs font-semibold"
                       >
                         Add Custom
                       </button>
@@ -572,11 +532,11 @@ const Teams = () => {
 
                   {/* Only show Team Admin creation fields for New Team */}
                   {!editingTeam && (
-                    <div style={{ padding: 14, background: '#222', borderRadius: 8, border: '1px solid #333', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <h4 style={{ margin: 0, fontSize: 13, color: 'var(--color-teal)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div className="p-3.5 bg-[#222] rounded-lg border border-[#333] flex flex-col gap-3">
+                      <h4 className="m-0 text-[13px] text-[var(--color-teal)] flex items-center gap-[6px]">
                         <Shield size={14} /> Create Team Admin Account
                       </h4>
-                      <p style={{ fontSize: 11, color: 'var(--color-text-muted)', margin: 0 }}>This creates the admin user who will manage and allocate this team's tickets.</p>
+                      <p className="text-[11px] text-[var(--color-text-muted)] m-0">This creates the admin user who will manage and allocate this team's tickets.</p>
                       
                       <div className="form-group">
                         <label>Admin Name *</label>
@@ -588,7 +548,7 @@ const Teams = () => {
                           placeholder="e.g. John Doe"
                           required
                         />
-                        {errors.adminName && <span style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{errors.adminName}</span>}
+                        {errors.adminName && <span className="text-[11px] text-[#f87171] mt-1">{errors.adminName}</span>}
                       </div>
 
                       <div className="form-group">
@@ -601,47 +561,42 @@ const Teams = () => {
                           placeholder="e.g. techadmin@tealvue.com"
                           required
                         />
-                        {errors.adminEmail && <span style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{errors.adminEmail}</span>}
+                        {errors.adminEmail && <span className="text-[11px] text-[#f87171] mt-1">{errors.adminEmail}</span>}
                       </div>
 
                       <div className="form-group">
                         <label>Password *</label>
-                        <div style={{ position: 'relative' }}>
+                        <div className="relative">
                           <input
                             type={showAdminPassword ? "text" : "password"}
-                            className="form-control"
+                            className="form-control w-full pr-10"
                             value={adminPassword}
                             onChange={(e) => handleFieldChange('adminPassword', e.target.value)}
                             placeholder="At least 6 characters"
-                            style={{ width: '100%', paddingRight: 40 }}
                             required
                           />
                           <button
                             type="button"
                             onClick={() => setShowAdminPassword(!showAdminPassword)}
-                            style={{
-                              position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                              background: 'none', border: 'none', color: '#888', cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none text-[#888] cursor-pointer flex items-center justify-center"
                           >
                             {showAdminPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                           </button>
                         </div>
-                        {errors.adminPassword && <span style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{errors.adminPassword}</span>}
-                        <div style={{ marginTop: 6, padding: 8, background: '#161b22', borderRadius: 6, border: '1px solid var(--color-border)' }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }}>Password Requirements:</div>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 8px', fontSize: 10 }}>
-                            <span style={{ color: adminPassword.length >= 8 ? 'var(--color-teal)' : '#acacac' }}>
+                        {errors.adminPassword && <span className="text-[11px] text-[#f87171] mt-1">{errors.adminPassword}</span>}
+                        <div className="mt-1.5 p-2 bg-[#161b22] rounded-md border border-[var(--color-border)]">
+                          <div className="text-[11px] font-semibold text-[var(--color-text-muted)] mb-1">Password Requirements:</div>
+                          <div className="grid grid-cols-2 gap-y-1 gap-x-2 text-[10px]">
+                            <span className={adminPassword.length >= 8 ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
                               {adminPassword.length >= 8 ? '✓' : '•'} Min 8 chars
                             </span>
-                            <span style={{ color: /[A-Z]/.test(adminPassword) ? 'var(--color-teal)' : '#acacac' }}>
+                            <span className={/[A-Z]/.test(adminPassword) ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
                               {/[A-Z]/.test(adminPassword) ? '✓' : '•'} 1 Uppercase (A-Z)
                             </span>
-                            <span style={{ color: /[0-9]/.test(adminPassword) ? 'var(--color-teal)' : '#acacac' }}>
+                            <span className={/[0-9]/.test(adminPassword) ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
                               {/[0-9]/.test(adminPassword) ? '✓' : '•'} 1 Number (0-9)
                             </span>
-                            <span style={{ color: /[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(adminPassword) ? 'var(--color-teal)' : '#acacac' }}>
+                            <span className={/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(adminPassword) ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
                               {/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(adminPassword) ? '✓' : '•'} 1 Special symbol
                             </span>
                           </div>
@@ -650,20 +605,20 @@ const Teams = () => {
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                  <div className="flex items-center gap-2 mt-1">
                     <input
                       type="checkbox"
                       id="isActive"
                       checked={isActive}
                       onChange={(e) => setIsActive(e.target.checked)}
-                      style={{ width: 16, height: 16 }}
+                      className="w-4 h-4"
                     />
-                    <label htmlFor="isActive" style={{ cursor: 'pointer' }}>Active and accepting ticket allocations</label>
+                    <label htmlFor="isActive" className="cursor-pointer">Active and accepting ticket allocations</label>
                   </div>
                 </div>
               </div>
 
-              <div className="modal-footer" style={{ flexShrink: 0, padding: '16px 28px', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'flex-end', gap: 12, background: 'rgba(255,255,255,0.01)' }}>
+              <div className="modal-footer shrink-0 py-4 px-7 border-t border-[var(--color-border)] flex justify-end gap-3 bg-[rgba(255,255,255,0.01)]">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>
                   Cancel
                 </button>
@@ -675,7 +630,7 @@ const Teams = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

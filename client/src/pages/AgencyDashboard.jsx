@@ -67,7 +67,7 @@ const AgencyDashboard = () => {
   };
 
   if (loading && !data) {
-    return <div style={{ padding: 60, textAlign: 'center' }}><div className="spinner" /></div>;
+    return <div className="p-[60px] text-center"><div className="spinner" /></div>;
   }
 
   const { summary, agencies = [] } = data || {};
@@ -82,49 +82,49 @@ const AgencyDashboard = () => {
       </div>
 
       {/* Summary Chips */}
-      <div className="stat-grid" style={{ marginBottom: 28 }}>
+      <div className="stat-grid mb-7">
         <div className="stat-card teal">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="flex justify-between items-start">
             <div>
               <div className="stat-label">Total Agencies</div>
               <div className="stat-value">{summary?.totalAgencies ?? 0}</div>
             </div>
-            <Building2 size={24} style={{ opacity: 0.5 }} />
+            <Building2 size={24} className="opacity-50" />
           </div>
         </div>
         <div className="stat-card blue">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="flex justify-between items-start">
             <div>
               <div className="stat-label">Total Allocated Tickets</div>
               <div className="stat-value">{summary?.totalTickets ?? 0}</div>
             </div>
-            <Ticket size={24} style={{ opacity: 0.5 }} />
+            <Ticket size={24} className="opacity-50" />
           </div>
         </div>
         <div className="stat-card green">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="flex justify-between items-start">
             <div>
               <div className="stat-label">Avg Completion %</div>
               <div className="stat-value">{summary?.avgCompletionRate ?? 0}%</div>
             </div>
-            <Percent size={24} style={{ opacity: 0.5 }} />
+            <Percent size={24} className="opacity-50" />
           </div>
         </div>
         <div className="stat-card orange">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="flex justify-between items-start">
             <div>
               <div className="stat-label">Auto-Allocated Tickets</div>
               <div className="stat-value">{summary?.autoAllocatedCount ?? 0}</div>
             </div>
-            <Sliders size={24} style={{ opacity: 0.5 }} />
+            <Sliders size={24} className="opacity-50" />
           </div>
         </div>
       </div>
 
       {/* Agency Cards Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 20 }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-5">
         {agencies.length === 0 ? (
-          <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>
+          <div className="card col-[1/-1] text-center p-10 text-[var(--color-text-muted)]">
             No agencies setup in the system.
           </div>
         ) : (
@@ -145,20 +145,20 @@ const AgencyDashboard = () => {
             const pctDeclined = totalVal > 0 ? (declinedVal / totalVal) * 100 : 0;
 
             return (
-              <div key={agency.agencyId} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div key={agency.agencyId} className="card flex flex-col gap-4">
+                <div className="flex justify-between items-start">
                   <div>
-                    <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: '#fff' }}>{agency.name}</h3>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+                    <h3 className="text-base font-semibold m-0 text-white">{agency.name}</h3>
+                    <div className="flex gap-1 flex-wrap mt-1.5">
                       {agency.categories.map((c, i) => (
-                        <span key={i} style={{ fontSize: 9, padding: '1px 6px', background: '#252525', borderRadius: 4, color: '#acacac' }}>{c}</span>
+                        <span key={i} className="text-[9px] px-1.5 py-[1px] bg-[#252525] rounded text-[#acacac]">{c}</span>
                       ))}
                     </div>
                   </div>
                   
                   {/* Progress ring percentage */}
-                  <div style={{ position: 'relative', width: 50, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="50" height="50" style={{ transform: 'rotate(-90deg)' }}>
+                  <div className="relative w-[50px] h-[50px] flex items-center justify-center">
+                    <svg width="50" height="50" className="-rotate-90">
                       <circle cx="25" cy="25" r="20" fill="transparent" stroke="#252525" strokeWidth="4" />
                       <circle
                         cx="25"
@@ -172,49 +172,49 @@ const AgencyDashboard = () => {
                         strokeLinecap="round"
                       />
                     </svg>
-                    <span style={{ position: 'absolute', fontSize: 10, fontWeight: 700, color: '#fff' }}>{agency.completionRate}%</span>
+                    <span className="absolute text-[10px] font-bold text-white">{agency.completionRate}%</span>
                   </div>
                 </div>
 
                 {/* Segments mini-bar: open(green)/in-progress(yellow)/closed(gray)/under-review(orange)/declined(red) */}
-                <div style={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', background: '#252525' }}>
-                  {openVal > 0 && <div style={{ width: `${pctOpen}%`, background: '#3fb950' }} title={`Open: ${openVal}`} />}
-                  {progressVal > 0 && <div style={{ width: `${pctProgress}%`, background: '#d29922' }} title={`In Progress: ${progressVal}`} />}
-                  {closedVal > 0 && <div style={{ width: `${pctClosed}%`, background: '#6e7681' }} title={`Closed: ${closedVal}`} />}
-                  {underReviewVal > 0 && <div style={{ width: `${pctReview}%`, background: '#fb923c' }} title={`Under Review: ${underReviewVal}`} />}
-                  {declinedVal > 0 && <div style={{ width: `${pctDeclined}%`, background: '#f85149' }} title={`Declined: ${declinedVal}`} />}
+                <div className="flex h-1.5 rounded-[3px] overflow-hidden bg-[#252525]">
+                  {openVal > 0 && <div className={`bg-[#3fb950] w-[${pctOpen}%]`} title={`Open: ${openVal}`} />}
+                  {progressVal > 0 && <div className={`bg-[#d29922] w-[${pctProgress}%]`} title={`In Progress: ${progressVal}`} />}
+                  {closedVal > 0 && <div className={`bg-[#6e7681] w-[${pctClosed}%]`} title={`Closed: ${closedVal}`} />}
+                  {underReviewVal > 0 && <div className={`bg-[#fb923c] w-[${pctReview}%]`} title={`Under Review: ${underReviewVal}`} />}
+                  {declinedVal > 0 && <div className={`bg-[#f85149] w-[${pctDeclined}%]`} title={`Declined: ${declinedVal}`} />}
                 </div>
 
                 {/* Stats Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 4, padding: '8px 0', borderTop: '1px solid #252525', borderBottom: '1px solid #252525', textAlign: 'center' }}>
+                <div className="grid grid-cols-6 gap-1 py-2 border-y border-[#252525] text-center">
                   <div>
-                    <div style={{ fontSize: 9, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>Total</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginTop: 2 }}>{agency.total}</div>
+                    <div className="text-[9px] text-[var(--color-text-muted)] whitespace-nowrap">Total</div>
+                    <div className="text-[13px] font-bold text-white mt-0.5">{agency.total}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 9, color: '#3fb950', whiteSpace: 'nowrap' }}>Open</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#3fb950', marginTop: 2 }}>{agency.open}</div>
+                    <div className="text-[9px] text-[#3fb950] whitespace-nowrap">Open</div>
+                    <div className="text-[13px] font-bold text-[#3fb950] mt-0.5">{agency.open}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 9, color: '#d29922', whiteSpace: 'nowrap' }}>Progress</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#d29922', marginTop: 2 }}>{agency.inProgress}</div>
+                    <div className="text-[9px] text-[#d29922] whitespace-nowrap">Progress</div>
+                    <div className="text-[13px] font-bold text-[#d29922] mt-0.5">{agency.inProgress}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 9, color: '#6e7681', whiteSpace: 'nowrap' }}>Closed</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#6e7681', marginTop: 2 }}>{agency.closed}</div>
+                    <div className="text-[9px] text-[#6e7681] whitespace-nowrap">Closed</div>
+                    <div className="text-[13px] font-bold text-[#6e7681] mt-0.5">{agency.closed}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 9, color: '#fb923c', whiteSpace: 'nowrap' }}>Review</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#fb923c', marginTop: 2 }}>{agency.underReview || 0}</div>
+                    <div className="text-[9px] text-[#fb923c] whitespace-nowrap">Review</div>
+                    <div className="text-[13px] font-bold text-[#fb923c] mt-0.5">{agency.underReview || 0}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 9, color: '#f85149', whiteSpace: 'nowrap' }}>Declined</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#f85149', marginTop: 2 }}>{agency.declined || 0}</div>
+                    <div className="text-[9px] text-[#f85149] whitespace-nowrap">Declined</div>
+                    <div className="text-[13px] font-bold text-[#f85149] mt-0.5">{agency.declined || 0}</div>
                   </div>
                 </div>
 
-                <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate(`/agencies/${agency.agencyId || agency._id}/performance`)}>
-                  View Performance Details <ChevronRight size={14} style={{ marginLeft: 4 }} />
+                <button className="btn btn-ghost w-full justify-center" onClick={() => navigate(`/agencies/${agency.agencyId || agency._id}/performance`)}>
+                  View Performance Details <ChevronRight size={14} className="ml-1" />
                 </button>
               </div>
             );
@@ -225,11 +225,11 @@ const AgencyDashboard = () => {
       {/* Agency Details Modal */}
       {selectedAgency && (
         <div className="modal-backdrop">
-          <div className="modal-content" style={{ maxWidth: 800, width: '90%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content max-w-[800px] w-[90%] max-h-[90vh] flex flex-col">
             <div className="modal-header">
               <div>
-                <h3 style={{ margin: 0 }}>{selectedAgency.name}</h3>
-                <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '4px 0 0 0' }}>{selectedAgency.email} • {selectedAgency.phone || 'No phone'}</p>
+                <h3 className="m-0">{selectedAgency.name}</h3>
+                <p className="text-xs text-[var(--color-text-muted)] m-0 mt-1">{selectedAgency.email} • {selectedAgency.phone || 'No phone'}</p>
               </div>
               <button onClick={() => setSelectedAgency(null)} className="modal-close">
                 <X size={18} />
@@ -237,23 +237,23 @@ const AgencyDashboard = () => {
             </div>
             
             {modalLoading ? (
-              <div style={{ padding: 40, textAlign: 'center', flex: 1 }}><div className="spinner" /></div>
+              <div className="p-10 text-center flex-1"><div className="spinner" /></div>
             ) : (
-              <div style={{ overflowY: 'auto', paddingRight: 6, display: 'flex', flexDirection: 'column', gap: 20, flex: 1, marginTop: 14 }}>
+              <div className="overflow-y-auto pr-1.5 flex flex-col gap-5 flex-1 mt-3.5">
                 {/* Description */}
                 {selectedAgency.description && (
-                  <div className="card" style={{ padding: 12, background: 'rgba(255,255,255,0.02)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Description</div>
-                    <div style={{ fontSize: 13, color: '#acacac', lineHeight: 1.5 }}>{selectedAgency.description}</div>
+                  <div className="card p-3 bg-[rgba(255,255,255,0.02)]">
+                    <div className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase mb-1">Description</div>
+                    <div className="text-[13px] text-[#acacac] leading-relaxed">{selectedAgency.description}</div>
                   </div>
                 )}
 
                 {/* Dashboard statistics section */}
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, minHeight: 180 }}>
+                <div className="grid grid-cols-[2fr_1fr] gap-4 min-h-[180px]">
                   {/* Status Breakdown Doughnut Chart */}
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 12 }}>Status Distribution</div>
-                    <div style={{ flex: 1, height: 130 }}>
+                  <div className="card flex flex-col">
+                    <div className="text-[13px] font-semibold text-white mb-3">Status Distribution</div>
+                    <div className="flex-1 h-[130px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -283,14 +283,14 @@ const AgencyDashboard = () => {
                   </div>
 
                   {/* Summary counts */}
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12 }}>
+                  <div className="card flex flex-col justify-center gap-3">
                     <div>
-                      <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Completion Rate</div>
-                      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-teal)' }}>{selectedAgency.completionRate}%</div>
+                      <div className="text-[10px] text-[var(--color-text-muted)]">Completion Rate</div>
+                      <div className="text-[22px] font-bold text-[var(--color-teal)]">{selectedAgency.completionRate}%</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Auto-Allocation Share</div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>
+                      <div className="text-[10px] text-[var(--color-text-muted)]">Auto-Allocation Share</div>
+                      <div className="text-lg font-bold text-white">
                         {agencyTickets.filter(t => t.autoAllocated).length} / {agencyTickets.length} tickets
                       </div>
                     </div>
@@ -299,8 +299,8 @@ const AgencyDashboard = () => {
 
                 {/* Ticket History */}
                 <div>
-                  <h4 style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 10 }}>Assigned Tickets History</h4>
-                  <div className="table-wrap" style={{ maxHeight: 220, overflowY: 'auto' }}>
+                  <h4 className="text-sm font-semibold text-white mb-2.5">Assigned Tickets History</h4>
+                  <div className="table-wrap max-h-[220px] overflow-y-auto">
                     <table>
                       <thead>
                         <tr>
@@ -314,18 +314,18 @@ const AgencyDashboard = () => {
                       <tbody>
                         {agencyTickets.length === 0 ? (
                           <tr>
-                            <td colSpan="5" style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: 12 }}>No tickets allocated to this agency.</td>
+                            <td colSpan="5" className="text-center text-[var(--color-text-muted)] p-3">No tickets allocated to this agency.</td>
                           </tr>
                         ) : (
                           agencyTickets.map(t => (
                             <tr key={t._id}>
-                              <td style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--color-text-muted)' }}>{t._id.slice(-6).toUpperCase()}</td>
-                              <td style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                <a href={`/tickets/${t._id}`} style={{ color: 'var(--color-teal)', textDecoration: 'underline' }}>{t.title}</a>
+                              <td className="font-mono text-[11px] text-[var(--color-text-muted)]">{t._id.slice(-6).toUpperCase()}</td>
+                              <td className="max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap">
+                                <a href={`/tickets/${t._id}`} className="text-[var(--color-teal)] underline">{t.title}</a>
                               </td>
                               <td><StatusBadge status={t.status} /></td>
                               <td><PriorityBadge priority={t.priority} /></td>
-                              <td style={{ textTransform: 'capitalize' }}>{t.category}</td>
+                              <td className="capitalize">{t.category}</td>
                             </tr>
                           ))
                         )}
@@ -336,20 +336,20 @@ const AgencyDashboard = () => {
 
                 {/* Assignment Timeline (Logs) */}
                 <div>
-                  <h4 style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 10 }}>Recent Activity Log (30 Days)</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 180, overflowY: 'auto', paddingRight: 4 }}>
+                  <h4 className="text-sm font-semibold text-white mb-2.5">Recent Activity Log (30 Days)</h4>
+                  <div className="flex flex-col gap-2 max-h-[180px] overflow-y-auto pr-1">
                     {agencyLogs.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: 16, color: 'var(--color-text-muted)', border: '1px dashed #252525', borderRadius: 8, fontSize: 13 }}>No recent activity records.</div>
+                      <div className="text-center p-4 text-[var(--color-text-muted)] border border-dashed border-[#252525] rounded-lg text-[13px]">No recent activity records.</div>
                     ) : (
                       agencyLogs.map(log => (
-                        <div key={log._id} style={{ display: 'flex', gap: 10, background: '#111', border: '1px solid #252525', borderRadius: 6, padding: '8px 12px', fontSize: 12 }}>
-                          <Clock size={13} style={{ color: 'var(--color-text-muted)', marginTop: 2, flexShrink: 0 }} />
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-muted)', fontSize: 10 }}>
+                        <div key={log._id} className="flex gap-2.5 bg-[#111] border border-[#252525] rounded-md py-2 px-3 text-xs">
+                          <Clock size={13} className="text-[var(--color-text-muted)] mt-0.5 shrink-0" />
+                          <div className="flex-1">
+                            <div className="flex justify-between text-[var(--color-text-muted)] text-[10px]">
                               <span>{log.action.replace(/_/g, ' ')}</span>
                               <span>{new Date(log.createdAt).toLocaleDateString()}</span>
                             </div>
-                            <div style={{ color: '#acacac', marginTop: 2 }}>{log.note}</div>
+                            <div className="text-[#acacac] mt-0.5">{log.note}</div>
                           </div>
                         </div>
                       ))

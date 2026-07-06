@@ -42,7 +42,7 @@ const AppShell = () => {
         <div className="mobile-header">
           <div className="mobile-logo">
             <img src={tealvueLogo} alt="Tealvue" width="32" height="32" />
-            <span>Teal<span style={{ color: 'var(--color-teal)' }}>vue</span></span>
+            <span>Teal<span className="text-[var(--color-teal)]">vue</span></span>
           </div>
           <button
             className="mobile-toggle"
@@ -110,7 +110,7 @@ const App = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Suspense fallback={<div className="spinner-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', width: '100vw', background: 'var(--color-bg)' }}><div className="spinner" /></div>}>
+        <Suspense fallback={<div className="spinner-container flex items-center justify-center h-screen w-screen bg-[var(--color-bg)]"><div className="spinner" /></div>}>
           <Routes>
             {/* Public routes */}
             <Route path="/login"    element={<Login />} />

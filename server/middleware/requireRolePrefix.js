@@ -7,6 +7,7 @@ const ROLE_PREFIX = {
   user:        '/api/user'
 };
 
+
 const requireRolePrefix = (req, res, next) => {
   let role = req.user?.role;
   if (role === 'super-admin') {

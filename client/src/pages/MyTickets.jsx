@@ -95,8 +95,7 @@ const MyTickets = () => {
         {/* Status filter */}
         <select
           id="mt-status"
-          className="select"
-          style={{ width: 140 }}
+          className="select w-[140px]"
           value={filters.status}
           onChange={(e) => handleFilter('status', e.target.value)}
         >
@@ -109,8 +108,7 @@ const MyTickets = () => {
         {/* Priority filter */}
         <select
           id="mt-priority"
-          className="select"
-          style={{ width: 140 }}
+          className="select w-[140px]"
           value={filters.priority}
           onChange={(e) => handleFilter('priority', e.target.value)}
         >
@@ -134,8 +132,8 @@ const MyTickets = () => {
 
       {/* ── Ticket List ─────────────────────────── */}
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-          <div className="spinner" style={{ width: 28, height: 28 }} />
+        <div className="flex justify-center p-[60px]">
+          <div className="spinner w-7 h-7" />
         </div>
       ) : tickets.length === 0 ? (
         // [UI] Empty state
@@ -143,59 +141,55 @@ const MyTickets = () => {
           <Ticket size={44} strokeWidth={1.5} />
           <h3>No tickets found</h3>
           <p>Try adjusting your filters or create a new ticket.</p>
-          <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => navigate('/tickets/create')}>
+          <button className="btn btn-primary mt-4" onClick={() => navigate('/tickets/create')}>
             <Plus size={14} />
             Create Ticket
           </button>
         </div>
       ) : (
-        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--color-border)' }}>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>#ID</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Title</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Category</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Priority</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Created Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tickets.map((t) => (
-                <tr
-                  key={t._id}
-                  onClick={() => navigate(`/tickets/${t._id}`)}
-                  style={{
-                    borderBottom: '1px solid var(--color-border-soft)',
-                    cursor: 'pointer',
-                    transition: 'background 0.12s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <td style={{ padding: '13px 16px', color: 'var(--color-text-muted)', fontFamily: 'monospace', fontSize: 11 }}>
-                    #{t._id.slice(-6).toUpperCase()}
-                  </td>
-                  <td style={{ padding: '13px 16px', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500, color: 'var(--color-text)' }}>
-                    {t.title}
-                  </td>
-                  <td style={{ padding: '13px 16px', textTransform: 'capitalize', fontSize: 12, color: 'var(--color-text-muted)' }}>
-                    {t.category || 'General'}
-                  </td>
-                  <td style={{ padding: '13px 16px' }}>
-                    <StatusBadge status={t.approvalStatus === 'suspended' ? 'suspended' : t.approvalStatus === 'rejected' ? 'rejected' : t.status} />
-                  </td>
-                  <td style={{ padding: '13px 16px' }}>
-                    <PriorityBadge priority={t.priority} />
-                  </td>
-                  <td style={{ padding: '13px 16px', fontSize: 12, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
-                    {new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </td>
+        <div className="bg-[var(--color-card)] border border-solid border-[var(--color-border)] rounded-xl overflow-hidden">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full border-collapse text-[13px] min-w-[700px]">
+              <thead>
+                <tr className="bg-[rgba(255,255,255,0.03)] border-b border-solid border-[var(--color-border)]">
+                  <th className="px-4 py-3 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em]">#ID</th>
+                  <th className="px-4 py-3 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em]">Title</th>
+                  <th className="px-4 py-3 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em]">Category</th>
+                  <th className="px-4 py-3 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em]">Status</th>
+                  <th className="px-4 py-3 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em]">Priority</th>
+                  <th className="px-4 py-3 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em]">Created Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {tickets.map((t) => (
+                  <tr
+                    key={t._id}
+                    onClick={() => navigate(`/tickets/${t._id}`)}
+                    className="border-b border-solid border-[var(--color-border-soft)] cursor-pointer transition-colors duration-[120ms] hover:bg-[rgba(255,255,255,0.03)]"
+                  >
+                    <td className="px-4 py-[13px] text-[var(--color-text-muted)] font-mono text-[11px]">
+                      #{t._id.slice(-6).toUpperCase()}
+                    </td>
+                    <td className="px-4 py-[13px] max-w-[220px] overflow-hidden text-ellipsis whitespace-nowrap font-medium text-[var(--color-text)]">
+                      {t.title}
+                    </td>
+                    <td className="px-4 py-[13px] capitalize text-[12px] text-[var(--color-text-muted)]">
+                      {t.category || 'General'}
+                    </td>
+                    <td className="px-4 py-[13px]">
+                      <StatusBadge status={t.approvalStatus === 'suspended' ? 'suspended' : t.approvalStatus === 'rejected' ? 'rejected' : t.status} />
+                    </td>
+                    <td className="px-4 py-[13px]">
+                      <PriorityBadge priority={t.priority} />
+                    </td>
+                    <td className="px-4 py-[13px] text-[12px] text-[var(--color-text-muted)] whitespace-nowrap">
+                      {new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

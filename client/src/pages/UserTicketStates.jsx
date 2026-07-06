@@ -64,35 +64,35 @@ const UserTicketStates = () => {
   };
 
   return (
-    <div className="page-body fade-in" style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 16px' }}>
+    <div className="page-body fade-in max-w-[900px] mx-auto py-6 px-4">
       
       {/* Header Section */}
-      <div style={{ marginBottom: '28px', borderBottom: '1px solid var(--color-border)', paddingBottom: '16px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text)', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', letterSpacing: '-0.02em' }}>
+      <div className="mb-7 border-b border-[var(--color-border)] pb-4">
+        <h1 className="text-[22px] font-bold text-[var(--color-text)] m-0 flex items-center gap-2.5 tracking-[-0.02em]">
           <Clock size={22} color="var(--color-teal)" /> Show Ticket States
         </h1>
-        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '6px', margin: 0, lineHeight: 1.5 }}>
+        <p className="text-[13px] text-[var(--color-text-muted)] mt-1.5 mb-0 leading-relaxed">
           Monitor the live, step-by-step progress of your support requests. Click on any ticket below to see its exact resolution state timeline.
         </p>
       </div>
 
       {loading && tickets.length === 0 ? (
-        <div style={{ padding: '80px 0', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '14px' }}>
-          <div className="spinner" style={{ width: 24, height: 24, margin: '0 auto 12px', border: '2px solid var(--color-teal-muted)', borderTopColor: 'var(--color-teal)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <div className="py-20 text-center text-[var(--color-text-muted)] text-sm">
+          <div className="spinner w-6 h-6 mx-auto mb-3 border-2 border-[var(--color-teal-muted)] border-t-[var(--color-teal)] rounded-full animate-spin" />
           Loading your tickets...
         </div>
       ) : tickets.length === 0 ? (
-        <div style={{ padding: '64px 16px', textAlign: 'center', background: 'var(--color-card)', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
-          <Ticket size={44} color="var(--color-text-dim)" style={{ margin: '0 auto 16px' }} />
-          <h3 style={{ color: 'var(--color-text)', fontSize: '15px', fontWeight: 600, margin: '0 0 6px' }}>
+        <div className="py-16 px-4 text-center bg-[var(--color-card)] rounded-xl border border-[var(--color-border)]">
+          <Ticket size={44} color="var(--color-text-dim)" className="mx-auto mb-4" />
+          <h3 className="text-[var(--color-text)] text-[15px] font-semibold m-0 mb-1.5">
             No tickets raised yet
           </h3>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', margin: 0 }}>
+          <p className="text-[var(--color-text-muted)] text-[13px] m-0">
             You haven't created any support requests yet.
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className="flex flex-col gap-3.5">
           {tickets.map((t) => {
             const isExpanded = expandedTicketId === t._id;
             const badgeStyle = getStatusBadgeStyle(t);
@@ -100,69 +100,23 @@ const UserTicketStates = () => {
             return (
               <div
                 key={t._id}
-                style={{
-                  background: 'var(--color-card)',
-                  border: isExpanded ? '1px solid var(--color-teal)' : '1px solid var(--color-border)',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  boxShadow: isExpanded ? '0 4px 20px rgba(0,0,0,0.4)' : 'none',
-                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                }}
+                className={`bg-[var(--color-card)] rounded-xl overflow-hidden transition-all duration-300 ${isExpanded ? 'border border-[var(--color-teal)] shadow-[0_4px_20px_rgba(0,0,0,0.4)]' : 'border border-[var(--color-border)] shadow-none'}`}
               >
                 {/* Clickable Card Header */}
                 <div
                   onClick={() => toggleExpand(t._id)}
-                  style={{
-                    padding: '18px 24px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    background: isExpanded ? 'rgba(255, 255, 255, 0.015)' : 'transparent',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isExpanded) {
-                      e.currentTarget.parentNode.style.borderColor = 'var(--color-teal)';
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.01)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isExpanded) {
-                      e.currentTarget.parentNode.style.borderColor = 'var(--color-border)';
-                      e.currentTarget.style.background = 'transparent';
-                    }
-                  }}
+                  className={`py-[18px] px-6 flex justify-between items-center cursor-pointer group ${isExpanded ? 'bg-[rgba(255,255,255,0.015)]' : 'bg-transparent hover:bg-[rgba(255,255,255,0.01)]'}`}
                 >
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flex: 1, overflow: 'hidden' }}>
-                    <div style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '8px',
-                      background: isExpanded ? 'var(--color-teal-muted)' : 'rgba(255,255,255,0.02)',
-                      border: isExpanded ? '1px solid var(--color-teal-dark)' : '1px solid var(--color-border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      transition: 'all 0.2s'
-                    }}>
+                  <div className="flex gap-4 items-center flex-1 overflow-hidden">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200 ${isExpanded ? 'bg-[var(--color-teal-muted)] border border-[var(--color-teal-dark)]' : 'bg-[rgba(255,255,255,0.02)] border border-[var(--color-border)]'}`}>
                       <Ticket size={16} color={isExpanded ? 'var(--color-teal)' : 'var(--color-text-muted)'} />
                     </div>
-                    <div style={{ overflow: 'hidden', flex: 1 }}>
-                      <div style={{
-                        fontSize: '15px',
-                        fontWeight: '600',
-                        color: isExpanded ? 'var(--color-text)' : 'var(--color-text)',
-                        marginBottom: '4px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        transition: 'color 0.2s'
-                      }}>
+                    <div className="overflow-hidden flex-1">
+                      <div className="text-[15px] font-semibold text-[var(--color-text)] mb-1 whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-200">
                         {t.title}
                       </div>
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                        <span style={{ textTransform: 'capitalize' }}>Category: {t.category}</span>
+                      <div className="flex gap-3 items-center text-[11px] text-[var(--color-text-muted)]">
+                        <span className="capitalize">Category: {t.category}</span>
                         <span>·</span>
                         <span>Created: {new Date(t.createdAt).toLocaleDateString()}</span>
                       </div>
@@ -170,32 +124,15 @@ const UserTicketStates = () => {
                   </div>
 
                   {/* Status Badge and Toggle Arrow */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: '16px' }}>
+                  <div className="flex items-center gap-4 ml-4">
                     <span
-                      style={{
-                        fontSize: '10px',
-                        fontWeight: '700',
-                        textTransform: 'uppercase',
-                        padding: '4px 9px',
-                        borderRadius: '6px',
-                        letterSpacing: '0.06em',
-                        ...badgeStyle
-                      }}
+                      className="text-[10px] font-bold uppercase py-1 px-[9px] rounded-md tracking-[0.06em]"
+                      style={badgeStyle}
                     >
                       {t.approvalStatus === 'rejected' ? 'Declined' : (t.status === 'in-progress' ? 'In Progress' : t.status)}
                     </span>
                     <button
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: isExpanded ? 'var(--color-teal)' : 'var(--color-text-muted)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: 0,
-                        transition: 'color 0.2s'
-                      }}
+                      className={`bg-transparent border-none cursor-pointer flex items-center justify-center p-0 transition-colors duration-200 ${isExpanded ? 'text-[var(--color-teal)]' : 'text-[var(--color-text-muted)]'}`}
                     >
                       {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                     </button>
@@ -204,11 +141,7 @@ const UserTicketStates = () => {
 
                 {/* Expanded Inline Custom Stepper */}
                 {isExpanded && (
-                  <div style={{ 
-                    padding: '0 24px 24px 24px', 
-                    borderTop: '1px solid var(--color-border)', 
-                    background: 'rgba(0, 0, 0, 0.15)' 
-                  }}>
+                  <div className="px-6 pb-6 pt-0 border-t border-[var(--color-border)] bg-[rgba(0,0,0,0.15)]">
                     <TicketTimeline ticketId={t._id} isUserView={true} />
                   </div>
                 )}
@@ -220,49 +153,23 @@ const UserTicketStates = () => {
 
       {/* Pagination */}
       {!loading && pages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '32px', gap: '16px' }}>
+        <div className="flex justify-center items-center mt-8 gap-4">
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            style={{
-              background: 'var(--color-card)',
-              border: '1px solid var(--color-border)',
-              color: page === 1 ? 'var(--color-text-dim)' : 'var(--color-text)',
-              cursor: page === 1 ? 'not-allowed' : 'pointer',
-              padding: '8px 18px',
-              borderRadius: '8px',
-              fontSize: '13px',
-              fontWeight: '500',
-              outline: 'none',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => { if (page !== 1) e.currentTarget.style.borderColor = 'var(--color-teal)'; }}
-            onMouseLeave={(e) => { if (page !== 1) e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+            className={`border px-[18px] py-2 rounded-lg text-[13px] font-medium outline-none transition-all duration-200 ${page === 1 ? 'bg-[var(--color-card)] border-[var(--color-border)] text-[var(--color-text-dim)] cursor-not-allowed' : 'bg-[var(--color-card)] border-[var(--color-border)] text-[var(--color-text)] cursor-pointer hover:border-[var(--color-teal)]'}`}
           >
             Previous
           </button>
           
-          <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', fontWeight: '500' }}>
+          <span className="text-[13px] text-[var(--color-text-muted)] font-medium">
             Page {page} of {pages}
           </span>
 
           <button
             onClick={() => setPage(p => Math.min(pages, p + 1))}
             disabled={page === pages}
-            style={{
-              background: 'var(--color-card)',
-              border: '1px solid var(--color-border)',
-              color: page === pages ? 'var(--color-text-dim)' : 'var(--color-text)',
-              cursor: page === pages ? 'not-allowed' : 'pointer',
-              padding: '8px 18px',
-              borderRadius: '8px',
-              fontSize: '13px',
-              fontWeight: '500',
-              outline: 'none',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => { if (page !== pages) e.currentTarget.style.borderColor = 'var(--color-teal)'; }}
-            onMouseLeave={(e) => { if (page !== pages) e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+            className={`border px-[18px] py-2 rounded-lg text-[13px] font-medium outline-none transition-all duration-200 ${page === pages ? 'bg-[var(--color-card)] border-[var(--color-border)] text-[var(--color-text-dim)] cursor-not-allowed' : 'bg-[var(--color-card)] border-[var(--color-border)] text-[var(--color-text)] cursor-pointer hover:border-[var(--color-teal)]'}`}
           >
             Next
           </button>

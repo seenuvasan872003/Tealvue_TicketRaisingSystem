@@ -132,19 +132,19 @@ const Notifications = () => {
   };
 
   return (
-    <div className="page-body fade-in" style={{ maxWidth: '1000px', margin: '0 auto', padding: '24px 16px' }}>
+    <div className="page-body fade-in max-w-[1000px] mx-auto px-4 py-6">
       {/* Header section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#e4e4e4', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h1 className="text-2xl font-semibold text-[#e4e4e4] m-0 flex items-center gap-[10px]">
             <Bell size={24} color="#d3a73c" /> Notifications
             {unreadCount > 0 && (
-              <span style={{ fontSize: '12px', background: '#f87171', color: '#000', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
+              <span className="text-xs bg-[#f87171] text-black px-2 py-[2px] rounded-xl font-bold">
                 {unreadCount} new
               </span>
             )}
           </h1>
-          <p style={{ fontSize: '13px', color: '#666', marginTop: '4px', margin: 0 }}>
+          <p className="text-[13px] text-[#666] mt-1 m-0">
             Audit log of all lifecycle events and assignments.
           </p>
         </div>
@@ -152,22 +152,7 @@ const Notifications = () => {
         {unreadCount > 0 && (
           <button
             onClick={handleMarkAllRead}
-            style={{
-              background: '#1a1a1a',
-              border: '0.5px solid #2d2d2d',
-              color: '#d3a73c',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'background 0.2s',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#222'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#1a1a1a'}
+            className="bg-[#1a1a1a] hover:bg-[#222] border-[0.5px] border-solid border-[#2d2d2d] text-[#d3a73c] px-4 py-2 rounded-md text-xs font-medium cursor-pointer flex items-center gap-[6px] transition-colors duration-200"
           >
             <Check size={14} /> Mark all read
           </button>
@@ -175,26 +160,14 @@ const Notifications = () => {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '0.5px solid #2d2d2d', marginBottom: '20px', gap: '24px' }}>
+      <div className="flex border-b-[0.5px] border-solid border-[#2d2d2d] mb-5 gap-6">
         {['all', 'unread', 'read'].map((tab) => {
           const isActive = activeTab === tab;
           return (
             <button
               key={tab}
               onClick={() => { setActiveTab(tab); setPage(1); }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '12px 4px',
-                color: isActive ? '#e4e4e4' : '#555',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                borderBottom: isActive ? '2px solid #d3a73c' : '2px solid transparent',
-                textTransform: 'capitalize',
-                transition: 'color 0.2s, border-color 0.2s',
-                outline: 'none',
-              }}
+              className={`bg-transparent border-none py-3 px-1 text-[14px] font-medium cursor-pointer capitalize transition-all duration-200 outline-none border-b-2 border-solid ${isActive ? 'text-[#e4e4e4] border-b-[#d3a73c]' : 'text-[#555] border-b-transparent'}`}
             >
               {tab}
             </button>
@@ -203,18 +176,18 @@ const Notifications = () => {
       </div>
 
       {/* Content */}
-      <div style={{ background: '#111', borderRadius: '10px', border: '0.5px solid #2d2d2d', overflow: 'hidden' }}>
+      <div className="bg-[#111] rounded-[10px] border-[0.5px] border-solid border-[#2d2d2d] overflow-hidden">
         {loading ? (
-          <div style={{ padding: '48px', textAlign: 'center', color: '#666' }}>
+          <div className="p-12 text-center text-[#666]">
             Loading notifications...
           </div>
         ) : notifications.length === 0 ? (
-          <div style={{ padding: '64px 16px', textAlign: 'center' }}>
-            <BellOff size={48} color="#2d2d2d" style={{ margin: '0 auto 16px' }} />
-            <h3 style={{ color: '#888', fontSize: '16px', fontWeight: 500, margin: '0 0 8px' }}>
+          <div className="px-4 py-16 text-center">
+            <BellOff size={48} color="#2d2d2d" className="mx-auto mb-4" />
+            <h3 className="text-[#888] text-base font-medium m-0 mb-2">
               No notifications found
             </h3>
-            <p style={{ color: '#555', fontSize: '13px', margin: 0 }}>
+            <p className="text-[#555] text-[13px] m-0">
               {activeTab === 'unread' ? 'You have read all your notifications!' : 'Your notification log is currently empty.'}
             </p>
           </div>
@@ -224,96 +197,46 @@ const Notifications = () => {
               <div
                 key={n._id}
                 onClick={() => handleItemClick(n)}
-                style={{
-                  padding: '16px 20px',
-                  borderBottom: '0.5px solid #1a1a1a',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  background: n.isRead ? 'transparent' : 'rgba(211, 167, 60, 0.02)',
-                  borderLeft: n.isRead ? '3px solid transparent' : '3px solid #d3a73c',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.015)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = n.isRead ? 'transparent' : 'rgba(211, 167, 60, 0.02)'}
+                className={`px-5 py-4 border-b-[0.5px] border-solid border-b-[#1a1a1a] flex justify-between items-center cursor-pointer transition-colors duration-200 border-l-[3px] border-solid hover:bg-[rgba(255,255,255,0.015)] ${n.isRead ? 'bg-transparent border-l-transparent' : 'bg-[rgba(211,167,60,0.02)] border-l-[#d3a73c]'}`}
               >
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flex: 1, marginRight: '16px' }}>
+                <div className="flex gap-4 items-start flex-1 mr-4">
                   {/* Color dot */}
                   <div
-                    style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      backgroundColor: typeColorMap[n.type] || '#666',
-                      marginTop: '4px',
-                      flexShrink: 0,
-                    }}
+                    className="w-3 h-3 rounded-full mt-1 shrink-0"
+                    style={{ backgroundColor: typeColorMap[n.type] || '#666' }}
                   />
 
                   {/* Message body */}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '13px', color: '#e4e4e4', lineHeight: 1.6 }}>
+                  <div className="flex-1">
+                    <div className="text-[13px] text-[#e4e4e4] leading-[1.6]">
                       {n.message}
                     </div>
                     
                     {/* Ticket title row */}
                     {n.ticketTitle && (
-                      <div style={{ color: '#d3a73c', fontSize: '11px', marginTop: '6px', fontWeight: 500 }}>
+                      <div className="text-[#d3a73c] text-[11px] mt-[6px] font-medium">
                         Ticket: {n.ticketTitle}
                       </div>
                     )}
                     
-                    <div style={{ fontSize: '11px', color: '#666', marginTop: '6px' }}>
+                    <div className="text-[11px] text-[#666] mt-[6px]">
                       by {n.senderName || 'System'} ({n.senderRole || 'system'}) · {relativeTime(n.createdAt)}
                     </div>
                   </div>
                 </div>
 
-                {/* Actions on right side */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }} onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                   {!n.isRead && (
                     <button
                       onClick={() => handleMarkRead(n._id)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#d3a73c',
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        fontWeight: 500,
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        transition: 'background 0.2s',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(211,167,60,0.08)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                      className="bg-transparent border-none text-[#d3a73c] text-xs cursor-pointer font-medium px-2 py-1 rounded transition-colors duration-200 hover:bg-[rgba(211,167,60,0.08)]"
                     >
                       Mark read
                     </button>
                   )}
                   <button
                     onClick={(e) => handleDelete(n._id, e)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#555',
-                      cursor: 'pointer',
-                      padding: '8px',
-                      borderRadius: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'color 0.2s, background 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#f87171';
-                      e.currentTarget.style.background = 'rgba(248,113,113,0.08)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#555';
-                      e.currentTarget.style.background = 'none';
-                    }}
+                    className="bg-transparent border-none text-[#555] cursor-pointer p-2 rounded flex items-center justify-center transition-colors duration-200 hover:text-[#f87171] hover:bg-[rgba(248,113,113,0.08)]"
                     title="Delete notification"
                   >
                     <Trash2 size={15} />
@@ -327,43 +250,23 @@ const Notifications = () => {
 
       {/* Pagination */}
       {!loading && totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '24px', gap: '16px' }}>
+        <div className="flex justify-center items-center mt-6 gap-4">
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
-            style={{
-              background: '#111',
-              border: '0.5px solid #2d2d2d',
-              color: page === 1 ? '#444' : '#e4e4e4',
-              cursor: page === 1 ? 'not-allowed' : 'pointer',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              outline: 'none',
-            }}
+            className={`bg-[#111] border-[0.5px] border-solid border-[#2d2d2d] px-3 py-2 rounded-md flex items-center outline-none ${page === 1 ? 'text-[#444] cursor-not-allowed' : 'text-[#e4e4e4] cursor-pointer'}`}
           >
             <ChevronLeft size={16} />
           </button>
           
-          <span style={{ fontSize: '13px', color: '#888' }}>
+          <span className="text-[13px] text-[#888]">
             Page {page} of {totalPages}
           </span>
 
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            style={{
-              background: '#111',
-              border: '0.5px solid #2d2d2d',
-              color: page === totalPages ? '#444' : '#e4e4e4',
-              cursor: page === totalPages ? 'not-allowed' : 'pointer',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              outline: 'none',
-            }}
+            className={`bg-[#111] border-[0.5px] border-solid border-[#2d2d2d] px-3 py-2 rounded-md flex items-center outline-none ${page === totalPages ? 'text-[#444] cursor-not-allowed' : 'text-[#e4e4e4] cursor-pointer'}`}
           >
             <ChevronRight size={16} />
           </button>

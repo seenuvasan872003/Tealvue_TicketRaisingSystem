@@ -6,7 +6,7 @@ export const ROLE_DEFAULTS = {
   'super-admin': [
     'dashboard', 'ticket_approval', 'all_users', 'create_user',
     'create_admin', 'teams_management', 'roles_features',
-    'team_dashboard', 'ticket_lifecycle_logs', 'activity_logs', 'client_logs'
+    'team_dashboard', 'manage_categories', 'ticket_lifecycle_logs', 'activity_logs', 'client_logs'
   ],
   'admin': [
     'dashboard', 'all_tickets', 'all_users',

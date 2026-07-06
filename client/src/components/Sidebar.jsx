@@ -25,6 +25,7 @@ import {
   CheckCircle,
   Activity,
   Layers,
+  Tag,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
@@ -51,7 +52,8 @@ const ICON_MAP = {
   'ti-circle-check': CheckCircle,
   'ti-timeline': FileText,
   'ti-activity': FileText,
-  'ti-terminal': FileText
+  'ti-terminal': FileText,
+  'ti-tags': Tag
 };
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -107,14 +109,13 @@ const Sidebar = ({ isOpen, onClose }) => {
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       {/* ── Logo ─────────────────────────────────────── */}
-      <div className="sidebar-logo" style={{ justifyContent: 'space-between', borderBottom: 'none' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src={tealvueLogo} alt="Tealvue Logo" width="28" height="28" style={{ height: 28, width: 28 }} />
-          <span>Teal<span style={{ color: 'var(--color-teal)' }}>vue</span></span>
+      <div className="sidebar-logo flex justify-between border-b-0">
+        <div className="flex items-center gap-2.5">
+          <img src={tealvueLogo} alt="Tealvue Logo" width="28" height="28" className="h-7 w-7" />
+          <span>Teal<span className="text-[var(--color-teal)]">vue</span></span>
         </div>
         {/* Mobile close button */}
-        <button onClick={closeMobile} className="mobile-toggle" id="sidebar-close-btn"
-          style={{ display: 'none' }}>
+        <button onClick={closeMobile} className="mobile-toggle flex md:hidden" id="sidebar-close-btn">
           <X size={18} />
         </button>
       </div>
@@ -125,59 +126,39 @@ const Sidebar = ({ isOpen, onClose }) => {
           navigate('/profile');
           closeMobile();
         }}
-        className="card-hover"
-        style={{
-          padding: '12px 20px 16px 20px',
-          borderBottom: '1px solid var(--color-border)',
-          background: 'rgba(255,255,255,0.015)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 12,
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-          flexShrink: 0,
-        }}
+        className="card-hover px-5 pt-3 pb-4 border-b border-[var(--color-border)] bg-[rgba(255,255,255,0.015)] flex items-center justify-between gap-3 cursor-pointer transition-all duration-200 shrink-0"
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden', flex: 1 }}>
+        <div className="flex items-center gap-3 overflow-hidden flex-1">
           {/* Avatar */}
           {user?.avatar ? (
             <img
               src={`${BASE_URL}${user.avatar}`}
               alt={user.name}
-              style={{
-                width: 38, height: 38, borderRadius: '50%',
-                objectFit: 'cover', border: '2px solid var(--color-border)', flexShrink: 0,
-              }}
+              className="w-[38px] h-[38px] rounded-full object-cover border-2 border-[var(--color-border)] shrink-0"
             />
           ) : (
-            <div style={{
-              width: 38, height: 38, borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--color-teal-dark), var(--color-teal))',
-              color: '#fff', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontSize: 14, fontWeight: 700, flexShrink: 0,
-            }}>
+            <div className="w-[38px] h-[38px] rounded-full bg-gradient-to-br from-[var(--color-teal-dark)] to-[var(--color-teal)] text-white flex items-center justify-center text-sm font-bold shrink-0">
               {user?.name?.[0]?.toUpperCase()}
             </div>
           )}
 
-          <div style={{ overflow: 'hidden', flex: 1 }}>
+          <div className="overflow-hidden flex-1">
             {(user?.role === 'team_admin' || user?.role === 'team_user') ? (
               <>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div className="text-[13px] font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">
                   {teamName || 'Loading Team...'}
                 </div>
-                <div style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, color: roleColor, fontWeight: 500 }}>
+                <div className="text-[11px] flex items-center gap-1 font-medium" style={{ color: roleColor }}>
                   <RoleIcon size={11} color={roleColor} />
                   {roleName} ({user.name})
                 </div>
               </>
             ) : (
               <>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div className="text-[13px] font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis">
                   {user?.name}
                 </div>
-                <div style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, color: roleColor, fontWeight: 500 }}>
+                <div className="text-[11px] flex items-center gap-1 font-medium" style={{ color: roleColor }}>
                   <RoleIcon size={11} color={roleColor} />
                   {roleName}
                 </div>
@@ -187,7 +168,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div>
 
         {/* Notification bell on the right */}
-        <div onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
+        <div onClick={(e) => e.stopPropagation()} className="shrink-0">
           <NotificationBell />
         </div>
       </div>
@@ -195,8 +176,8 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* ── Navigation ───────────────────────────────── */}
       <nav className="sidebar-nav" onClick={closeMobile}>
         {Object.entries(grouped).map(([section, items]) => (
-          <div key={section} style={{ display: 'contents' }}>
-            <span className="nav-section-label" style={{ marginTop: 8 }}>{section}</span>
+          <div key={section} className="contents">
+            <span className="nav-section-label mt-2">{section}</span>
             {items.map(item => {
               const IconComp = ICON_MAP[item.icon] || Ticket;
               return (
@@ -219,8 +200,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Logout */}
         <button
           id="sidebar-logout"
-          className="btn btn-ghost"
-          style={{ width: '100%', justifyContent: 'center' }}
+          className="btn btn-ghost w-full justify-center"
           onClick={handleLogout}
         >
           <LogOut size={15} />

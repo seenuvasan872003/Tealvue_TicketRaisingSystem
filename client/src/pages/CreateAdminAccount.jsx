@@ -127,7 +127,13 @@ const CreateAdminAccount = () => {
         role: 'admin',
       });
       setErrors({});
-      navigate('/admin/users');
+      const redirectPaths = {
+        'super-admin': '/super-admin/users',
+        'admin': '/admin/users',
+        'team_admin': '/team-admin/users',
+        'team_user': '/team-user/users'
+      };
+      navigate(redirectPaths[user?.role] || '/users');
     } catch (err) {
       const serverMessage = err?.response?.data?.message || 'Failed to create account';
       const errorsList = err?.response?.data?.errors;
@@ -157,8 +163,8 @@ const CreateAdminAccount = () => {
         </div>
       </div>
 
-      <div className="create-admin-form" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: '28px 32px', maxWidth: 500, margin: '0 auto' }}>
-        <h2 style={{ color: '#e4e4e4', marginBottom: 20 }}>Create New Admin</h2>
+      <div className="create-admin-form bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl py-7 px-8 max-w-[500px] mx-auto">
+        <h2 className="text-[#e4e4e4] mb-5">Create New Admin</h2>
         <form onSubmit={handleSubmit}>
           <div className="field-group">
             <label>Full Name</label>
@@ -168,8 +174,8 @@ const CreateAdminAccount = () => {
               value={formData.name} 
               onChange={e => handleNameChange(e.target.value)} 
             />
-            {errors.name && <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>{errors.name}</span>}
-            {formData.name && !errors.name && <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>✓ Name is valid</span>}
+            {errors.name && <span className="error-msg block text-[11px] text-[var(--color-high)] mt-1">{errors.name}</span>}
+            {formData.name && !errors.name && <span className="success-msg block text-[11px] text-[var(--color-teal)] mt-1">✓ Name is valid</span>}
           </div>
 
           <div className="field-group">
@@ -181,48 +187,43 @@ const CreateAdminAccount = () => {
               value={formData.email} 
               onChange={e => handleEmailChange(e.target.value)} 
             />
-            {errors.email && <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>{errors.email}</span>}
-            {formData.email && !errors.email && <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>✓ Email is valid</span>}
+            {errors.email && <span className="error-msg block text-[11px] text-[var(--color-high)] mt-1">{errors.email}</span>}
+            {formData.email && !errors.email && <span className="success-msg block text-[11px] text-[var(--color-teal)] mt-1">✓ Email is valid</span>}
           </div>
 
           <div className="field-group">
             <label>Temporary Password</label>
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
               <input 
-                className={errors.password ? 'input-error' : formData.password ? 'input-success' : ''}
+                className={`${errors.password ? 'input-error' : formData.password ? 'input-success' : ''} w-full pr-10`}
                 type={showPassword ? "text" : "password"} 
                 placeholder="Enter the password" 
                 value={formData.password} 
                 onChange={e => handlePasswordChange(e.target.value)} 
-                style={{ width: '100%', paddingRight: 40 }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', color: '#888', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none text-[#888] cursor-pointer flex items-center justify-center"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            {errors.password && <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>{errors.password}</span>}
-            <div style={{ marginTop: 6, padding: 8, background: '#161b22', borderRadius: 6, border: '1px solid var(--color-border)' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }}>Password Requirements:</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 8px', fontSize: 10 }}>
-                <span style={{ color: formData.password.length >= 8 ? 'var(--color-teal)' : '#acacac' }}>
+            {errors.password && <span className="error-msg block text-[11px] text-[var(--color-high)] mt-1">{errors.password}</span>}
+            <div className="mt-1.5 p-2 bg-[#161b22] rounded-md border border-[var(--color-border)]">
+              <div className="text-[11px] font-semibold text-[var(--color-text-muted)] mb-1">Password Requirements:</div>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
+                <span className={formData.password.length >= 8 ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
                   {formData.password.length >= 8 ? '✓' : '•'} Min 8 chars
                 </span>
-                <span style={{ color: /[A-Z]/.test(formData.password) ? 'var(--color-teal)' : '#acacac' }}>
+                <span className={/[A-Z]/.test(formData.password) ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
                   {/[A-Z]/.test(formData.password) ? '✓' : '•'} 1 Uppercase (A-Z)
                 </span>
-                <span style={{ color: /[0-9]/.test(formData.password) ? 'var(--color-teal)' : '#acacac' }}>
+                <span className={/[0-9]/.test(formData.password) ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
                   {/[0-9]/.test(formData.password) ? '✓' : '•'} 1 Number (0-9)
                 </span>
-                <span style={{ color: /[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(formData.password) ? 'var(--color-teal)' : '#acacac' }}>
-                  {/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(formData.password) ? '✓' : '•'} 1 Special symbol
+                <span className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(formData.password) ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
+                  {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(formData.password) ? '✓' : '•'} 1 Special symbol
                 </span>
               </div>
             </div>
@@ -230,38 +231,32 @@ const CreateAdminAccount = () => {
 
           <div className="field-group">
             <label>Confirm Password</label>
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
               <input 
-                className={errors.confirmPassword ? 'input-error' : formData.confirmPassword ? 'input-success' : ''}
+                className={`${errors.confirmPassword ? 'input-error' : formData.confirmPassword ? 'input-success' : ''} w-full pr-10`}
                 type={showConfirmPassword ? "text" : "password"} 
                 placeholder="Confirm password" 
                 value={formData.confirmPassword} 
                 onChange={e => handleConfirmPasswordChange(e.target.value)} 
-                style={{ width: '100%', paddingRight: 40 }}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                style={{
-                  position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', color: '#888', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none text-[#888] cursor-pointer flex items-center justify-center"
               >
                 {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            {errors.confirmPassword && <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>{errors.confirmPassword}</span>}
-            {formData.confirmPassword && !errors.confirmPassword && <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>✓ Passwords match</span>}
+            {errors.confirmPassword && <span className="error-msg block text-[11px] text-[var(--color-high)] mt-1">{errors.confirmPassword}</span>}
+            {formData.confirmPassword && !errors.confirmPassword && <span className="success-msg block text-[11px] text-[var(--color-teal)] mt-1">✓ Passwords match</span>}
           </div>
 
 
 
-          <div style={{ marginTop: 24 }}>
+          <div className="mt-6">
             <button 
               type="submit" 
-              className="btn btn-primary" 
-              style={{ width: '100%', justifyContent: 'center' }} 
+              className="btn btn-primary w-full justify-center" 
               disabled={loading || Object.keys(errors).length > 0 || !formData.name || !formData.email || !formData.password || !formData.confirmPassword}
             >
               <UserPlus size={16} />

@@ -82,25 +82,23 @@ const TeamDashboard = () => {
 
   return (
     <div className="page-body fade-in">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div className="page-header flex justify-between items-center mb-6">
         <div>
           <h1 className="page-title">Team Progress Dashboard</h1>
           <p className="page-subtitle">Overview of specialized support teams' workload and allocation metrics.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div className="flex gap-3 items-center">
           {isSuperAdmin && (
             <button 
-              className="btn btn-primary"
+              className="btn btn-primary flex items-center gap-1.5"
               onClick={() => navigate('/super-admin/categories')}
-              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
               Manage Categories
             </button>
           )}
           <button 
-            className="btn btn-ghost"
+            className="btn btn-ghost flex items-center gap-1.5"
             onClick={fetchDashboardData}
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
             <RefreshCw size={14} /> Refresh
           </button>
@@ -108,49 +106,49 @@ const TeamDashboard = () => {
       </div>
 
       {/* Summary Chips */}
-      <div className="stat-grid" style={{ marginBottom: 28 }}>
+      <div className="stat-grid mb-7">
         <div className="stat-card teal">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="flex justify-between items-start">
             <div>
               <div className="stat-label">Total Teams</div>
               <div className="stat-value">{summary?.totalTeams ?? 0}</div>
             </div>
-            <Users size={24} style={{ opacity: 0.5 }} />
+            <Users size={24} className="opacity-50" />
           </div>
         </div>
         <div className="stat-card blue">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="flex justify-between items-start">
             <div>
               <div className="stat-label">Total Allocated Tickets</div>
               <div className="stat-value">{summary?.totalTickets ?? 0}</div>
             </div>
-            <Ticket size={24} style={{ opacity: 0.5 }} />
+            <Ticket size={24} className="opacity-50" />
           </div>
         </div>
         <div className="stat-card green">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="flex justify-between items-start">
             <div>
               <div className="stat-label">Avg Completion %</div>
               <div className="stat-value">{summary?.avgCompletionRate ?? 0}%</div>
             </div>
-            <Percent size={24} style={{ opacity: 0.5 }} />
+            <Percent size={24} className="opacity-50" />
           </div>
         </div>
         <div className="stat-card orange">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="flex justify-between items-start">
             <div>
               <div className="stat-label">Auto-Allocated Tickets</div>
               <div className="stat-value">{summary?.autoAllocatedCount ?? 0}</div>
             </div>
-            <Sliders size={24} style={{ opacity: 0.5 }} />
+            <Sliders size={24} className="opacity-50" />
           </div>
         </div>
       </div>
 
       {/* Teams Cards Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 24 }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6">
         {teams.length === 0 ? (
-          <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>
+          <div className="card col-span-full text-center p-10 text-[var(--color-text-muted)]">
             No teams setup in the system.
           </div>
         ) : (
@@ -172,26 +170,26 @@ const TeamDashboard = () => {
             const displayChartData = hasData ? chartData : [{ name: 'Empty', value: 1, color: '#252525' }];
 
             return (
-              <div key={team.teamId} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 24 }}>
+              <div key={team.teamId} className="card flex flex-col gap-4 p-6">
                 {/* Header Row */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div className="flex justify-between items-start">
                   <div>
-                    <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: '#fff', cursor: 'pointer' }} onClick={() => openDetailsModal(team)} className="clickable-title">
+                    <h3 onClick={() => openDetailsModal(team)} className="clickable-title text-lg font-semibold m-0 text-white cursor-pointer">
                       {team.name}
                     </h3>
-                    <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4 }}>
-                      Admin: <strong style={{ color: '#fff' }}>{team.teamAdmin?.name || 'Unassigned'}</strong> • {team.membersCount} agents
+                    <div className="text-xs text-[var(--color-text-muted)] mt-1">
+                      Admin: <strong className="text-white">{team.teamAdmin?.name || 'Unassigned'}</strong> • {team.membersCount} agents
                     </div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                    <div className="flex gap-1.5 flex-wrap mt-2">
                       {team.categories.map((c, i) => (
-                        <span key={i} style={{ fontSize: 10, padding: '2px 8px', background: '#202020', borderRadius: 4, color: '#acacac', textTransform: 'capitalize' }}>{c}</span>
+                        <span key={i} className="text-[10px] py-0.5 px-2 bg-[#202020] rounded text-[#acacac] capitalize">{c}</span>
                       ))}
                     </div>
                   </div>
                   
                   {/* Team Completion Rate Ring */}
-                  <div style={{ position: 'relative', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="48" height="48" style={{ transform: 'rotate(-90deg)' }}>
+                  <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                    <svg width="48" height="48" className="-rotate-90">
                       <circle cx="24" cy="24" r="19" fill="transparent" stroke="#252525" strokeWidth="3.5" />
                       <circle
                         cx="24"
@@ -205,14 +203,14 @@ const TeamDashboard = () => {
                         strokeLinecap="round"
                       />
                     </svg>
-                    <span style={{ position: 'absolute', fontSize: 10, fontWeight: 700, color: '#fff' }}>{team.completionRate}%</span>
+                    <span className="absolute text-[10px] font-bold text-white">{team.completionRate}%</span>
                   </div>
                 </div>
 
                 {/* Unified Circle / Pie Chart & Detailed Stats Row */}
-                <div style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '16px 0', borderTop: '1px solid #252525', borderBottom: '1px solid #252525' }}>
+                <div className="flex gap-4 items-center py-4 border-t border-b border-[#252525]">
                   {/* Left: Recharts Doughnut/Circle Chart */}
-                  <div style={{ width: 100, height: 100, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="w-[100px] h-[100px] relative flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -230,50 +228,50 @@ const TeamDashboard = () => {
                         </Pie>
                       </PieChart>
                     </ResponsiveContainer>
-                    <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <span style={{ fontSize: 16, fontWeight: '800', color: '#fff' }}>{team.total}</span>
-                      <span style={{ fontSize: 8, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Total</span>
+                    <div className="absolute flex flex-col items-center">
+                      <span className="text-base font-extrabold text-white">{team.total}</span>
+                      <span className="text-[8px] text-[var(--color-text-muted)] uppercase">Total</span>
                     </div>
                   </div>
 
                   {/* Right: Detailed Legend & Data List */}
-                  <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', paddingLeft: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#141414', borderRadius: 4, padding: '4px 8px', border: '1px solid #202020' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#3fb950' }} />
-                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Open</span>
+                  <div className="flex-1 grid grid-cols-2 gap-y-2 gap-x-4 pl-2">
+                    <div className="flex items-center justify-between bg-[#141414] rounded px-2 py-1 border border-[#202020]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#3fb950]" />
+                        <span className="text-[11px] text-[var(--color-text-muted)]">Open</span>
                       </div>
-                      <strong style={{ fontSize: 12, color: '#3fb950' }}>{openVal}</strong>
+                      <strong className="text-xs text-[#3fb950]">{openVal}</strong>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#141414', borderRadius: 4, padding: '4px 8px', border: '1px solid #202020' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d29922' }} />
-                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Progress</span>
+                    <div className="flex items-center justify-between bg-[#141414] rounded px-2 py-1 border border-[#202020]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#d29922]" />
+                        <span className="text-[11px] text-[var(--color-text-muted)]">Progress</span>
                       </div>
-                      <strong style={{ fontSize: 12, color: '#d29922' }}>{progressVal}</strong>
+                      <strong className="text-xs text-[#d29922]">{progressVal}</strong>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#141414', borderRadius: 4, padding: '4px 8px', border: '1px solid #202020' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6e7681' }} />
-                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Closed</span>
+                    <div className="flex items-center justify-between bg-[#141414] rounded px-2 py-1 border border-[#202020]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#6e7681]" />
+                        <span className="text-[11px] text-[var(--color-text-muted)]">Closed</span>
                       </div>
-                      <strong style={{ fontSize: 12, color: '#9ca3af' }}>{closedVal}</strong>
+                      <strong className="text-xs text-[#9ca3af]">{closedVal}</strong>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#141414', borderRadius: 4, padding: '4px 8px', border: '1px solid #202020' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444' }} />
-                        <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Transfer</span>
+                    <div className="flex items-center justify-between bg-[#141414] rounded px-2 py-1 border border-[#202020]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" />
+                        <span className="text-[11px] text-[var(--color-text-muted)]">Transfer</span>
                       </div>
-                      <strong style={{ fontSize: 12, color: '#ef4444' }}>{transferredVal}</strong>
+                      <strong className="text-xs text-[#ef4444]">{transferredVal}</strong>
                     </div>
                   </div>
                 </div>
 
-                <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate(`/teams/${team.teamId || team._id}/performance`)}>
-                  View Performance Details <ChevronRight size={14} style={{ marginLeft: 4 }} />
+                <button className="btn btn-ghost w-full justify-center" onClick={() => navigate(`/teams/${team.teamId || team._id}/performance`)}>
+                  View Performance Details <ChevronRight size={14} className="ml-1" />
                 </button>
               </div>
             );
@@ -284,11 +282,11 @@ const TeamDashboard = () => {
       {/* Team Details Modal */}
       {selectedTeam && (
         <div className="modal-backdrop">
-          <div className="modal-content" style={{ maxWidth: 800, width: '90%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content max-w-[800px] w-[90%] max-h-[85vh] flex flex-col">
             <div className="modal-header">
               <div>
-                <h3 style={{ margin: 0 }}>{selectedTeam.name}</h3>
-                <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '4px 0 0 0' }}>Admin: {selectedTeam.teamAdmin?.name || 'Unassigned'} • {selectedTeam.membersCount} active agents</p>
+                <h3 className="m-0">{selectedTeam.name}</h3>
+                <p className="text-xs text-[var(--color-text-muted)] mt-1 mb-0 mx-0">Admin: {selectedTeam.teamAdmin?.name || 'Unassigned'} • {selectedTeam.membersCount} active agents</p>
               </div>
               <button onClick={() => setSelectedTeam(null)} className="modal-close">
                 <X size={18} />
@@ -296,38 +294,38 @@ const TeamDashboard = () => {
             </div>
             
             {modalLoading ? (
-              <div style={{ padding: 40, textAlign: 'center', flex: 1 }}><div className="spinner" /></div>
+              <div className="p-10 text-center flex-1"><div className="spinner" /></div>
             ) : (
-              <div style={{ overflowY: 'auto', paddingRight: 6, display: 'flex', flexDirection: 'column', gap: 20, flex: 1, marginTop: 14 }}>
+              <div className="overflow-y-auto pr-1.5 flex flex-col gap-5 flex-1 mt-3.5">
                 {/* Team Admin Account Credentials Box */}
-                <div className="card" style={{ padding: 16, background: 'rgba(20,160,125,0.04)', border: '1px solid rgba(20,160,125,0.15)', borderRadius: 8 }}>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: 13, color: 'var(--color-teal)', fontWeight: 600 }}>Team Admin Account Credentials</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, fontSize: 13 }}>
+                <div className="card p-4 bg-[rgba(20,160,125,0.04)] border border-[rgba(20,160,125,0.15)] rounded-lg">
+                  <h4 className="m-0 mb-2 text-[13px] text-[var(--color-teal)] font-semibold">Team Admin Account Credentials</h4>
+                  <div className="grid grid-cols-2 gap-4 text-[13px]">
                     <div>
-                      <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: 11 }}>Login Email:</span>
-                      <strong style={{ color: '#fff' }}>{selectedTeam.teamAdmin?.email || 'N/A'}</strong>
+                      <span className="text-[var(--color-text-muted)] block text-[11px]">Login Email:</span>
+                      <strong className="text-white">{selectedTeam.teamAdmin?.email || 'N/A'}</strong>
                     </div>
                     <div>
-                      <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: 11 }}>Login Password:</span>
-                      <strong style={{ color: '#eac253', fontFamily: 'monospace' }}>{selectedTeam.teamAdminPassword || 'password123'}</strong>
+                      <span className="text-[var(--color-text-muted)] block text-[11px]">Login Password:</span>
+                      <strong className="text-[#eac253] font-mono">{selectedTeam.teamAdminPassword || 'password123'}</strong>
                     </div>
                   </div>
                 </div>
 
                 {/* Description */}
                 {selectedTeam.description && (
-                  <div className="card" style={{ padding: 12, background: 'rgba(255,255,255,0.02)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Description</div>
-                    <div style={{ fontSize: 13, color: '#acacac', lineHeight: 1.5 }}>{selectedTeam.description}</div>
+                  <div className="card p-3 bg-[rgba(255,255,255,0.02)]">
+                    <div className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase mb-1">Description</div>
+                    <div className="text-[13px] text-[#acacac] leading-relaxed">{selectedTeam.description}</div>
                   </div>
                 )}
 
                 {/* Dashboard statistics section */}
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, minHeight: 180 }}>
+                <div className="grid grid-cols-[2fr_1fr] gap-4 min-h-[180px]">
                   {/* Status Breakdown Doughnut Chart */}
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 12 }}>Status Distribution</div>
-                    <div style={{ flex: 1, height: 130 }}>
+                  <div className="card flex flex-col">
+                    <div className="text-[13px] font-semibold text-white mb-3">Status Distribution</div>
+                    <div className="flex-1 h-[130px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -359,14 +357,14 @@ const TeamDashboard = () => {
                   </div>
 
                   {/* Summary counts */}
-                  <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12 }}>
+                  <div className="card flex flex-col justify-center gap-3">
                     <div>
-                      <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Completion Rate</div>
-                      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-teal)' }}>{selectedTeam.completionRate}%</div>
+                      <div className="text-[10px] text-[var(--color-text-muted)]">Completion Rate</div>
+                      <div className="text-[22px] font-bold text-[var(--color-teal)]">{selectedTeam.completionRate}%</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>Auto-Allocation Share</div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>
+                      <div className="text-[10px] text-[var(--color-text-muted)]">Auto-Allocation Share</div>
+                      <div className="text-lg font-bold text-white">
                         {teamTickets.filter(t => t.autoAllocated).length} / {teamTickets.length} tickets
                       </div>
                     </div>
@@ -375,40 +373,40 @@ const TeamDashboard = () => {
 
                 {/* Team Members & Performance */}
                 <div>
-                  <h4 style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 10 }}>Team Members & Performance</h4>
-                  <div className="table-wrap" style={{ maxHeight: 220, overflowY: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <h4 className="text-sm font-semibold text-white mb-2.5">Team Members & Performance</h4>
+                  <div className="table-wrap max-h-[220px] overflow-y-auto">
+                    <table className="w-full border-collapse text-[13px]">
                       <thead>
-                        <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--color-border)' }}>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', color: '#acacac', fontWeight: 600 }}>Agent Name</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', color: '#acacac', fontWeight: 600 }}>Email</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'center', color: '#acacac', fontWeight: 600 }}>Total</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'center', color: '#acacac', fontWeight: 600 }}>Open</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'center', color: '#acacac', fontWeight: 600 }}>Progress</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'center', color: '#acacac', fontWeight: 600 }}>Closed</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'center', color: '#acacac', fontWeight: 600 }}>Completion</th>
+                        <tr className="bg-[rgba(255,255,255,0.02)] border-b border-[var(--color-border)]">
+                          <th className="py-2.5 px-3.5 text-left text-[#acacac] font-semibold">Agent Name</th>
+                          <th className="py-2.5 px-3.5 text-left text-[#acacac] font-semibold">Email</th>
+                          <th className="py-2.5 px-3.5 text-center text-[#acacac] font-semibold">Total</th>
+                          <th className="py-2.5 px-3.5 text-center text-[#acacac] font-semibold">Open</th>
+                          <th className="py-2.5 px-3.5 text-center text-[#acacac] font-semibold">Progress</th>
+                          <th className="py-2.5 px-3.5 text-center text-[#acacac] font-semibold">Closed</th>
+                          <th className="py-2.5 px-3.5 text-center text-[#acacac] font-semibold">Completion</th>
                         </tr>
                       </thead>
                       <tbody>
                         {teamMembers.length === 0 ? (
                           <tr>
-                            <td colSpan="7" style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: 20 }}>No agents assigned to this team.</td>
+                            <td colSpan="7" className="text-center text-[var(--color-text-muted)] p-5">No agents assigned to this team.</td>
                           </tr>
                         ) : (
                           teamMembers.map(m => (
-                            <tr key={m._id} style={{ borderBottom: '1px solid var(--color-border-soft)' }}>
-                              <td style={{ padding: '10px 14px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: m.isActive ? '#3fb950' : '#ef4444', display: 'inline-block' }} />
-                                  <strong style={{ color: '#e4e4e4' }}>{m.name}</strong>
+                            <tr key={m._id} className="border-b border-[var(--color-border-soft)]">
+                              <td className="py-2.5 px-3.5">
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-1.5 h-1.5 rounded-full inline-block ${m.isActive ? 'bg-[#3fb950]' : 'bg-[#ef4444]'}`} />
+                                  <strong className="text-[#e4e4e4]">{m.name}</strong>
                                 </div>
                               </td>
-                              <td style={{ padding: '10px 14px', color: 'var(--color-text-muted)' }}>{m.email}</td>
-                              <td style={{ padding: '10px 14px', textAlign: 'center', color: '#fff' }}>{m.total}</td>
-                              <td style={{ padding: '10px 14px', textAlign: 'center', color: '#3fb950', fontWeight: '600' }}>{m.open}</td>
-                              <td style={{ padding: '10px 14px', textAlign: 'center', color: '#d29922', fontWeight: '600' }}>{m.inProgress}</td>
-                              <td style={{ padding: '10px 14px', textAlign: 'center', color: '#9ca3af', fontWeight: '600' }}>{m.closed}</td>
-                              <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: '700', color: 'var(--color-teal)' }}>{m.completionRate}%</td>
+                              <td className="py-2.5 px-3.5 text-[var(--color-text-muted)]">{m.email}</td>
+                              <td className="py-2.5 px-3.5 text-center text-white">{m.total}</td>
+                              <td className="py-2.5 px-3.5 text-center text-[#3fb950] font-semibold">{m.open}</td>
+                              <td className="py-2.5 px-3.5 text-center text-[#d29922] font-semibold">{m.inProgress}</td>
+                              <td className="py-2.5 px-3.5 text-center text-[#9ca3af] font-semibold">{m.closed}</td>
+                              <td className="py-2.5 px-3.5 text-center font-bold text-[var(--color-teal)]">{m.completionRate}%</td>
                             </tr>
                           ))
                         )}
@@ -419,8 +417,8 @@ const TeamDashboard = () => {
 
                 {/* Ticket History */}
                 <div>
-                  <h4 style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 10 }}>Assigned Tickets History</h4>
-                  <div className="table-wrap" style={{ maxHeight: 220, overflowY: 'auto' }}>
+                  <h4 className="text-sm font-semibold text-white mb-2.5">Assigned Tickets History</h4>
+                  <div className="table-wrap max-h-[220px] overflow-y-auto">
                     <table>
                       <thead>
                         <tr>
@@ -434,18 +432,22 @@ const TeamDashboard = () => {
                       <tbody>
                         {teamTickets.length === 0 ? (
                           <tr>
-                            <td colSpan="5" style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: 12 }}>No tickets allocated to this team.</td>
+                            <td colSpan="5" className="text-center text-[var(--color-text-muted)] p-3">No tickets allocated to this team.</td>
                           </tr>
                         ) : (
                           teamTickets.map(t => (
-                            <tr key={t._id}>
-                              <td style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--color-text-muted)' }}>{t._id.slice(-6).toUpperCase()}</td>
-                              <td style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                <a href={`/tickets/${t._id}`} style={{ color: 'var(--color-teal)', textDecoration: 'underline' }}>{t.title}</a>
+                            <tr
+                              key={t._id}
+                              onClick={() => navigate(`/tickets/${t._id}`)}
+                              className="cursor-pointer transition-colors duration-100 hover:bg-[rgba(255,255,255,0.03)]"
+                            >
+                              <td className="font-mono text-[11px] text-[var(--color-text-muted)]">{t._id.slice(-6).toUpperCase()}</td>
+                              <td className="max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap font-medium text-[#e4e4e4]">
+                                {t.title}
                               </td>
-                              <td><StatusBadge status={t.status} /></td>
-                              <td><PriorityBadge priority={t.priority} /></td>
-                              <td style={{ textTransform: 'capitalize' }}>{t.category}</td>
+                              <td onClick={(e) => e.stopPropagation()}><StatusBadge status={t.status} /></td>
+                              <td onClick={(e) => e.stopPropagation()}><PriorityBadge priority={t.priority} /></td>
+                              <td className="capitalize">{t.category}</td>
                             </tr>
                           ))
                         )}
@@ -456,20 +458,20 @@ const TeamDashboard = () => {
 
                 {/* Assignment Timeline (Logs) */}
                 <div>
-                  <h4 style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 10 }}>Recent Activity Log (30 Days)</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 180, overflowY: 'auto', paddingRight: 4 }}>
+                  <h4 className="text-sm font-semibold text-white mb-2.5">Recent Activity Log (30 Days)</h4>
+                  <div className="flex flex-col gap-2 max-h-[180px] overflow-y-auto pr-1">
                     {teamLogs.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: 16, color: 'var(--color-text-muted)', border: '1px dashed #252525', borderRadius: 8, fontSize: 13 }}>No recent activity records.</div>
+                      <div className="text-center p-4 text-[var(--color-text-muted)] border border-dashed border-[#252525] rounded-lg text-[13px]">No recent activity records.</div>
                     ) : (
                       teamLogs.map(log => (
-                        <div key={log._id} style={{ display: 'flex', gap: 10, background: '#111', border: '1px solid #252525', borderRadius: 6, padding: '8px 12px', fontSize: 12 }}>
-                          <Clock size={13} style={{ color: 'var(--color-text-muted)', marginTop: 2, flexShrink: 0 }} />
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-muted)', fontSize: 10 }}>
+                        <div key={log._id} className="flex gap-2.5 bg-[#111] border border-[#252525] rounded-md py-2 px-3 text-xs">
+                          <Clock size={13} className="text-[var(--color-text-muted)] mt-0.5 shrink-0" />
+                          <div className="flex-1">
+                            <div className="flex justify-between text-[var(--color-text-muted)] text-[10px]">
                               <span>{log.action.replace(/_/g, ' ')}</span>
                               <span>{new Date(log.createdAt).toLocaleDateString()}</span>
                             </div>
-                            <div style={{ color: '#acacac', marginTop: 2 }}>{log.note}</div>
+                            <div className="text-[#acacac] mt-0.5">{log.note}</div>
                           </div>
                         </div>
                       ))

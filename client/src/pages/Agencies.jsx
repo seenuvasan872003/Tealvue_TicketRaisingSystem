@@ -209,7 +209,7 @@ const Agencies = () => {
 
   if (loading && agencies.length === 0) {
     return (
-      <div style={{ padding: 60, textAlign: 'center' }}>
+      <div className="p-[60px] text-center">
         <div className="spinner" />
       </div>
     );
@@ -228,7 +228,7 @@ const Agencies = () => {
       </div>
 
       {/* Stats row */}
-      <div className="stat-grid" style={{ marginBottom: 28 }}>
+      <div className="stat-grid mb-7">
         <div className="stat-card teal">
           <div className="stat-label">Total Agencies</div>
           <div className="stat-value">{totalAgencies}</div>
@@ -243,7 +243,7 @@ const Agencies = () => {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card p-0 overflow-hidden">
         <div className="table-wrap">
           <table>
             <thead>
@@ -258,7 +258,7 @@ const Agencies = () => {
             <tbody>
               {agencies.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: 24, color: 'var(--color-text-muted)' }}>
+                  <td colSpan="5" className="text-center p-6 text-[var(--color-text-muted)]">
                     No agencies found.
                   </td>
                 </tr>
@@ -266,21 +266,15 @@ const Agencies = () => {
                 agencies.map((agency) => (
                   <tr key={agency.agencyId}>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{agency.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>{agency.email}</div>
+                      <div className="font-semibold">{agency.name}</div>
+                      <div className="text-[11px] text-[var(--color-text-muted)]">{agency.email}</div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                      <div className="flex gap-1 flex-wrap">
                         {agency.categories.map((cat, idx) => (
                           <span
                             key={idx}
-                            style={{
-                              padding: '2px 8px',
-                              fontSize: 10,
-                              borderRadius: 4,
-                              background: 'var(--color-border)',
-                              color: 'var(--color-text)',
-                            }}
+                            className="py-0.5 px-2 text-[10px] rounded bg-[var(--color-border)] text-[var(--color-text)]"
                           >
                             {cat}
                           </span>
@@ -290,36 +284,27 @@ const Agencies = () => {
                     <td>
                       <button
                         onClick={() => handleToggleStatus(agency)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          fontSize: 12,
-                          color: agency.isActive ? 'var(--color-success)' : 'var(--color-error)',
-                        }}
+                        className={`bg-none border-none cursor-pointer flex items-center gap-1.5 text-xs ${agency.isActive ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}`}
                       >
                         {agency.isActive ? (
                           <>
-                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-success)' }} />
+                            <span className="w-2 h-2 rounded-full bg-[var(--color-success)]" />
                             Active
                           </>
                         ) : (
                           <>
-                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-error)' }} />
+                            <span className="w-2 h-2 rounded-full bg-[var(--color-error)]" />
                             Inactive
                           </>
                         )}
                       </button>
                     </td>
-                    <td style={{ fontWeight: 600 }}>{agency.total}</td>
+                    <td className="font-semibold">{agency.total}</td>
                     <td>
-                      <div style={{ display: 'flex', gap: 12 }}>
+                      <div className="flex gap-3">
                         <button
                           className="btn btn-ghost"
-                          style={{ padding: 6 }}
+                          className="btn btn-ghost p-1.5"
                           onClick={() => openEditModal(agency)}
                           title="Edit"
                         >
@@ -327,7 +312,7 @@ const Agencies = () => {
                         </button>
                         <button
                           className="btn btn-ghost"
-                          style={{ padding: 6, color: 'var(--color-error)' }}
+                          className="btn btn-ghost p-1.5 text-[var(--color-error)]"
                           onClick={() => handleDelete(agency.agencyId)}
                           title="Delete"
                         >
@@ -346,14 +331,14 @@ const Agencies = () => {
       {/* Add / Edit Modal */}
       {showModal && (
         <div className="modal-backdrop">
-          <div className="modal-content" style={{ maxWidth: 500, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div className="modal-header" style={{ flexShrink: 0, padding: '16px 20px', borderBottom: '1px solid var(--color-border)' }}>
-              <h3 style={{ margin: 0 }}>{editingAgency ? 'Edit Agency' : 'Add New Agency'}</h3>
+          <div className="modal-content max-w-[500px] max-h-[85vh] flex flex-col overflow-hidden">
+            <div className="modal-header shrink-0 py-4 px-5 border-b border-[var(--color-border)]">
+              <h3 className="m-0">{editingAgency ? 'Edit Agency' : 'Add New Agency'}</h3>
               <button onClick={() => setShowModal(false)} className="modal-close">
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', flex: 1, padding: '20px' }}>
+            <form onSubmit={handleSave} className="flex flex-col gap-4 overflow-y-auto flex-1 p-5">
               <div className="form-group">
                 <label>Agency Name *</label>
                 <input
@@ -364,7 +349,7 @@ const Agencies = () => {
                   placeholder="e.g. TechCare Agency"
                   required
                 />
-                {errors.name && <span style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>{errors.name}</span>}
+                {errors.name && <span className="text-xs text-[#f87171] mt-1">{errors.name}</span>}
               </div>
 
               <div className="form-group">
@@ -377,7 +362,7 @@ const Agencies = () => {
                   placeholder="e.g. support@agency.com"
                   required
                 />
-                {errors.email && <span style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>{errors.email}</span>}
+                {errors.email && <span className="text-xs text-[#f87171] mt-1">{errors.email}</span>}
               </div>
 
               <div className="form-group">
@@ -389,7 +374,7 @@ const Agencies = () => {
                   onChange={(e) => handleFieldChange('phone', e.target.value)}
                   placeholder="e.g. 1234567890"
                 />
-                {errors.phone && <span style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>{errors.phone}</span>}
+                {errors.phone && <span className="text-xs text-[#f87171] mt-1">{errors.phone}</span>}
               </div>
 
               <div className="form-group">
@@ -401,15 +386,15 @@ const Agencies = () => {
                   onChange={(e) => handleFieldChange('description', e.target.value)}
                   placeholder="Describe the agency's primary responsibilities..."
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>
-                  <span>{errors.description && <span style={{ color: '#f87171' }}>{errors.description}</span>}</span>
+                <div className="flex justify-between text-[11px] text-[var(--color-text-muted)] mt-1">
+                  <span>{errors.description && <span className="text-[#f87171]">{errors.description}</span>}</span>
                   <span>{description.length}/500</span>
                 </div>
               </div>
 
               <div className="form-group">
                 <label>Support Categories *</label>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6, marginBottom: 12 }}>
+                <div className="flex gap-2 flex-wrap mt-1.5 mb-3">
                   {categoryOptions.map((cat) => {
                     const isSelected = categories.includes(cat);
                     return (
@@ -417,16 +402,7 @@ const Agencies = () => {
                         key={cat}
                         type="button"
                         onClick={() => handleCategoryToggle(cat)}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: 6,
-                          border: isSelected ? '1px solid var(--color-teal)' : '1px solid var(--color-border)',
-                          background: isSelected ? 'var(--color-teal-dark)' : 'var(--color-surface)',
-                          color: '#fff',
-                          cursor: 'pointer',
-                          fontSize: 12,
-                          transition: 'all 0.2s',
-                        }}
+                        className={`py-1.5 px-3 rounded-md text-white cursor-pointer text-xs transition-all duration-200 ${isSelected ? 'border border-[var(--color-teal)] bg-[var(--color-teal-dark)]' : 'border border-[var(--color-border)] bg-[var(--color-surface)]'}`}
                       >
                         {cat}
                       </button>
@@ -435,21 +411,13 @@ const Agencies = () => {
                 </div>
 
                 {/* Add Custom Category Input */}
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
+                <div className="flex gap-2 items-center mt-2">
                   <input
                     type="text"
                     placeholder="Enter new custom category..."
                     value={customCategory}
                     onChange={(e) => setCustomCategory(e.target.value)}
-                    style={{
-                      flex: 1,
-                      padding: '6px 10px',
-                      borderRadius: 6,
-                      border: '1px solid var(--color-border)',
-                      background: 'var(--color-surface)',
-                      color: '#fff',
-                      fontSize: 12,
-                    }}
+                    className="flex-1 py-1.5 px-2.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] text-white text-xs"
                   />
                   <button
                     type="button"
@@ -472,34 +440,25 @@ const Agencies = () => {
                       setCustomCategory('');
                       toast.success(`Category "${capitalized}" added and selected`);
                     }}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: 6,
-                      border: '1px solid var(--color-teal)',
-                      background: 'rgba(20,160,125,0.1)',
-                      color: 'var(--color-teal)',
-                      cursor: 'pointer',
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
+                    className="py-1.5 px-3 rounded-md border border-[var(--color-teal)] bg-[rgba(20,160,125,0.1)] text-[var(--color-teal)] cursor-pointer text-xs font-semibold"
                   >
                     Add Custom
                   </button>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <div className="flex items-center gap-2 mt-1">
                 <input
                   type="checkbox"
                   id="isActive"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  style={{ width: 16, height: 16 }}
+                  className="w-4 h-4"
                 />
-                <label htmlFor="isActive" style={{ cursor: 'pointer' }}>Active and accepting assignments</label>
+                <label htmlFor="isActive" className="cursor-pointer">Active and accepting assignments</label>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 14 }}>
+              <div className="flex justify-end gap-3 mt-3.5">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>
                   Cancel
                 </button>

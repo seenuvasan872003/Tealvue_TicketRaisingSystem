@@ -187,9 +187,9 @@ const updateProfile = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     // Only allow updating personal fields
-    let { name, department, password } = req.body;
-    name       = sanitizeText(name);
-    department = sanitizeText(department);
+    let { name, email, password } = req.body;
+    name = sanitizeText(name);
+    if (email) email = email.toLowerCase().trim();
 
     if (name) {
       if (name.length < 2 || name.length > 50) {
@@ -197,7 +197,15 @@ const updateProfile = async (req, res) => {
       }
       user.name = name;
     }
-    if (department !== undefined) user.department = department || null;
+    
+    if (email && email !== user.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) return res.status(400).json({ message: 'Invalid email format' });
+      
+      const emailExists = await User.findOne({ email });
+      if (emailExists) return res.status(400).json({ message: 'Email already in use' });
+      user.email = email;
+    }
 
     if (password) {
       const pwError = validatePassword(password);

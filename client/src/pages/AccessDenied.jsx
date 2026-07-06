@@ -53,94 +53,33 @@ const AccessDenied = () => {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem',
-      background: 'var(--color-bg)',
-    }}>
-      <div style={{
-        maxWidth: 480,
-        width: '100%',
-        textAlign: 'center',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '1.5rem',
-      }}>
-        <div style={{
-          width: 96,
-          height: 96,
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05))',
-          border: '2px solid rgba(239,68,68,0.3)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 0 40px rgba(239,68,68,0.15), 0 0 80px rgba(239,68,68,0.06)',
-          animation: 'accessDeniedPulse 2.5s ease-in-out infinite',
-        }}>
+    <div className="min-h-screen flex items-center justify-center p-8 bg-[var(--color-bg)]">
+      <div className="max-w-[480px] w-full text-center flex flex-col items-center gap-6">
+        <div className="w-24 h-24 rounded-full bg-[linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05))] border-2 border-[rgba(239,68,68,0.3)] flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.15),0_0_80px_rgba(239,68,68,0.06)] animate-[accessDeniedPulse_2.5s_ease-in-out_infinite]">
           <ShieldOff size={40} color="#ef4444" strokeWidth={1.5} />
         </div>
         <div>
-          <h1 style={{
-            fontSize: '1.75rem',
-            fontWeight: 800,
-            color: 'var(--color-text)',
-            margin: 0,
-            letterSpacing: '-0.02em',
-          }}>
+          <h1 className="text-[1.75rem] font-extrabold text-[var(--color-text)] m-0 tracking-[-0.02em]">
             Access Denied
           </h1>
-          <p style={{
-            marginTop: '0.5rem',
-            fontSize: '0.95rem',
-            color: 'var(--color-text-muted)',
-            lineHeight: 1.6,
-          }}>
+          <p className="mt-2 text-[0.95rem] text-[var(--color-text-muted)] leading-[1.6]">
             {message}
             <br />
-            Please contact your <strong style={{ color: 'var(--color-teal)' }}>Super Admin</strong> to request access.
+            Please contact your <strong className="text-[var(--color-teal)]">Super Admin</strong> to request access.
           </p>
         </div>
         {featureId && (
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.4rem 1rem',
-            borderRadius: 999,
-            background: 'rgba(239,68,68,0.08)',
-            border: '1px solid rgba(239,68,68,0.2)',
-            fontSize: '0.8rem',
-            fontFamily: 'monospace',
-            color: '#ef4444',
-            letterSpacing: '0.05em',
-          }}>
-            <span style={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: '#ef4444',
-              display: 'inline-block',
-            }} />
+          <div className="inline-flex items-center gap-2 py-[0.4rem] px-4 rounded-full bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.2)] text-[0.8rem] font-mono text-[#ef4444] tracking-[0.05em]">
+            <span className="w-[6px] h-[6px] rounded-full bg-[#ef4444] inline-block" />
             {featureId}
           </div>
         )}
-        <div style={{
-          width: '100%',
-          height: 1,
-          background: 'var(--color-border)',
-          opacity: 0.5,
-        }} />
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div className="w-full h-[1px] bg-[var(--color-border)] opacity-50" />
+        <div className="flex gap-3 flex-wrap justify-center">
           <button
             id="access-denied-back-btn"
             onClick={() => navigate(-1)}
-            className="btn btn-ghost"
-            style={{ gap: '0.5rem' }}
+            className="btn btn-ghost gap-2"
           >
             <ArrowLeft size={15} />
             Go Back
@@ -153,12 +92,7 @@ const AccessDenied = () => {
             Go to Dashboard
           </button>
         </div>
-        <p style={{
-          fontSize: '0.78rem',
-          color: 'var(--color-text-muted)',
-          opacity: 0.6,
-          margin: 0,
-        }}>
+        <p className="text-[0.78rem] text-[var(--color-text-muted)] opacity-60 m-0">
           Logged in as <strong>{user?.name}</strong> ({user?.role})
         </p>
       </div>

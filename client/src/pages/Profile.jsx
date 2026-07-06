@@ -41,7 +41,7 @@ const Profile = () => {
 
   // ── Edit profile state ────────────────────────────────
   const [name,       setName]       = useState(user?.name       || '');
-  const [department, setDepartment] = useState(user?.department || '');
+  const [email,      setEmail]      = useState(user?.email      || '');
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPrev, setAvatarPrev] = useState(null);
   const [saving,     setSaving]     = useState(false);
@@ -88,7 +88,7 @@ const Profile = () => {
     try {
       const fd = new FormData();
       fd.append('name', name.trim());
-      fd.append('department', department.trim());
+      fd.append('email', email.trim());
       if (avatarFile) fd.append('avatar', avatarFile);
 
       await updateProfile(fd);
@@ -156,13 +156,13 @@ const Profile = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 20, alignItems: 'start', maxWidth: 900 }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-5 items-start max-w-[900px]">
 
         {/* ── Left Column: Avatar + Info Card ───────────────────── */}
-        <div className="card" style={{ padding: '24px 28px' }}>
+        <div className="card px-7 py-6">
           <form onSubmit={handleSave}>
             {/* Avatar row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
+            <div className="flex items-center gap-5 mb-6">
               <div className="avatar-upload-wrap">
                 {avatarSrc ? (
                   <img src={avatarSrc} alt={user?.name} className="avatar-img" />
@@ -182,40 +182,40 @@ const Profile = () => {
                       ref={fileRef}
                       type="file"
                       accept="image/*"
-                      style={{ display: 'none' }}
+                      className="hidden"
                       onChange={handleAvatarPick}
                     />
                   </>
               </div>
 
               <div>
-                <h2 style={{ fontSize: 18, fontWeight: 700 }}>{user?.name}</h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                  <span className={`badge ${roleBadge}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <h2 className="text-lg font-bold">{user?.name}</h2>
+                <div className="flex items-center gap-2 mt-[6px]">
+                  <span className={`badge ${roleBadge} inline-flex items-center gap-1`}>
                     <RoleIcon size={11} /> {roleName}
                   </span>
                   {!user?.isActive && (
-                    <span className="badge" style={{ background: 'rgba(248,81,73,0.1)', color: '#f85149', border: '1px solid rgba(248,81,73,0.2)', fontSize: 11 }}>
+                    <span className="badge bg-[rgba(248,81,73,0.1)] text-[#f85149] border border-solid border-[rgba(248,81,73,0.2)] text-[11px]">
                       Suspended
                     </span>
                   )}
                   {user?.securityFlags > 0 && (
-                    <span className="badge" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)', fontSize: 11 }}>
-                      Security Flags: {user.securityFlags}/5
+                    <span className="badge w-fit bg-[#2a1a1a] text-[#f87171] border-[0.5px] border-solid border-[#4b1e1e] text-[11px] px-2 py-[2px] rounded-[20px] inline-flex items-center gap-1">
+                      <ShieldCheck size={11} /> {user.securityFlags}/5
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 6 }}>
-                  <Mail size={11} style={{ marginRight: 5, verticalAlign: 'middle' }} />
+                <div className="text-[12px] text-[var(--color-text-muted)] mt-[6px] flex items-center gap-1">
+                  <Mail size={11} className="shrink-0" />
                   {user?.email}
                 </div>
               </div>
             </div>
 
             {/* Name field */}
-            <div className="form-group">
-              <label className="form-label">
-                <User size={12} style={{ marginRight: 5, verticalAlign: 'middle' }} />
+            <div className="profile-form-row">
+              <label className="form-label flex items-center gap-1.5">
+                <User size={14} className="shrink-0" />
                 Full Name
               </label>
               <input
@@ -229,38 +229,38 @@ const Profile = () => {
               {nameErr && <div className="form-error">{nameErr}</div>}
             </div>
 
-            {/* Department field */}
-            <div className="form-group">
-              <label className="form-label">
-                <Building2 size={12} style={{ marginRight: 5, verticalAlign: 'middle' }} />
-                Department <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(optional)</span>
+            {/* Email field */}
+            <div className="profile-form-row">
+              <label className="form-label flex items-center gap-1.5">
+                <Mail size={14} className="shrink-0" />
+                Email
               </label>
               <input
-                id="profile-department"
+                id="profile-email"
+                type="email"
                 className="form-input"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                placeholder="e.g. Engineering, Support"
-                maxLength={80}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Your email address"
+                required
               />
             </div>
 
             {/* Info rows (read-only) */}
-            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 16, marginTop: 4 }}>
+            <div className="border-t border-solid border-[var(--color-border)] pt-4 mt-1">
               {[
-                { label: 'Email', value: user?.email, Icon: Mail },
                 { label: 'Member Since', value: formatDate(user?.createdAt), Icon: Calendar },
               ].map(({ label, value, Icon }) => (
-                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid var(--color-border-soft)' }}>
-                  <span style={{ fontSize: 12, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div key={label} className="flex justify-between items-center py-[9px] border-b border-solid border-[var(--color-border-soft)]">
+                  <span className="text-[12px] text-[var(--color-text-muted)] flex items-center gap-[6px]">
                     <Icon size={12} /> {label}
                   </span>
-                  <span style={{ fontSize: 13 }}>{value}</span>
+                  <span className="text-[13px]">{value}</span>
                 </div>
               ))}
             </div>
 
-            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+            <div className="flex gap-[10px] mt-5 flex-wrap">
               <button
                 id="profile-save"
                 type="submit"
@@ -285,34 +285,33 @@ const Profile = () => {
         </div>
 
         {/* ── Right Column: Password & Action Cards ────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="flex flex-col gap-4">
           
           {/* Change Password Card */}
-          <div className="card" style={{ padding: '24px 28px' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
-              <Lock size={14} style={{ marginRight: 6, verticalAlign: 'middle', color: 'var(--color-text-muted)' }} />
+          <div className="card px-7 py-6">
+            <h3 className="text-[14px] font-semibold mb-1 flex items-center gap-[6px]">
+              <Lock size={14} className="mr-[6px] align-middle text-[var(--color-text-muted)]" />
               Change Password
             </h3>
-            <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 18 }}>
+            <p className="text-[12px] text-[var(--color-text-muted)] mb-[18px]">
               Min 6 characters
             </p>
             <form onSubmit={handlePwChange}>
               <div className="form-group">
                 <label className="form-label">New Password</label>
-                <div style={{ position: 'relative' }}>
+                <div className="relative">
                   <input
                     id="profile-new-password"
                     type={pwVisible ? 'text' : 'password'}
-                    className="form-input"
+                    className="form-input pr-[40px]"
                     value={newPw}
                     onChange={(e) => setNewPw(e.target.value)}
                     placeholder="Enter new password"
-                    style={{ paddingRight: 40 }}
                   />
                   <button
                     type="button"
                     onClick={() => setPwVisible((v) => !v)}
-                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}
+                    className="absolute right-[10px] top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-[var(--color-text-muted)]"
                   >
                     {pwVisible ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
@@ -338,8 +337,7 @@ const Profile = () => {
               <button
                 id="profile-change-pw"
                 type="submit"
-                className="btn btn-primary"
-                style={{ width: '100%', justifyContent: 'center', marginTop: 16 }}
+                className="btn btn-primary w-full justify-center mt-4"
                 disabled={pwSaving || !newPw || !confirmPw}
               >
                 <Lock size={14} />
@@ -348,12 +346,6 @@ const Profile = () => {
           </form>
         </div>
 
-        {/* ── Actions ──────────────────────────────── */}
-        {/* <div className="card" style={{ padding: '16px 24px' }}>
-          <button id="profile-logout" className="btn btn-danger" onClick={handleLogout}>
-            <LogOut size={14} /> Sign out
-          </button>
-        </div> */}
       </div>
       </div>
     </div>

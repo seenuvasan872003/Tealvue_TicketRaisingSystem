@@ -113,10 +113,6 @@ const ticketValidator = [
   body('title')
     .trim()
     .custom((val) => {
-      const stripped = sanitizeHtml(val, { allowedTags: [], allowedAttributes: {} });
-      if (stripped !== val) {
-        throw new Error('Title must be 5–100 characters, no links or special characters');
-      }
       if (/http|https|www/i.test(val)) {
         throw new Error('Title must be 5–100 characters, no links or special characters');
       }

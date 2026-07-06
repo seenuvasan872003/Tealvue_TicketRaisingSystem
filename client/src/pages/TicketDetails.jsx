@@ -242,6 +242,12 @@ const TicketDetails = () => {
     };
     fetchCats();
   }, []);
+
+  useEffect(() => {
+    if (categories.length > 0 && !categories.includes(adminCategory)) {
+      setAdminCategory(categories[0]);
+    }
+  }, [categories, adminCategory]);
   
   useEffect(() => { 
     if (user?.role === 'admin' || user?.role === 'team_admin' || user?.role === 'team_user') {
@@ -456,15 +462,14 @@ const TicketDetails = () => {
 
   // ── Render guards ─────────────────────────────────────────
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
-      <div className="spinner" style={{ width: 32, height: 32 }} />
+    <div className="flex items-center justify-center min-h-[300px]">
+      <div className="spinner w-8 h-8" />
     </div>
   );
   if (error) return (
     <div className="page-body fade-in">
       <button 
-        className="btn btn-ghost btn-sm" 
-        style={{ marginBottom: 20 }} 
+        className="btn btn-ghost btn-sm mb-5" 
         onClick={() => {
           if (user?.role === 'super-admin') navigate('/super-admin/dashboard');
           else if (user?.role === 'admin') navigate('/admin/dashboard');
@@ -475,10 +480,10 @@ const TicketDetails = () => {
       >
         <ArrowLeft size={14} /> Back
       </button>
-      <div style={{ background: 'rgba(248,81,73,0.08)', border: '1px solid rgba(248,81,73,0.2)', borderRadius: 12, padding: '40px 32px', textAlign: 'center' }}>
-        <Lock size={32} style={{ color: '#f85149', marginBottom: 12 }} />
-        <h2 style={{ color: '#f85149', marginBottom: 8 }}>Access Denied</h2>
-        <p style={{ color: '#acacac' }}>{error}</p>
+      <div className="bg-[rgba(248,81,73,0.08)] border border-[rgba(248,81,73,0.2)] rounded-xl px-8 py-10 text-center">
+        <Lock size={32} className="text-[#f85149] mb-3 mx-auto" />
+        <h2 className="text-[#f85149] mb-2">Access Denied</h2>
+        <p className="text-[#acacac]">{error}</p>
       </div>
     </div>
   );
@@ -488,8 +493,7 @@ const TicketDetails = () => {
     return (
       <div className="page-body fade-in">
         <button 
-          className="btn btn-ghost btn-sm" 
-          style={{ marginBottom: 20 }} 
+          className="btn btn-ghost btn-sm mb-5" 
           onClick={() => {
             if (user?.role === 'super-admin') navigate('/super-admin/dashboard');
             else if (user?.role === 'admin') navigate('/admin/dashboard');
@@ -500,47 +504,21 @@ const TicketDetails = () => {
         >
           <ArrowLeft size={14} /> Back to tickets
         </button>
-        <div style={{
-          background: 'rgba(248,113,113,0.05)',
-          border: '1px solid rgba(248,113,113,0.18)',
-          borderRadius: 12,
-          padding: '40px 32px',
-          color: '#f87171',
-          fontSize: 14,
-          lineHeight: 1.6,
-          maxWidth: 600,
-          margin: '60px auto',
-          textAlign: 'center',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 16
-        }}>
-          <div style={{
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            background: 'rgba(248,113,113,0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 8
-          }}>
-            <X size={32} style={{ color: '#ef4444' }} />
+        <div className="bg-[rgba(248,113,113,0.05)] border border-[rgba(248,113,113,0.18)] rounded-xl px-8 py-10 text-[#f87171] text-sm leading-[1.6] max-w-[600px] my-[60px] mx-auto text-center shadow-[0_8px_32px_rgba(0,0,0,0.3)] flex flex-col items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-[rgba(248,113,113,0.1)] flex items-center justify-center mb-2">
+            <X size={32} className="text-[#ef4444]" />
           </div>
-          <h2 style={{ color: '#ef4444', margin: 0, fontSize: 20, fontWeight: 700 }}>Ticket Declined / Rejected</h2>
+          <h2 className="text-[#ef4444] m-0 text-xl font-bold">Ticket Declined / Rejected</h2>
           {ticket.moderationNote && (
-            <p style={{ color: '#acacac', margin: 0, fontStyle: 'italic', background: 'rgba(0,0,0,0.2)', padding: '10px 16px', borderRadius: 8, border: '1px solid var(--color-border)' }}>
+            <p className="text-[#acacac] m-0 italic bg-[rgba(0,0,0,0.2)] px-4 py-2.5 rounded-lg border border-[var(--color-border)]">
               Reason: {ticket.moderationNote}
             </p>
           )}
-          <p style={{ fontSize: 16, fontWeight: 600, margin: '8px 0 0 0', color: '#fff' }}>
+          <p className="text-base font-semibold mt-2 mb-0 text-white">
             This ticket has been declined. Kindly create a new ticket.
           </p>
           <button 
-            className="btn btn-primary" 
-            style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 8 }} 
+            className="btn btn-primary mt-3 inline-flex items-center gap-2" 
             onClick={() => navigate('/tickets/create')}
           >
             Create New Ticket
@@ -566,8 +544,7 @@ const TicketDetails = () => {
     <>
       <div className="page-body fade-in">
       <button 
-        className="btn btn-ghost btn-sm" 
-        style={{ marginBottom: 20 }} 
+        className="btn btn-ghost btn-sm mb-5" 
         onClick={() => {
           if (user?.role === 'super-admin') navigate('/super-admin/dashboard');
           else if (user?.role === 'admin') navigate('/admin/dashboard');
@@ -579,53 +556,53 @@ const TicketDetails = () => {
         <ArrowLeft size={14} /> Back to tickets
       </button>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, alignItems: 'start' }}>
+      <div className="ticket-details-grid grid gap-5 items-start">
 
         {/* ── Left column: ticket body + comments */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="flex flex-col gap-4">
 
           {/* Main Ticket Card */}
-          <div style={card}>
+          <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl px-7 py-6">
             {/* Badges row */}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+            <div className="flex gap-2 flex-wrap mb-4">
               {ticket.approvalStatus === 'suspended' ? (
-                <span className="badge" style={{ background: 'rgba(251,146,60,0.1)', color: '#fb923c', border: '1px solid rgba(251,146,60,0.25)' }}>
+                <span className="badge bg-[rgba(251,146,60,0.1)] text-[#fb923c] border border-[rgba(251,146,60,0.25)]">
                   Under Review
                 </span>
               ) : ticket.approvalStatus === 'rejected' ? (
-                <span className="badge" style={{ background: 'rgba(248,113,113,0.1)', color: '#f87171', border: '1px solid rgba(248,113,113,0.25)' }}>
+                <span className="badge bg-[rgba(248,113,113,0.1)] text-[#f87171] border border-[rgba(248,113,113,0.25)]">
                   Rejected
                 </span>
               ) : (
                 <StatusBadge status={ticket.status} />
               )}
               <PriorityBadge priority={ticket.priority} />
-              <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #2e2e2e', textTransform: 'capitalize' }}>
+              <span className="badge bg-[rgba(255,255,255,0.05)] border border-[#2e2e2e] capitalize">
                 <Tag size={10} /> {ticket.category}
               </span>
               {isAssigned && !isSuperAdmin && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, padding: '3px 10px', background: 'rgba(211,167,60,0.1)', color: '#d3a73c', border: '1px solid rgba(211,167,60,0.25)', borderRadius: 20 }}>
+                <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-[3px] bg-[rgba(211,167,60,0.1)] text-[#d3a73c] border border-[rgba(211,167,60,0.25)] rounded-full">
                   <UserCheck size={11} /> Assigned to you
                 </span>
               )}
             </div>
 
             {ticket.approvalStatus === 'suspended' && (
-              <div style={{ background: 'rgba(251,146,60,0.08)', border: '1px solid rgba(251,146,60,0.2)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 13, color: '#fb923c', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="bg-[rgba(251,146,60,0.08)] border border-[rgba(251,146,60,0.2)] rounded-lg p-3 mb-4 text-[13px] text-[#fb923c] flex items-center gap-2">
                 <Clock size={16} />
                 <span><strong>Under Review:</strong> Your ticket has been flagged for content review. It will be restored or a decision will be communicated shortly.</span>
               </div>
             )}
             {ticket.approvalStatus === 'rejected' && (
-              <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 13, color: '#f87171', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="bg-[rgba(248,113,113,0.08)] border border-[rgba(248,113,113,0.2)] rounded-lg p-3 mb-4 text-[13px] text-[#f87171] flex flex-col gap-1">
+                <div className="flex items-center gap-2">
                   <X size={16} />
                   <strong>Ticket Declined / Rejected</strong>
                 </div>
-                <div style={{ paddingLeft: 24, fontSize: 12, opacity: 0.9 }}>
+                <div className="pl-6 text-xs opacity-90">
                   Reason: {ticket.moderationNote || 'No explanation note provided.'}
                 </div>
-                <div style={{ paddingLeft: 24, fontSize: 13, fontWeight: 600, marginTop: 4, color: '#ff7878' }}>
+                <div className="pl-6 text-[13px] font-semibold mt-1 text-[#ff7878]">
                   This ticket has been declined. Kindly create a new ticket.
                 </div>
               </div>
@@ -636,21 +613,25 @@ const TicketDetails = () => {
               <form onSubmit={handleEditSave}>
                 <div className="field-group">
                   <label>Title</label>
-                  <input style={inputStyle} value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} required />
+                  <input className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-sm px-3.5 py-2.5 w-full outline-none font-['Roboto',sans-serif]" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} required />
                 </div>
                 <div className="field-group">
                   <label>Description</label>
-                  <textarea style={{ ...inputStyle, minHeight: 120, resize: 'vertical' }} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} required />
+                  <textarea className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-sm px-3.5 py-2.5 w-full outline-none font-['Roboto',sans-serif] min-h-[120px] resize-y" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} required />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12, marginBottom: 16 }}>
+                <div className="grid grid-cols-1 gap-3 mb-4">
                   <div className="field-group">
                     <label>Category</label>
-                    <select style={inputStyle} value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))}>
+                    <select 
+                      className="select bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-[13px] py-1.5 pr-8 pl-2.5 w-full outline-none font-['Roboto',sans-serif]"
+                      value={editForm.category} 
+                      onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))}
+                    >
                       {categories.map(c => <option key={c} value={c}>{c.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
                     </select>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 10 }}>
+                <div className="flex gap-2.5">
                   <button type="submit" className="btn btn-primary" disabled={updating}>
                     <Save size={14} /> {updating ? 'Saving…' : 'Save Changes'}
                   </button>
@@ -661,15 +642,15 @@ const TicketDetails = () => {
               </form>
             ) : (
               <>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
-                  <h1 style={{ fontSize: 20, fontWeight: 700, color: '#e4e4e4', margin: 0, flex: 1 }}>{ticket.title}</h1>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <h1 className="text-xl font-bold text-[#e4e4e4] m-0 flex-1">{ticket.title}</h1>
                   {canEditContent && (
                     <button className="btn btn-ghost btn-sm" onClick={() => setEditMode(true)}>
                       <Edit3 size={13} /> Edit
                     </button>
                   )}
                 </div>
-                <p style={{ fontSize: 14, color: '#acacac', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                <p className="text-sm text-[#acacac] leading-[1.7] whitespace-pre-wrap">
                   {ticket.description}
                 </p>
               </>
@@ -677,27 +658,27 @@ const TicketDetails = () => {
 
             {/* Attachments */}
             {ticket.attachments?.length > 0 && (
-              <div style={{ marginTop: 24 }}>
-                <h4 style={{ fontSize: 12, fontWeight: 600, color: '#e4e4e4', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+              <div className="mt-6">
+                <h4 className="text-xs font-semibold text-[#e4e4e4] flex items-center gap-1.5 mb-3">
                   <Paperclip size={14} /> Attachments
                 </h4>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                <div className="flex flex-wrap gap-3">
                   {ticket.attachments.map((att, i) => {
                     const isImg = att.mimetype?.startsWith('image/') || 
                                   att.file_type?.startsWith('image/') ||
                                   /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(att.originalName || att.original_name || '');
                     if (isImg) {
                       return (
-                        <div key={i} onClick={() => setLightboxIndex(i)} style={{ width: 90, height: 90, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                          <img src={`${BASE_URL}${att.url}`} alt={att.originalName || att.original_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div key={i} onClick={() => setLightboxIndex(i)} className="w-[90px] h-[90px] rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col items-center justify-center cursor-pointer">
+                          <img src={`${BASE_URL}${att.url}`} alt={att.originalName || att.original_name} className="w-full h-full object-cover" />
                         </div>
                       );
                     }
                     return (
-                      <a key={i} href={`${BASE_URL}${att.url}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-                        <div style={{ width: 90, height: 90, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      <a key={i} href={`${BASE_URL}${att.url}`} target="_blank" rel="noreferrer" className="no-underline">
+                        <div className="w-[90px] h-[90px] rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface)] flex flex-col items-center justify-center">
                           <FileText size={24} color="#acacac" />
-                          <span style={{ fontSize: 10, color: '#acacac', textAlign: 'center', padding: '0 4px', marginTop: 4 }}>{att.originalName || att.original_name}</span>
+                          <span className="text-[10px] text-[#acacac] text-center px-1 mt-1">{att.originalName || att.original_name}</span>
                         </div>
                       </a>
                     );
@@ -707,12 +688,12 @@ const TicketDetails = () => {
             )}
 
             {/* Meta info */}
-            <div style={{ borderTop: '1px solid var(--color-border)', marginTop: 20, paddingTop: 16, display: 'flex', gap: 20, fontSize: 12, color: '#acacac', flexWrap: 'wrap' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Hash size={12} /> {ticket._id.slice(-6).toUpperCase()}</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Calendar size={12} /> {fmt(ticket.createdAt)}</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><User size={12} /> {ticket.user_id?.name}</span>
+            <div className="border-t border-[var(--color-border)] mt-5 pt-4 flex gap-5 text-xs text-[#acacac] flex-wrap">
+              <span className="flex items-center gap-1.5"><Hash size={12} /> {ticket._id.slice(-6).toUpperCase()}</span>
+              <span className="flex items-center gap-1.5"><Calendar size={12} /> {fmt(ticket.createdAt)}</span>
+              <span className="flex items-center gap-1.5"><User size={12} /> {ticket.user_id?.name}</span>
               {ticket.assigned_to && (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#d3a73c' }}>
+                <span className="flex items-center gap-1.5 text-[#d3a73c]">
                   <Target size={12} /> Assigned to {ticket.assigned_to.name}
                 </span>
               )}
@@ -720,32 +701,32 @@ const TicketDetails = () => {
           </div>
 
           {/* Comments Card */}
-          <div style={card}>
-            <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8, color: '#e4e4e4' }}>
+          <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl px-7 py-6">
+            <h2 className="text-[15px] font-semibold mb-5 flex items-center gap-2 text-[#e4e4e4]">
               <MessageSquare size={16} /> Comments ({comments.length})
             </h2>
 
             {comments.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '30px 0', color: '#555' }}>No comments yet.</div>
+              <div className="text-center py-7.5 text-[#555]">No comments yet.</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+              <div className="flex flex-col gap-3 mb-5">
                 {comments.map((c) => (
-                  <div key={c._id} style={{ display: 'flex', gap: 12 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #b8892a, #d3a73c)', color: '#0a0a0a', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div key={c._id} className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#b8892a] to-[#d3a73c] text-[#0a0a0a] text-xs font-bold flex items-center justify-center shrink-0">
                       {c.user_id?.name?.[0]?.toUpperCase()}
                     </div>
-                    <div style={{ flex: 1, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, padding: '10px 14px' }}>
-                      <div style={{ fontSize: 11, color: '#acacac', marginBottom: 4, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                        <span style={{ fontWeight: 600, color: '#e4e4e4' }}>{c.user_id?.name}</span>
+                    <div className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-3.5 py-2.5">
+                      <div className="text-[11px] text-[#acacac] mb-1 flex items-center flex-wrap gap-1.5">
+                        <span className="font-semibold text-[#e4e4e4]">{c.user_id?.name}</span>
                         {(c.user_id?.role === 'admin' || c.user_id?.role === 'super-admin') && (
-                          <span style={{ fontSize: 9, padding: '2px 6px', background: 'rgba(211,167,60,0.1)', color: '#d3a73c', border: '1px solid rgba(211,167,60,0.2)', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                          <span className="text-[9px] px-1.5 py-0.5 bg-[rgba(211,167,60,0.1)] text-[#d3a73c] border border-[rgba(211,167,60,0.2)] rounded-full inline-flex items-center gap-[3px]">
                             {c.user_id.role === 'super-admin' ? <Crown size={9} /> : <ShieldCheck size={9} />}
                             {c.user_id.role === 'super-admin' ? 'Super Admin' : 'Admin'}
                           </span>
                         )}
-                        <span style={{ marginLeft: 4 }}>{fmt(c.createdAt)}</span>
+                        <span className="ml-1">{fmt(c.createdAt)}</span>
                       </div>
-                      <p style={{ fontSize: 13, whiteSpace: 'pre-wrap', color: '#e4e4e4' }}>{c.comment}</p>
+                      <p className="text-[13px] whitespace-pre-wrap text-[#e4e4e4]">{c.comment}</p>
                     </div>
                   </div>
                 ))}
@@ -756,7 +737,7 @@ const TicketDetails = () => {
               <form onSubmit={handleComment}>
                 <div className="field-group">
                   <textarea
-                    style={{ ...inputStyle, minHeight: 90 }}
+                    className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-sm px-3.5 py-2.5 w-full outline-none font-['Roboto',sans-serif] min-h-[90px]"
                     placeholder="Write your comment…"
                     value={comment}
                     onChange={e => setComment(e.target.value)}
@@ -767,7 +748,7 @@ const TicketDetails = () => {
                 </button>
               </form>
             ) : (
-              <div style={{ padding: '12px 16px', background: 'rgba(110,118,129,0.1)', borderRadius: 8, fontSize: 13, color: '#6e7681', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="px-4 py-3 bg-[rgba(110,118,129,0.1)] rounded-lg text-[13px] text-[#6e7681] flex items-center gap-2">
                 <Lock size={14} /> {ticket?.status === 'closed' ? 'This ticket is closed — no further comments.' : 'Only the ticket owner, assigned admin, or super admin can comment.'}
               </div>
             )}
@@ -782,23 +763,12 @@ const TicketDetails = () => {
         </div>
 
         {/* ── Right sidebar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="flex flex-col gap-4">
 
           {/* Read Only banner for reallocated/transferred tickets */}
           {ticket?._isReadOnlyForTeam && (
-            <div style={{
-              background: 'rgba(239,68,68,0.06)',
-              border: '1px dashed #ef4444',
-              borderRadius: 12,
-              padding: '16px 20px',
-              color: '#f87171',
-              fontSize: 13,
-              lineHeight: 1.5,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 6
-            }}>
-              <strong style={{ color: '#ef4444', fontWeight: 600 }}>Ticket Reallocated / Transferred</strong>
+            <div className="bg-[rgba(239,68,68,0.06)] border border-dashed border-[#ef4444] rounded-xl px-5 py-4 text-[#f87171] text-[13px] leading-[1.5] flex flex-col gap-1.5">
+              <strong className="text-[#ef4444] font-semibold">Ticket Reallocated / Transferred</strong>
               {ticket.allocationStatus === 'transferred_to_admin' ? (
                 <span>This ticket was transferred back to Admins. Only Admins can view and take the next step.</span>
               ) : (
@@ -807,15 +777,15 @@ const TicketDetails = () => {
             </div>
           )}
 
-          <div style={card}>
-            <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: '#e4e4e4' }}>Ticket Details</h3>
+          <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl px-7 py-6">
+            <h3 className="text-sm font-semibold mb-4 text-[#e4e4e4]">Ticket Details</h3>
             {[
               { label: 'Status',    value: ticket.approvalStatus === 'suspended' ? (
-                  <span className="badge" style={{ background: 'rgba(251,146,60,0.1)', color: '#fb923c', border: '1px solid rgba(251,146,60,0.25)' }}>
+                  <span className="badge bg-[rgba(251,146,60,0.1)] text-[#fb923c] border border-[rgba(251,146,60,0.25)]">
                     Under Review
                   </span>
                 ) : ticket.approvalStatus === 'rejected' ? (
-                  <span className="badge" style={{ background: 'rgba(248,113,113,0.1)', color: '#f87171', border: '1px solid rgba(248,113,113,0.25)' }}>
+                  <span className="badge bg-[rgba(248,113,113,0.1)] text-[#f87171] border border-[rgba(248,113,113,0.25)]">
                     Rejected
                   </span>
                 ) : (
@@ -824,15 +794,15 @@ const TicketDetails = () => {
               ...(user?.role !== 'user' ? [
                 { label: 'Priority',  value: <PriorityBadge priority={ticket.priority} /> },
                 { label: 'Due Date',  value: ticket.dueDate
-                    ? <span style={{ color: '#f85149', display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={12} /> {fmtDateOnly(ticket.dueDate)}</span>
-                    : <span style={{ color: '#555' }}>None</span> }
+                    ? <span className="text-[#f85149] flex items-center gap-1"><Clock size={12} /> {fmtDateOnly(ticket.dueDate)}</span>
+                    : <span className="text-[#555]">None</span> }
               ] : []),
-              { label: 'Category',  value: <span style={{ textTransform: 'capitalize', color: '#e4e4e4' }}>{ticket.category}</span> },
-              { label: 'Raised by', value: <span style={{ color: '#e4e4e4' }}>{ticket.user_id?.name}</span> },
-              { label: 'Created',   value: <span style={{ color: '#acacac', fontSize: 11 }}>{fmt(ticket.createdAt)}</span> },
+              { label: 'Category',  value: <span className="capitalize text-[#e4e4e4]">{ticket.category}</span> },
+              { label: 'Raised by', value: <span className="text-[#e4e4e4]">{ticket.user_id?.name}</span> },
+              { label: 'Created',   value: <span className="text-[#acacac] text-[11px]">{fmt(ticket.createdAt)}</span> },
             ].map(({ label, value }) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #252525', fontSize: 13 }}>
-                <span style={{ color: '#acacac' }}>{label}</span>
+              <div key={label} className="flex justify-between items-center py-2 border-b border-[#252525] text-[13px]">
+                <span className="text-[#acacac]">{label}</span>
                 <span>{value}</span>
               </div>
             ))}
@@ -840,32 +810,13 @@ const TicketDetails = () => {
 
           {/* Resolved & Closed Final State Card */}
           {ticket.status === 'closed' && (
-            <div style={{
-              background: 'rgba(34,197,94,0.04)',
-              border: '1px solid rgba(34,197,94,0.18)',
-              borderRadius: 12,
-              padding: '20px 24px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              gap: 12
-            }}>
-              <div style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: 'rgba(34,197,94,0.1)',
-                color: '#22c55e',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
+            <div className="bg-[rgba(34,197,94,0.04)] border border-[rgba(34,197,94,0.18)] rounded-xl px-6 py-5 flex flex-col items-center text-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-[rgba(34,197,94,0.1)] text-[#22c55e] flex items-center justify-center">
                 <CheckCircle size={28} />
               </div>
               <div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: 14, color: '#22c55e', fontWeight: 600 }}>Resolved & Closed</h4>
-                <p style={{ margin: 0, fontSize: 12, color: '#acacac', lineHeight: 1.5 }}>
+                <h4 className="m-0 mb-1 text-sm text-[#22c55e] font-semibold">Resolved & Closed</h4>
+                <p className="m-0 text-xs text-[#acacac] leading-[1.5]">
                   This ticket has been marked as completed. No further allocations or state updates are permitted.
                 </p>
               </div>
@@ -874,32 +825,13 @@ const TicketDetails = () => {
 
           {/* Suspended & Declined Final State Card */}
           {ticket.approvalStatus === 'suspended' && (
-            <div style={{
-              background: 'rgba(251,146,60,0.04)',
-              border: '1px solid rgba(251,146,60,0.18)',
-              borderRadius: 12,
-              padding: '20px 24px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              gap: 12
-            }}>
-              <div style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: 'rgba(251,146,60,0.1)',
-                color: '#fb923c',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
+            <div className="bg-[rgba(251,146,60,0.04)] border border-[rgba(251,146,60,0.18)] rounded-xl px-6 py-5 flex flex-col items-center text-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-[rgba(251,146,60,0.1)] text-[#fb923c] flex items-center justify-center">
                 <Clock size={28} />
               </div>
               <div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: 14, color: '#fb923c', fontWeight: 600 }}>Under Review</h4>
-                <p style={{ margin: 0, fontSize: 12, color: '#acacac', lineHeight: 1.5 }}>
+                <h4 className="m-0 mb-1 text-sm text-[#fb923c] font-semibold">Under Review</h4>
+                <p className="m-0 text-xs text-[#acacac] leading-[1.5]">
                   This ticket has been suspended for review. No further allocations or state updates are permitted.
                 </p>
               </div>
@@ -907,32 +839,13 @@ const TicketDetails = () => {
           )}
 
           {ticket.approvalStatus === 'rejected' && (
-            <div style={{
-              background: 'rgba(239,68,68,0.04)',
-              border: '1px solid rgba(239,68,68,0.18)',
-              borderRadius: 12,
-              padding: '20px 24px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              gap: 12
-            }}>
-              <div style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: 'rgba(239,68,68,0.1)',
-                color: '#f87171',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
+            <div className="bg-[rgba(239,68,68,0.04)] border border-[rgba(239,68,68,0.18)] rounded-xl px-6 py-5 flex flex-col items-center text-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-[rgba(239,68,68,0.1)] text-[#f87171] flex items-center justify-center">
                 <XCircle size={28} />
               </div>
               <div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: 14, color: '#f87171', fontWeight: 600 }}>Rejected & Declined</h4>
-                <p style={{ margin: 0, fontSize: 12, color: '#acacac', lineHeight: 1.5 }}>
+                <h4 className="m-0 mb-1 text-sm text-[#f87171] font-semibold">Rejected & Declined</h4>
+                <p className="m-0 text-xs text-[#acacac] leading-relaxed">
                   This ticket has been declined. No further allocations or state updates are permitted.
                 </p>
               </div>
@@ -942,12 +855,12 @@ const TicketDetails = () => {
           {/* Admin Controls — only for standard admin */}
           {user?.role === 'admin' && ticket.status !== 'closed' && ticket.approvalStatus !== 'suspended' && ticket.approvalStatus !== 'rejected' && (
             <div style={card}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, color: '#e4e4e4' }}>
+              <h3 className="text-sm font-semibold mb-4 flex items-center gap-1.5 text-[#e4e4e4]">
                 <ShieldCheck size={16} color="var(--color-teal)" /> Admin Controls
               </h3>
 
               {/* Status update */}
-              <div className="field-group" style={{ marginBottom: 16 }}>
+              <div className="field-group mb-4">
                 <label>Update Status</label>
                 <select
                   style={inputStyle}
@@ -962,7 +875,7 @@ const TicketDetails = () => {
               </div>
 
               {/* Priority update */}
-              <div className="field-group" style={{ marginBottom: 16 }}>
+              <div className="field-group mb-4">
                 <label>Update Priority</label>
                 <select
                   style={inputStyle}
@@ -978,13 +891,13 @@ const TicketDetails = () => {
               </div>
 
               {/* Due date update */}
-              <form onSubmit={handleDueDateChange} style={{ marginBottom: 16 }}>
+              <form onSubmit={handleDueDateChange} className="mb-4">
                 <div className="field-group">
                   <label>Update Due Date</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div className="flex gap-2">
                     <input
                       type="date"
-                      style={{ ...inputStyle, flex: 1, padding: '6px 10px' }}
+                      className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-sm px-2.5 py-1.5 flex-1 outline-none font-['Roboto',sans-serif]"
                       value={dueDateInput}
                       onChange={(e) => setDueDateInput(e.target.value)}
                       disabled={updating}
@@ -995,10 +908,10 @@ const TicketDetails = () => {
               </form>
 
               {/* Team Assignment */}
-              <div className="field-group" style={{ marginTop: 12 }}>
+              <div className="field-group mt-3">
                 <label>Assign Team (All Teams Available)</label>
                 <select
-                  style={inputStyle}
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-sm px-3.5 py-2.5 w-full outline-none font-['Roboto',sans-serif]"
                   value={ticket.teamId?._id || ticket.teamId || ''}
                   onChange={(e) => handleTeamAssign(e.target.value)}
                   disabled={updating}
@@ -1017,16 +930,16 @@ const TicketDetails = () => {
 
               {/* Allocated Team details card */}
               {ticket.teamId && (
-                <div style={{ marginTop: 16, padding: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid #2e2e2e', borderRadius: 8 }}>
-                  <h4 style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-teal)', margin: '0 0 6px 0' }}>Allocated Team</h4>
-                  <div style={{ fontWeight: 600, fontSize: 13, color: '#fff' }}>{ticket.teamId.name || 'Assigned Team'}</div>
+                <div className="mt-4 p-3 bg-[rgba(255,255,255,0.02)] border border-[#2e2e2e] rounded-lg">
+                  <h4 className="text-[11px] font-bold uppercase tracking-[0.05em] text-[var(--color-teal)] m-0 mb-1.5">Allocated Team</h4>
+                  <div className="font-semibold text-[13px] text-white">{ticket.teamId.name || 'Assigned Team'}</div>
                   {ticket.assignedToUser && (
-                    <div style={{ fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>
+                    <div className="text-[11px] text-[var(--color-teal)] mt-1">
                       Agent: {ticket.assignedToUser.name}
                     </div>
                   )}
                   {ticket.autoAllocated && (
-                    <div style={{ fontSize: 9, color: 'var(--color-progress)', marginTop: 4, display: 'inline-block', background: 'rgba(211,167,60,0.1)', padding: '2px 6px', borderRadius: 4 }}>
+                    <div className="text-[9px] text-[var(--color-progress)] mt-1 inline-block bg-[rgba(211,167,60,0.1)] px-1.5 py-0.5 rounded">
                       Auto-Allocated
                     </div>
                   )}
@@ -1035,14 +948,14 @@ const TicketDetails = () => {
 
               {/* Set Category & Decline panel for Admin attention */}
               {(ticket.allocationStatus === 'pending_admin' || ticket.allocationStatus === 'transferred_to_admin') && (
-                <div style={{ marginTop: 16, padding: '16px 14px', background: 'rgba(211,167,60,0.05)', border: '1px dashed #d3a73c', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <h4 style={{ fontSize: 12, fontWeight: 700, color: '#d3a73c', margin: 0 }}>Requires Allocation Attention</h4>
+                <div className="mt-4 p-3.5 px-4 bg-[rgba(211,167,60,0.05)] border border-dashed border-[#d3a73c] rounded-lg flex flex-col gap-3">
+                  <h4 className="text-xs font-bold text-[#d3a73c] m-0">Requires Allocation Attention</h4>
                   
-                  <div className="field-group" style={{ margin: 0 }}>
-                    <label style={{ fontSize: 11, color: '#acacac' }}>Set Category to Auto-Allocate</label>
-                    <div style={{ display: 'flex', gap: 8 }}>
+                  <div className="field-group !m-0">
+                    <label className="text-[11px] text-[#acacac]">Set Category to Auto-Allocate</label>
+                    <div className="flex gap-2">
                       <select
-                        style={{ ...inputStyle, padding: '6px 10px', fontSize: 13 }}
+                        className="select bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-[13px] py-1.5 pr-8 pl-2.5 outline-none font-['Roboto',sans-serif] w-auto min-w-[160px]"
                         value={adminCategory}
                         onChange={(e) => setAdminCategory(e.target.value)}
                         disabled={updating}
@@ -1051,8 +964,7 @@ const TicketDetails = () => {
                       </select>
                       <button
                         type="button"
-                        className="btn btn-primary btn-sm"
-                        style={{ padding: '0 14px' }}
+                        className="btn btn-primary btn-sm px-3.5"
                         onClick={() => handleSetCategory(adminCategory)}
                         disabled={updating}
                       >
@@ -1066,8 +978,7 @@ const TicketDetails = () => {
               {/* General Decline Ticket Button for Admin */}
               <button
                 type="button"
-                className="btn btn-danger btn-sm"
-                style={{ width: '100%', justifyContent: 'center', background: '#e53e3e', color: '#fff', border: 'none', padding: '8px 0', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 13, marginTop: 16 }}
+                className="btn btn-danger btn-sm w-full justify-center bg-[#e53e3e] text-white border-none py-2 rounded-md cursor-pointer font-semibold text-[13px] mt-4"
                 onClick={() => setDeclineModal(true)}
                 disabled={updating}
               >
@@ -1078,14 +989,14 @@ const TicketDetails = () => {
 
           {/* Team Admin Controls — only for own Team Admin */}
           {user?.role === 'team_admin' && ticket.teamId && ticket.status !== 'closed' && ticket.approvalStatus !== 'suspended' && ticket.approvalStatus !== 'rejected' && !ticket?._isReadOnlyForTeam && (
-            <div style={card}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, color: '#e4e4e4' }}>
+            <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl px-7 py-6">
+              <h3 className="text-sm font-semibold mb-4 flex items-center gap-1.5 text-[#e4e4e4]">
                 <ShieldCheck size={16} color="var(--color-teal)" /> Team Allocation
               </h3>
               <div className="field-group">
                 <label>Allocate to Team Member</label>
                 <select
-                  style={inputStyle}
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-sm px-3.5 py-2.5 w-full outline-none font-['Roboto',sans-serif]"
                   value={ticket.assignedToUser?._id || ticket.assignedToUser || ''}
                   onChange={(e) => handleMemberAssign(e.target.value)}
                   disabled={updating || ticket.status === 'closed'}
@@ -1098,8 +1009,8 @@ const TicketDetails = () => {
               </div>
 
               {ticket.assignedToUser && (
-                <div style={{ marginTop: 12, fontSize: 12, color: 'var(--color-text-muted)' }}>
-                  Currently assigned to: <strong style={{ color: '#fff' }}>{ticket.assignedToUser.name}</strong>
+                <div className="mt-3 text-xs text-[var(--color-text-muted)]">
+                  Currently assigned to: <strong className="text-white">{ticket.assignedToUser.name}</strong>
                 </div>
               )}
             </div>
@@ -1107,13 +1018,12 @@ const TicketDetails = () => {
 
           {/* Team Agent Controls — only for assigned team_user */}
           {user?.role === 'team_user' && ticket.assignedToUser?._id?.toString() === user?._id?.toString() && ticket.status === 'in-progress' && ticket.approvalStatus !== 'suspended' && ticket.approvalStatus !== 'rejected' && !ticket?._isReadOnlyForTeam && (
-            <div style={card}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, color: '#e4e4e4' }}>
+            <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl px-7 py-6">
+              <h3 className="text-sm font-semibold mb-4 flex items-center gap-1.5 text-[#e4e4e4]">
                 <CheckCircle size={16} color="var(--color-success)" /> Resolve Ticket
               </h3>
               <button
-                className="btn btn-primary"
-                style={{ width: '100%', justifyContent: 'center', gap: 8, padding: '10px 0' }}
+                className="btn btn-primary w-full justify-center gap-2 py-2.5"
                 onClick={handleCloseTicket}
                 disabled={updating}
               >
@@ -1128,15 +1038,14 @@ const TicketDetails = () => {
             ticket.status !== 'closed' && 
             ticket.approvalStatus !== 'suspended' && 
             ticket.approvalStatus !== 'rejected' && (
-              <div style={card}>
-                <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, color: '#e4e4e4' }}>
+              <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl px-7 py-6">
+                <h3 className="text-sm font-semibold mb-4 flex items-center gap-1.5 text-[#e4e4e4]">
                   <ShieldCheck size={16} color="var(--color-teal)" /> Staff Actions
                 </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div className="flex flex-col gap-2.5">
                   <button
                     type="button"
-                    className="btn btn-ghost"
-                    style={{ width: '100%', justifyContent: 'center', border: '1px solid var(--color-border)' }}
+                    className="btn btn-ghost w-full justify-center border border-[var(--color-border)]"
                     onClick={() => {
                       setReallocateCategory('');
                       setReallocateModal(true);
@@ -1147,8 +1056,7 @@ const TicketDetails = () => {
                   </button>
                   <button
                     type="button"
-                    className="btn btn-ghost"
-                    style={{ width: '100%', justifyContent: 'center', border: '1px solid var(--color-border)' }}
+                    className="btn btn-ghost w-full justify-center border border-[var(--color-border)]"
                     onClick={() => setTransferModal(true)}
                     disabled={updating}
                   >
@@ -1160,19 +1068,19 @@ const TicketDetails = () => {
 
           {/* Super Admin / General View-only details */}
           {(user?.role === 'super-admin' || (user?.role !== 'admin' && user?.role !== 'team_admin')) && ticket.teamId && (
-            <div style={card}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, color: '#acacac' }}>
+            <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl px-7 py-6">
+              <h3 className="text-sm font-semibold mb-2.5 flex items-center gap-1.5 text-[#acacac]">
                 <ShieldCheck size={16} color="#888" /> Support Team
               </h3>
-              <div style={{ padding: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid #2e2e2e', borderRadius: 8 }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: '#fff' }}>{ticket.teamId.name}</div>
+              <div className="p-3 bg-[rgba(255,255,255,0.02)] border border-[#2e2e2e] rounded-lg">
+                <div className="font-semibold text-[13px] text-white">{ticket.teamId.name}</div>
                 {ticket.assignedToUser && (
-                  <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>
+                  <div className="text-[11px] text-[var(--color-text-muted)] mt-1">
                     Assigned Agent: {ticket.assignedToUser.name}
                   </div>
                 )}
                 {ticket.autoAllocated && (
-                  <div style={{ fontSize: 9, color: 'var(--color-progress)', marginTop: 4, display: 'inline-block', background: 'rgba(211,167,60,0.1)', padding: '2px 6px', borderRadius: 4 }}>
+                  <div className="text-[9px] text-[var(--color-progress)] mt-1 inline-block bg-[rgba(211,167,60,0.1)] px-1.5 py-0.5 rounded">
                     Auto-Allocated
                   </div>
                 )}
@@ -1182,34 +1090,34 @@ const TicketDetails = () => {
 
           {/* Internal Notes — admin/super-admin only */}
           {isAdminLevel && (
-            <div style={{ background: 'rgba(211,167,60,0.04)', border: '1px solid rgba(211,167,60,0.18)', borderRadius: 12, padding: '16px 20px' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#d3a73c', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="bg-[rgba(211,167,60,0.04)] border border-[rgba(211,167,60,0.18)] rounded-xl px-5 py-4">
+              <div className="text-xs font-bold uppercase tracking-[0.08em] text-[#d3a73c] mb-3 flex items-center gap-1.5">
                 <Lock size={12} /> Internal Notes
               </div>
 
               {ticket.internal_notes?.length > 0 ? (
-                <div style={{ marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="mb-3 flex flex-col gap-2">
                   {ticket.internal_notes.map((n, i) => (
-                    <div key={i} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, padding: '10px 12px' }}>
-                      <div style={{ fontSize: 10, color: '#acacac', marginBottom: 4 }}>
+                    <div key={i} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg px-3 py-2.5">
+                      <div className="text-[10px] text-[#acacac] mb-1">
                         {n.author?.name || n.added_by?.name} • {fmt(n.createdAt)}
                       </div>
-                      <div style={{ fontSize: 12, whiteSpace: 'pre-wrap', color: '#e4e4e4' }}>{n.text || n.note}</div>
+                      <div className="text-xs whitespace-pre-wrap text-[#e4e4e4]">{n.text || n.note}</div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ fontSize: 12, color: '#555', marginBottom: 12 }}>No internal notes yet.</div>
+                <div className="text-xs text-[#555] mb-3">No internal notes yet.</div>
               )}
 
               <form onSubmit={handleNote}>
                 <textarea
-                  style={{ ...inputStyle, minHeight: 60, fontSize: 12, padding: 8, marginBottom: 8 }}
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-xs p-2 mb-2 w-full outline-none font-['Roboto',sans-serif] min-h-[60px]"
                   placeholder="Add a private note (not visible to user)…"
                   value={note}
                   onChange={e => setNote(e.target.value)}
                 />
-                <button type="submit" className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center' }} disabled={updating || !note.trim()}>
+                <button type="submit" className="btn btn-primary btn-sm w-full justify-center" disabled={updating || !note.trim()}>
                   <Plus size={12} /> Add Note
                 </button>
               </form>
@@ -1247,42 +1155,12 @@ const TicketDetails = () => {
         return (
           <div 
             onClick={() => setLightboxIndex(null)}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.9)',
-              zIndex: 9999,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backdropFilter: 'blur(8px)',
-            }}
+            className="fixed inset-0 bg-[rgba(0,0,0,0.9)] z-[9999] flex items-center justify-center backdrop-blur-[8px]"
           >
             {/* Close Button */}
             <button 
               onClick={() => setLightboxIndex(null)}
-              style={{
-                position: 'absolute',
-                top: 24,
-                right: 24,
-                background: 'rgba(255,255,255,0.1)',
-                border: 'none',
-                color: '#fff',
-                width: 44,
-                height: 44,
-                borderRadius: '50%',
-                cursor: 'pointer',
-                fontSize: 24,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'background 0.2s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+              className="absolute top-6 right-6 bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.2)] border-none text-white w-11 h-11 rounded-full cursor-pointer text-2xl flex items-center justify-center transition-colors"
             >
               &times;
             </button>
@@ -1291,43 +1169,20 @@ const TicketDetails = () => {
             {imageAttachments.length > 1 && (
               <button 
                 onClick={handlePrev}
-                style={{
-                  position: 'absolute',
-                  left: 24,
-                  background: 'rgba(255,255,255,0.1)',
-                  border: 'none',
-                  color: '#fff',
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  fontSize: 24,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                className="absolute left-6 bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.2)] border-none text-white w-11 h-11 rounded-full cursor-pointer text-2xl flex items-center justify-center transition-colors"
               >
                 &#8249;
               </button>
             )}
 
             {/* Image Container */}
-            <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: '80%', maxHeight: '80%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div onClick={(e) => e.stopPropagation()} className="max-w-[80%] max-h-[80%] flex flex-col items-center">
               <img 
                 src={`${BASE_URL}${currentAttachment.url}`} 
                 alt={currentAttachment.originalName || currentAttachment.original_name} 
-                style={{ 
-                  maxWidth: '100%', 
-                  maxHeight: '80vh', 
-                  borderRadius: 12, 
-                  border: '1px solid #30363d',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.8)' 
-                }} 
+                className="max-w-full max-h-[80vh] rounded-xl border border-[#30363d] shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
               />
-              <div style={{ marginTop: 16, color: '#f0f6fc', fontSize: 14, fontWeight: 500, background: 'rgba(0,0,0,0.6)', padding: '6px 14px', borderRadius: 20 }}>
+              <div className="mt-4 text-[#f0f6fc] text-sm font-medium bg-[rgba(0,0,0,0.6)] px-3.5 py-1.5 rounded-full">
                 {currentAttachment.originalName || currentAttachment.original_name} ({imageIndexInFiltered + 1} / {imageAttachments.length})
               </div>
             </div>
@@ -1336,24 +1191,7 @@ const TicketDetails = () => {
             {imageAttachments.length > 1 && (
               <button 
                 onClick={handleNext}
-                style={{
-                  position: 'absolute',
-                  right: 24,
-                  background: 'rgba(255,255,255,0.1)',
-                  border: 'none',
-                  color: '#fff',
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  fontSize: 24,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                className="absolute right-6 bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.2)] border-none text-white w-11 h-11 rounded-full cursor-pointer text-2xl flex items-center justify-center transition-colors"
               >
                 &#8250;
               </button>
@@ -1364,25 +1202,25 @@ const TicketDetails = () => {
 
       {/* Decline Ticket Modal */}
       {declineModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 28, width: '100%', maxWidth: 480 }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#ff4444', fontWeight: 600 }}>Decline Ticket</h3>
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.85)] flex items-center justify-center z-[1000] backdrop-blur-sm">
+          <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-7 w-full max-w-[480px]">
+            <h3 className="m-0 mb-4 text-base text-[#ff4444] font-semibold">Decline Ticket</h3>
             <form onSubmit={handleDeclineSubmit}>
-              <div className="field-group" style={{ marginBottom: 20 }}>
+              <div className="field-group mb-5">
                 <label>Decline Reason * (Min 5 chars)</label>
                 <textarea
-                  style={{ ...inputStyle, minHeight: 100 }}
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-sm px-3.5 py-2.5 w-full outline-none font-['Roboto',sans-serif] min-h-[100px]"
                   placeholder="Explain why this ticket is being declined..."
                   value={declineReason}
                   onChange={(e) => setDeclineReason(e.target.value)}
                   required
                 />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <div className="flex justify-end gap-3">
                 <button type="button" className="btn btn-ghost" onClick={() => { setDeclineModal(false); setDeclineReason(''); }}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" style={{ background: '#ff4444', border: 'none' }} disabled={updating}>
+                <button type="submit" className="btn btn-primary bg-[#ff4444] border-none" disabled={updating}>
                   {updating ? 'Declining...' : 'Decline Ticket'}
                 </button>
               </div>
@@ -1393,14 +1231,14 @@ const TicketDetails = () => {
 
       {/* Reallocate Ticket Modal */}
       {reallocateModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 28, width: '100%', maxWidth: 480 }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#e4e4e4', fontWeight: 600 }}>Reallocate to Other Team</h3>
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.85)] flex items-center justify-center z-[1000] backdrop-blur-sm">
+          <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-7 w-full max-w-[480px]">
+            <h3 className="m-0 mb-4 text-base text-[#e4e4e4] font-semibold">Reallocate to Other Team</h3>
             <form onSubmit={handleReallocateSubmit}>
-              <div className="field-group" style={{ marginBottom: 16 }}>
+              <div className="field-group mb-4">
                 <label>Select Team to Transfer Ticket</label>
                 <select
-                  style={inputStyle}
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-sm px-3.5 py-2.5 w-full outline-none font-['Roboto',sans-serif]"
                   value={reallocateCategory}
                   onChange={(e) => setReallocateCategory(e.target.value)}
                   disabled={updating}
@@ -1424,17 +1262,17 @@ const TicketDetails = () => {
                   }
                 </select>
               </div>
-              <div className="field-group" style={{ marginBottom: 20 }}>
+              <div className="field-group mb-5">
                 <label>Reason for Reallocation *</label>
                 <textarea
-                  style={{ ...inputStyle, minHeight: 80 }}
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-sm px-3.5 py-2.5 w-full outline-none font-['Roboto',sans-serif] min-h-[80px]"
                   placeholder="Explain why this ticket is being reallocated to another team..."
                   value={reallocateReason}
                   onChange={(e) => setReallocateReason(e.target.value)}
                   required
                 />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <div className="flex justify-end gap-3">
                 <button type="button" className="btn btn-ghost" onClick={() => { setReallocateModal(false); setReallocateReason(''); }}>
                   Cancel
                 </button>
@@ -1449,21 +1287,21 @@ const TicketDetails = () => {
 
       {/* Transfer to Admin Modal */}
       {transferModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 28, width: '100%', maxWidth: 480 }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#e4e4e4', fontWeight: 600 }}>Transfer to Admin</h3>
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.85)] flex items-center justify-center z-[1000] backdrop-blur-sm">
+          <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-7 w-full max-w-[480px]">
+            <h3 className="m-0 mb-4 text-base text-[#e4e4e4] font-semibold">Transfer to Admin</h3>
             <form onSubmit={handleTransferSubmit}>
-              <div className="field-group" style={{ marginBottom: 20 }}>
+              <div className="field-group mb-5">
                 <label>Reason for Transfer *</label>
                 <textarea
-                  style={{ ...inputStyle, minHeight: 100 }}
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-sm px-3.5 py-2.5 w-full outline-none font-['Roboto',sans-serif] min-h-[100px]"
                   placeholder="Explain why this ticket is being transferred back to Admins..."
                   value={transferReason}
                   onChange={(e) => setTransferReason(e.target.value)}
                   required
                 />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <div className="flex justify-end gap-3">
                 <button type="button" className="btn btn-ghost" onClick={() => { setTransferModal(false); setTransferReason(''); }}>
                   Cancel
                 </button>

@@ -31,7 +31,7 @@ const ApiFlowVisualizer = () => {
 
   return (
     <div className="page-body fade-in">
-      <div className="page-header" style={{ marginBottom: 24 }}>
+      <div className="page-header mb-6">
         <div>
           <h1 className="page-title">API Execution Flow Visualizer</h1>
           <p className="page-subtitle">Track frontend events, file sources, and backend API triggers with execution paths.</p>
@@ -39,40 +39,32 @@ const ApiFlowVisualizer = () => {
       </div>
 
       {loading ? (
-        <div style={{ padding: 60, textAlign: 'center' }}><div className="spinner" /></div>
+        <div className="p-[60px] text-center"><div className="spinner" /></div>
       ) : logs.length === 0 ? (
-        <div className="card empty-state" style={{ padding: '60px 40px', textAlign: 'center' }}>
-          <Activity size={40} style={{ color: 'var(--color-text-muted)', marginBottom: 12, opacity: 0.5 }} />
+        <div className="card empty-state px-10 py-[60px] text-center">
+          <Activity size={40} className="text-[var(--color-text-muted)] mb-3 opacity-50 mx-auto" />
           <h3>No API trigger events logged yet</h3>
-          <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>Trigger some actions on the dashboard or tickets page first.</p>
+          <p className="text-[13px] text-[var(--color-text-muted)] m-0">Trigger some actions on the dashboard or tickets page first.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 20 }}>
+        <div className="grid grid-cols-[320px_1fr] gap-5">
           {/* Left panel: Log Actions list */}
-          <div className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '75vh', overflowY: 'auto' }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.04em' }}>Trigger Actions</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="card p-4 flex flex-col gap-3 max-h-[75vh] overflow-y-auto">
+            <h3 className="text-[13px] font-bold uppercase text-[var(--color-text-muted)] tracking-[0.04em]">Trigger Actions</h3>
+            <div className="flex flex-col gap-2">
               {logs.map(log => {
                 const isActive = selectedLog?._id === log._id;
                 return (
                   <div
                     key={log._id}
                     onClick={() => setSelectedLog(log)}
-                    style={{
-                      padding: 10,
-                      borderRadius: 8,
-                      border: `1px solid ${isActive ? 'var(--color-teal)' : 'var(--color-border)'}`,
-                      background: isActive ? 'var(--color-teal-muted)' : 'rgba(255,255,255,0.01)',
-                      cursor: 'pointer',
-                      fontSize: 12,
-                      transition: 'all 0.15s'
-                    }}
+                    className={`p-[10px] rounded-lg border border-solid cursor-pointer text-xs transition-all duration-150 ${isActive ? 'border-[var(--color-teal)] bg-[var(--color-teal-muted)]' : 'border-[var(--color-border)] bg-[rgba(255,255,255,0.01)]'}`}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#fff', fontWeight: 600 }}>
+                    <div className="flex justify-between text-white font-semibold">
                       <span>{log.action || 'API Request'}</span>
-                      <span style={{ color: log.status >= 400 ? 'var(--color-high)' : 'var(--color-open)' }}>{log.status}</span>
+                      <span className={log.status >= 400 ? 'text-[var(--color-high)]' : 'text-[var(--color-open)]'}>{log.status}</span>
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div className="text-[11px] text-[var(--color-text-muted)] mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                       {log.method} {log.api}
                     </div>
                   </div>
@@ -82,40 +74,40 @@ const ApiFlowVisualizer = () => {
           </div>
 
           {/* Right panel: Flow Visualization */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="flex flex-col gap-5">
             {selectedLog && (
               <>
                 {/* Visual execution flow chart */}
-                <div className="card" style={{ padding: 24, background: 'var(--color-surface)', display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>Execution Flow Chart</h3>
+                <div className="card p-6 bg-[var(--color-surface)] flex flex-col gap-5">
+                  <h3 className="text-[14px] font-semibold text-white">Execution Flow Chart</h3>
                   
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24, padding: '20px 0', position: 'relative' }}>
+                  <div className="flex items-center justify-between flex-wrap gap-6 py-5 relative">
                     {/* Node 1: Client Page/Component */}
-                    <div style={{ flex: 1, minWidth: 160, padding: 16, background: '#1c2128', border: '1px solid var(--color-border)', borderRadius: 10, textAlign: 'center' }}>
-                      <FileText size={24} style={{ color: 'var(--color-teal)', marginBottom: 8 }} />
-                      <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Source Component</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginTop: 4 }}>{selectedLog.component || 'Global'}</div>
-                      <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>{selectedLog.file || '—'}</div>
+                    <div className="flex-1 min-w-[160px] p-4 bg-[#1c2128] border border-solid border-[var(--color-border)] rounded-[10px] text-center">
+                      <FileText size={24} className="text-[var(--color-teal)] mb-2" />
+                      <div className="text-[11px] text-[var(--color-text-muted)] uppercase font-bold">Source Component</div>
+                      <div className="text-[13px] font-semibold text-white mt-1">{selectedLog.component || 'Global'}</div>
+                      <div className="text-[11px] text-[var(--color-text-muted)] mt-[2px]">{selectedLog.file || '—'}</div>
                     </div>
 
-                    <ArrowRight size={20} style={{ color: 'var(--color-text-muted)' }} />
+                    <ArrowRight size={20} className="text-[var(--color-text-muted)]" />
 
                     {/* Node 2: API Trigger */}
-                    <div style={{ flex: 1, minWidth: 180, padding: 16, background: 'rgba(20,160,125,0.04)', border: '1px solid var(--color-teal)', borderRadius: 10, textAlign: 'center' }}>
-                      <Play size={24} style={{ color: 'var(--color-teal)', marginBottom: 8 }} />
-                      <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>API Trigger Event</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-teal)', marginTop: 4 }}>{selectedLog.method} {selectedLog.api}</div>
-                      <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>User Action: {selectedLog.action || '—'}</div>
+                    <div className="flex-1 min-w-[180px] p-4 bg-[rgba(20,160,125,0.04)] border border-solid border-[var(--color-teal)] rounded-[10px] text-center">
+                      <Play size={24} className="text-[var(--color-teal)] mb-2" />
+                      <div className="text-[11px] text-[var(--color-text-muted)] uppercase font-bold">API Trigger Event</div>
+                      <div className="text-[13px] font-bold text-[var(--color-teal)] mt-1">{selectedLog.method} {selectedLog.api}</div>
+                      <div className="text-[11px] text-[var(--color-text-muted)] mt-[2px]">User Action: {selectedLog.action || '—'}</div>
                     </div>
 
-                    <ArrowRight size={20} style={{ color: 'var(--color-text-muted)' }} />
+                    <ArrowRight size={20} className="text-[var(--color-text-muted)]" />
 
                     {/* Node 3: Server Endpoint */}
-                    <div style={{ flex: 1, minWidth: 160, padding: 16, background: '#1c2128', border: '1px solid var(--color-border)', borderRadius: 10, textAlign: 'center' }}>
-                      <Server size={24} style={{ color: selectedLog.status >= 400 ? 'var(--color-high)' : 'var(--color-open)', marginBottom: 8 }} />
-                      <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Backend Node</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginTop: 4 }}>REST Controller</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: selectedLog.status >= 400 ? 'var(--color-high)' : 'var(--color-open)', marginTop: 4 }}>
+                    <div className="flex-1 min-w-[160px] p-4 bg-[#1c2128] border border-solid border-[var(--color-border)] rounded-[10px] text-center">
+                      <Server size={24} className={`mb-2 ${selectedLog.status >= 400 ? 'text-[var(--color-high)]' : 'text-[var(--color-open)]'}`} />
+                      <div className="text-[11px] text-[var(--color-text-muted)] uppercase font-bold">Backend Node</div>
+                      <div className="text-[13px] font-semibold text-white mt-1">REST Controller</div>
+                      <div className={`text-xs font-bold mt-1 ${selectedLog.status >= 400 ? 'text-[var(--color-high)]' : 'text-[var(--color-open)]'}`}>
                         Status: {selectedLog.status}
                       </div>
                     </div>
@@ -123,31 +115,31 @@ const ApiFlowVisualizer = () => {
                 </div>
 
                 {/* Details list card */}
-                <div className="card" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 16 }}>Execution Details & Sample Payload</h3>
+                <div className="card p-6">
+                  <h3 className="text-[14px] font-semibold text-white mb-4">Execution Details & Sample Payload</h3>
                   
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', fontSize: 13, padding: '8px 0', borderBottom: '1px solid var(--color-border)' }}>
-                      <span style={{ color: 'var(--color-text-muted)' }}>Request Method</span>
-                      <span style={{ color: '#fff', fontWeight: 600 }}>{selectedLog.method}</span>
+                  <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-[150px_1fr] text-[13px] py-2 border-b border-solid border-[var(--color-border)]">
+                      <span className="text-[var(--color-text-muted)]">Request Method</span>
+                      <span className="text-white font-semibold">{selectedLog.method}</span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', fontSize: 13, padding: '8px 0', borderBottom: '1px solid var(--color-border)' }}>
-                      <span style={{ color: 'var(--color-text-muted)' }}>Target API Endpoint</span>
-                      <span style={{ color: 'var(--color-teal)', fontFamily: 'monospace' }}>{selectedLog.api}</span>
+                    <div className="grid grid-cols-[150px_1fr] text-[13px] py-2 border-b border-solid border-[var(--color-border)]">
+                      <span className="text-[var(--color-text-muted)]">Target API Endpoint</span>
+                      <span className="text-[var(--color-teal)] font-mono">{selectedLog.api}</span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', fontSize: 13, padding: '8px 0', borderBottom: '1px solid var(--color-border)' }}>
-                      <span style={{ color: 'var(--color-text-muted)' }}>Source Function</span>
-                      <span style={{ color: '#fff' }}>{selectedLog.function || '—'}</span>
+                    <div className="grid grid-cols-[150px_1fr] text-[13px] py-2 border-b border-solid border-[var(--color-border)]">
+                      <span className="text-[var(--color-text-muted)]">Source Function</span>
+                      <span className="text-white">{selectedLog.function || '—'}</span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', fontSize: 13, padding: '8px 0', borderBottom: '1px solid var(--color-border)' }}>
-                      <span style={{ color: 'var(--color-text-muted)' }}>Response Status</span>
-                      <span style={{ color: selectedLog.status >= 400 ? 'var(--color-high)' : 'var(--color-open)', fontWeight: 750 }}>
+                    <div className="grid grid-cols-[150px_1fr] text-[13px] py-2 border-b border-solid border-[var(--color-border)]">
+                      <span className="text-[var(--color-text-muted)]">Response Status</span>
+                      <span className={`font-bold ${selectedLog.status >= 400 ? 'text-[var(--color-high)]' : 'text-[var(--color-open)]'}`}>
                         {selectedLog.status}
                       </span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', fontSize: 13, padding: '8px 0', borderBottom: '1px solid var(--color-border)' }}>
-                      <span style={{ color: 'var(--color-text-muted)' }}>User Entity</span>
-                      <span style={{ color: '#fff' }}>
+                    <div className="grid grid-cols-[150px_1fr] text-[13px] py-2 border-b border-solid border-[var(--color-border)]">
+                      <span className="text-[var(--color-text-muted)]">User Entity</span>
+                      <span className="text-white">
                         {(() => {
                           if (selectedLog.userId && typeof selectedLog.userId === 'object') {
                             return `${selectedLog.userId.name || selectedLog.userId.email || 'Anonymous'} (${selectedLog.userId.role || 'user'})`;
@@ -159,18 +151,9 @@ const ApiFlowVisualizer = () => {
                     </div>
                     
                     {/* Simulated Sample Data Payload */}
-                    <div style={{ marginTop: 12 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: 8 }}>Simulated Payload Response Sample</div>
-                      <pre style={{
-                        background: 'var(--color-surface)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: 8,
-                        padding: 14,
-                        color: 'var(--color-teal)',
-                        fontSize: 12,
-                        fontFamily: 'monospace',
-                        overflowX: 'auto'
-                      }}>
+                    <div className="mt-3">
+                      <div className="text-[11px] font-bold uppercase text-[var(--color-text-muted)] mb-2">Simulated Payload Response Sample</div>
+                      <pre className="bg-[var(--color-surface)] border border-solid border-[var(--color-border)] rounded-lg p-[14px] text-[var(--color-teal)] text-xs font-mono overflow-x-auto">
                         {JSON.stringify({
                           apiPath: selectedLog.api,
                           triggerAction: selectedLog.action,

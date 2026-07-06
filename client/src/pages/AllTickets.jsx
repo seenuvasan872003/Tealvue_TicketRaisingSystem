@@ -8,7 +8,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Ticket, UserCheck, ShieldCheck } from 'lucide-react';
-import { getTickets, updateTicket, getTeams, assignTicketTeam, deleteTicket, restoreTicket } from '../services/ticketApi';
+import { getTickets, updateTicket, getTeams, assignTicketTeam, deleteTicket, restoreTicket, getCategories } from '../services/ticketApi';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -21,6 +21,7 @@ const AllTickets = () => {
 
   const [tickets,  setTickets]  = useState([]);
   const [teams,    setTeams]    = useState([]);
+  const [categories, setCategories] = useState(['General', 'Technical', 'Billing', 'HR', 'Other']);
   const [total,    setTotal]    = useState(0);
   const [page,     setPage]     = useState(1);
   const [pages,    setPages]    = useState(1);
@@ -82,6 +83,13 @@ const AllTickets = () => {
 
   useEffect(() => {
     loadTeams();
+    const fetchCats = async () => {
+      try {
+        const { data } = await getCategories();
+        if (data && data.length > 0) setCategories(data);
+      } catch {}
+    };
+    fetchCats();
   }, []);
 
   const handleFilter = (key, val) => {
@@ -150,22 +158,17 @@ const AllTickets = () => {
       </div>
 
       {/* Tab Selectors */}
-      <div style={{ display: 'flex', gap: 16, borderBottom: '1px solid var(--color-border)', marginBottom: 20 }}>
+      <div className="flex gap-4 border-b border-[var(--color-border)] mb-5">
         <button
           onClick={() => {
             setFilters(f => ({ ...f, needsAttention: false, showDeclined: false }));
             setPage(1);
           }}
-          style={{
-            padding: '10px 16px',
-            background: 'none',
-            border: 'none',
-            borderBottom: !filters.needsAttention && !filters.showDeclined ? '2px solid var(--color-teal)' : '2px solid transparent',
-            color: !filters.needsAttention && !filters.showDeclined ? 'var(--color-teal)' : '#acacac',
-            fontWeight: 600,
-            cursor: 'pointer',
-            fontSize: 14
-          }}
+          className={`px-4 py-2.5 bg-transparent border-none font-semibold cursor-pointer text-sm ${
+            !filters.needsAttention && !filters.showDeclined
+              ? 'border-b-2 border-[var(--color-teal)] text-[var(--color-teal)]'
+              : 'border-b-2 border-transparent text-[#acacac]'
+          }`}
         >
           All Tickets
         </button>
@@ -174,19 +177,11 @@ const AllTickets = () => {
             setFilters(f => ({ ...f, needsAttention: true, showDeclined: false }));
             setPage(1);
           }}
-          style={{
-            padding: '10px 16px',
-            background: 'none',
-            border: 'none',
-            borderBottom: filters.needsAttention ? '2px solid var(--color-teal)' : '2px solid transparent',
-            color: filters.needsAttention ? 'var(--color-teal)' : '#acacac',
-            fontWeight: 600,
-            cursor: 'pointer',
-            fontSize: 14,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6
-          }}
+          className={`px-4 py-2.5 bg-transparent border-none font-semibold cursor-pointer text-sm flex items-center gap-1.5 ${
+            filters.needsAttention
+              ? 'border-b-2 border-[var(--color-teal)] text-[var(--color-teal)]'
+              : 'border-b-2 border-transparent text-[#acacac]'
+          }`}
         >
           <ShieldCheck size={16} /> Needs Attention
         </button>
@@ -195,30 +190,22 @@ const AllTickets = () => {
             setFilters(f => ({ ...f, needsAttention: false, showDeclined: true }));
             setPage(1);
           }}
-          style={{
-            padding: '10px 16px',
-            background: 'none',
-            border: 'none',
-            borderBottom: filters.showDeclined ? '2px solid var(--color-teal)' : '2px solid transparent',
-            color: filters.showDeclined ? 'var(--color-teal)' : '#acacac',
-            fontWeight: 600,
-            cursor: 'pointer',
-            fontSize: 14,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6
-          }}
+          className={`px-4 py-2.5 bg-transparent border-none font-semibold cursor-pointer text-sm flex items-center gap-1.5 ${
+            filters.showDeclined
+              ? 'border-b-2 border-[var(--color-teal)] text-[var(--color-teal)]'
+              : 'border-b-2 border-transparent text-[#acacac]'
+          }`}
         >
           Declined Tickets
         </button>
       </div>
 
       {/* ── Filter Bar */}
-      <div className="filter-bar" style={{ flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
-        <div className="search-input-wrap" style={{ flex: 1, minWidth: 200 }}>
-          <Search size={14} />
+      <div className="flex flex-col sm:flex-row sm:flex-nowrap gap-[10px] sm:gap-[8px] items-stretch sm:items-center w-full mb-4 overflow-visible">
+        <div className="search-input-wrap relative w-full sm:flex-1 sm:min-w-[160px] h-[42px] sm:h-[38px] flex items-center">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
           <input
-            className="input"
+            className="input w-auto h-full pl-9 pr-3 text-xs bg-[#1a1a1a] border border-[#4b4b4b] rounded-lg"
             type="text"
             placeholder="Search by title or ID…"
             value={filters.search}
@@ -226,14 +213,22 @@ const AllTickets = () => {
           />
         </div>
 
-        <select className="select" style={{ width: 145 }} value={filters.status} onChange={(e) => handleFilter('status', e.target.value)}>
+        <select 
+          className="select w-auto h-[42px] sm:h-[38px] text-xs bg-[#1a1a1a] border border-[#4b4b4b] rounded-lg cursor-pointer px-3" 
+          value={filters.status} 
+          onChange={(e) => handleFilter('status', e.target.value)}
+        >
           <option value="">All Status</option>
           <option value="open">Open</option>
           <option value="in-progress">In Progress</option>
           <option value="closed">Closed</option>
         </select>
 
-        <select className="select" style={{ width: 145 }} value={filters.priority} onChange={(e) => handleFilter('priority', e.target.value)}>
+        <select 
+          className="select w-auto  h-[42px] sm:h-[38px] text-xs bg-[#1a1a1a] border border-[#4b4b4b] rounded-lg cursor-pointer px-3" 
+          value={filters.priority} 
+          onChange={(e) => handleFilter('priority', e.target.value)}
+        >
           <option value="">All Priority</option>
           <option value="urgent">Urgent</option>
           <option value="high">High</option>
@@ -241,25 +236,29 @@ const AllTickets = () => {
           <option value="low">Low</option>
         </select>
 
-        <select className="select" style={{ width: 160 }} value={filters.team} onChange={(e) => handleFilter('team', e.target.value)}>
+        <select 
+          className="select w-auto  h-[42px] sm:h-[38px] text-xs bg-[#1a1a1a] border border-[#4b4b4b] rounded-lg cursor-pointer px-3" 
+          value={filters.team} 
+          onChange={(e) => handleFilter('team', e.target.value)}
+        >
           <option value="">All Teams</option>
           {teams.map(t => (
             <option key={t.teamId || t._id} value={t.teamId || t._id}>{t.name}</option>
           ))}
         </select>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#acacac', cursor: 'pointer', padding: '0 8px' }}>
+        <label className="flex items-center gap-[6px] text-xs text-[#acacac] cursor-pointer  w-auto sm:whitespace-nowrap h-[42px] sm:h-[38px] pl-1 sm:pl-0 justify-start">
           <input 
             type="checkbox" 
             checked={filters.unassignedOnly} 
             onChange={(e) => handleFilter('unassignedOnly', e.target.checked)} 
-            style={{ width: 14, height: 14 }}
+            className="!w-auto h-3.5"
           />
           Show unassigned only
         </label>
 
         {hasFilters && (
-          <button className="btn btn-ghost btn-sm" onClick={() => { setFilters({ status: '', priority: '', search: '', team: '', unassignedOnly: false }); setPage(1); }}>
+          <button className="btn btn-ghost btn-sm h-[42px] sm:h-[38px] w-full sm:w-auto flex items-center justify-center gap-1" onClick={() => { setFilters({ status: '', priority: '', search: '', team: '', unassignedOnly: false }); setPage(1); }}>
             <X size={13} /> Clear
           </button>
         )}
@@ -267,18 +266,9 @@ const AllTickets = () => {
 
       {/* Needs Attention Info Banner */}
       {filters.needsAttention && (
-        <div style={{
-          background: 'rgba(211,167,60,0.04)',
-          border: '1px dashed rgba(211,167,60,0.3)',
-          borderRadius: 8,
-          padding: '12px 16px',
-          marginBottom: 16,
-          fontSize: 13,
-          color: '#d3a73c',
-          lineHeight: 1.5
-        }}>
+        <div className="bg-[rgba(211,167,60,0.04)] border border-dashed border-[rgba(211,167,60,0.3)] rounded-lg py-3 px-4 mb-4 text-[13px] text-[#d3a73c] leading-relaxed">
           <strong>What is "Needs Attention"?</strong> This view displays tickets that require immediate Admin action:
-          <ul style={{ margin: '4px 0 0 20px', padding: 0, listStyleType: 'disc' }}>
+          <ul className="mt-1 ml-5 p-0 list-disc">
             <li><strong>Pending Allocation:</strong> Newly created tickets submitted without a category. Admins must set a category to trigger auto-allocation or assign a team manually.</li>
             <li><strong>Transferred to Admin:</strong> Tickets that were transferred back to Admins by support teams, requiring manual review or reallocation.</li>
           </ul>
@@ -287,30 +277,30 @@ const AllTickets = () => {
 
       {/* ── Table */}
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-          <div className="spinner" style={{ width: 28, height: 28 }} />
+        <div className="flex justify-center p-[60px]">
+          <div className="spinner w-7 h-7" />
         </div>
       ) : tickets.length === 0 ? (
-        <div className="empty-state" style={{ border: '1px solid var(--color-border)', borderRadius: 12 }}>
+        <div className="empty-state border border-[var(--color-border)] rounded-xl">
           <Ticket size={44} strokeWidth={1.5} />
           <h3>No tickets found</h3>
           <p>Try adjusting your filters.</p>
         </div>
       ) : (
-        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'hidden' }}>
-          <div className="table-wrap" style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 800 }}>
+        <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl overflow-hidden">
+          <div className="table-wrap overflow-x-auto">
+            <table className="w-full border-collapse text-[13px] min-w-[800px]">
               <thead>
-                <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--color-border)' }}>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>#ID</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Title</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Category</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Priority</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>User</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Team Assigned</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Created</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Quick Actions</th>
+                <tr className="bg-[rgba(255,255,255,0.03)] border-b border-[var(--color-border)]">
+                  <th className="py-3 px-2.5 pl-4 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em] w-[70px]">#ID</th>
+                  <th className="py-3 px-2.5 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em] w-[140px]">Title</th>
+                  <th className="py-3 px-2.5 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em] w-[90px]">Category</th>
+                  <th className="py-3 px-2.5 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em] w-[110px]">Priority</th>
+                  <th className="py-3 px-2.5 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em] w-[110px]">Status</th>
+                  <th className="py-3 px-2.5 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em] w-[90px]">User</th>
+                  <th className="py-3 px-2.5 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em] w-[140px]">Team Assigned</th>
+                  <th className="py-3 px-2.5 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em] w-[90px]">Created</th>
+                  <th className="py-3 px-2.5 text-left text-[#acacac] font-semibold text-[11px] uppercase tracking-[0.06em] w-[180px]">Quick Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -323,30 +313,21 @@ const AllTickets = () => {
                     <tr
                       key={t._id}
                       onClick={() => navigate(`/tickets/${t._id}`)}
-                      style={{
-                        borderBottom: '1px solid var(--color-border-soft)',
-                        cursor: 'pointer',
-                        transition: 'background 0.12s',
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      className="border-b border-[var(--color-border-soft)] cursor-pointer transition-colors duration-100 hover:bg-[rgba(255,255,255,0.03)]"
                     >
-                      <td style={{ padding: '13px 16px', color: '#555', fontFamily: 'monospace', fontSize: 11 }}>
+                      <td className="py-3 px-2.5 pl-4 text-[#555] font-mono text-[11px]">
                         #{t._id.slice(-6).toUpperCase()}
                       </td>
-                      <td style={{ padding: '13px 16px', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500, color: '#e4e4e4' }}>
+                      <td className="py-3 px-2.5 max-w-[140px] overflow-hidden text-ellipsis whitespace-nowrap font-medium text-[#e4e4e4]">
                         {t.title}
                       </td>
-                      <td style={{ padding: '13px 16px', textTransform: 'capitalize', fontSize: 12, color: '#acacac' }}>{t.category || 'General'}</td>
-                      <td style={{ padding: '13px 16px' }} onClick={(e) => e.stopPropagation()}>
+                      <td className="py-3 px-2.5 capitalize text-xs text-[#acacac]">{t.category || 'General'}</td>
+                      <td className="py-3 px-2.5" onClick={(e) => e.stopPropagation()}>
                         {t.approvalStatus === 'suspended' || t.approvalStatus === 'rejected' || t.status === 'closed' ? (
-                          <span style={{ textTransform: 'capitalize', color: '#acacac' }}>{t.priority}</span>
+                          <span className="capitalize text-[#acacac] text-xs">{t.priority}</span>
                         ) : (
                           <select
-                            style={{
-                              padding: '4px 6px', fontSize: 11, background: '#111',
-                              border: '1px solid #3a3a3a', color: '#e4e4e4', borderRadius: 4, cursor: 'pointer',
-                            }}
+                              className="select py-1 pl-2 pr-6 text-xs min-w-[80px] w-full outline-none"
                             value={t.priority}
                             disabled={updating === t._id}
                             onClick={(e) => e.stopPropagation()}
@@ -359,23 +340,20 @@ const AllTickets = () => {
                           </select>
                         )}
                       </td>
-                      <td style={{ padding: '13px 16px' }} onClick={(e) => e.stopPropagation()}>
+                      <td className="px-2.5 py-3" onClick={(e) => e.stopPropagation()}>
                         {t.approvalStatus === 'suspended' ? (
-                          <span className="badge" style={{ background: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', border: '1px solid rgba(251, 146, 60, 0.2)', fontSize: 11 }}>
+                          <span className="badge bg-[rgba(251,146,60,0.1)] text-[#fb923c] border border-[rgba(251,146,60,0.2)] text-[11px] px-2 py-1">
                             Under Review
                           </span>
                         ) : t.approvalStatus === 'rejected' ? (
-                          <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: 11 }}>
+                          <span className="badge bg-[rgba(239,68,68,0.1)] text-[#ef4444] border border-[rgba(239,68,68,0.2)] text-[11px] px-2 py-1">
                             Declined
                           </span>
                         ) : t.status === 'closed' ? (
-                          <span style={{ textTransform: 'capitalize', color: '#acacac' }}>{t.status}</span>
+                          <span className="capitalize text-[#acacac] text-xs">{t.status}</span>
                         ) : (
                           <select
-                            style={{
-                              padding: '4px 6px', fontSize: 11, background: '#111',
-                              border: '1px solid #3a3a3a', color: '#e4e4e4', borderRadius: 4, cursor: 'pointer',
-                            }}
+                              className="select py-1 pr-6 pl-2 text-xs min-w-[90px] w-full outline-none"
                             value={t.status}
                             disabled={updating === t._id}
                             onChange={(e) => handleStatusChange(t._id, e.target.value, e)}
@@ -386,105 +364,57 @@ const AllTickets = () => {
                           </select>
                         )}
                       </td>
-                      <td style={{ padding: '13px 16px', fontSize: 12, color: '#acacac' }}>{t.user_id?.name || '—'}</td>
-                      <td style={{ padding: '13px 16px', fontSize: 12, overflow: 'visible' }} onClick={(e) => e.stopPropagation()}>
+                      <td className="py-3 px-2.5 text-xs text-[#acacac]">{t.user_id?.name || '—'}</td>
+                      <td className="py-3 px-2.5 text-xs overflow-visible" onClick={(e) => e.stopPropagation()}>
                         {t.approvalStatus === 'suspended' || t.approvalStatus === 'rejected' || t.status === 'closed' ? (
-                          <span style={{ color: '#fff', fontWeight: 500 }}>{currentTeam ? currentTeam.name : 'Unassigned'}</span>
+                          <span className="text-white font-medium">{currentTeam ? currentTeam.name : 'Unassigned'}</span>
                         ) : (
-                          <div style={{ position: 'relative' }}>
+                          <div className="relative">
                             <button
                               className="btn btn-sm btn-ghost"
                               disabled={updating === t._id}
-                              style={{
-                                border: '1px solid #3a3a3a',
-                                background: '#111',
-                                color: '#e4e4e4',
-                                fontSize: 11,
-                                padding: '4px 8px',
-                                borderRadius: 4,
-                                minWidth: 140,
-                                textAlign: 'left',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                cursor: 'pointer'
-                              }}
+                              className="btn btn-sm btn-ghost border border-[var(--color-border)] bg-[var(--color-bg)] text-white text-xs py-1.5 px-3 rounded-md min-w-[140px] text-left flex justify-between items-center cursor-pointer"
                               onClick={() => setActiveAssignTicket(activeAssignTicket === t._id ? null : t._id)}
                             >
                               <span>{currentTeam ? currentTeam.name : 'Unassigned'}</span>
-                              <span style={{ fontSize: 9, opacity: 0.6 }}>▼</span>
+                              <span className="text-[9px] opacity-60">▼</span>
                             </button>
 
                             {activeAssignTicket === t._id && (
                               <div
-                                style={{
-                                  position: 'absolute',
-                                  top: '100%',
-                                  right: 0,
-                                  zIndex: 999,
-                                  background: '#181818',
-                                  border: '1px solid #333',
-                                  borderRadius: 6,
-                                  padding: 6,
-                                  minWidth: 260,
-                                  boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-                                  marginTop: 4,
-                                }}
+                                className="absolute top-full right-0 z-[999] bg-[#181818] border border-[#333] rounded-md p-1.5 min-w-[260px] shadow-[0_8px_24px_rgba(0,0,0,0.6)] mt-1"
                               >
-                                <div style={{ padding: '4px 8px', fontSize: 10, color: '#acacac', borderBottom: '1px solid #222', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
+                                <div className="py-1 px-2 text-[10px] text-[#acacac] border-b border-[#222] mb-1.5 flex justify-between">
                                   <span>Category: <strong>{mappedCat}</strong></span>
-                                  <button onClick={() => setActiveAssignTicket(null)} style={{ color: '#ff5f5f', cursor: 'pointer', background: 'none', border: 'none', fontSize: 10 }}>Close</button>
+                                  <button onClick={() => setActiveAssignTicket(null)} className="text-[#ff5f5f] cursor-pointer bg-none border-none text-[10px]">Close</button>
                                 </div>
                                 
                                 <div
-                                  style={{
-                                    padding: '6px 8px',
-                                    borderRadius: 4,
-                                    cursor: 'pointer',
-                                    fontSize: 11,
-                                    color: '#e4e4e4',
-                                    background: !currentTeam ? 'rgba(20,160,125,0.15)' : 'transparent',
-                                    marginBottom: 4,
-                                  }}
+                                  className={`py-1.5 px-2 rounded cursor-pointer text-[11px] text-[#e4e4e4] mb-1 hover:bg-[rgba(255,255,255,0.08)] ${!currentTeam ? 'bg-[rgba(20,160,125,0.15)]' : 'bg-transparent'}`}
                                   onClick={() => {
                                     handleTeamChange(t._id, '');
                                     setActiveAssignTicket(null);
                                   }}
-                                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                                  onMouseLeave={(e) => e.currentTarget.style.background = !currentTeam ? 'rgba(20,160,125,0.15)' : 'transparent'}
                                 >
                                   Unassigned
                                 </div>
 
                                 {filteredTeams.length > 0 ? (
                                   <>
-                                    <div style={{ padding: '4px 8px 2px 8px', fontSize: 9, color: 'var(--color-teal)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Matching Teams</div>
+                                    <div className="pt-1 pb-0.5 px-2 text-[9px] text-[var(--color-teal)] font-semibold uppercase tracking-[0.05em]">Matching Teams</div>
                                     {filteredTeams.map(tm => (
                                       <div
                                         key={tm._id}
-                                        style={{
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'space-between',
-                                          padding: '6px 8px',
-                                          borderRadius: 4,
-                                          cursor: 'pointer',
-                                          fontSize: 11,
-                                          color: '#e4e4e4',
-                                          background: currentTeam?._id === tm._id ? 'rgba(20,160,125,0.15)' : 'transparent',
-                                          marginBottom: 2,
-                                        }}
+                                        className={`flex items-center justify-between py-1.5 px-2 rounded cursor-pointer text-[11px] text-[#e4e4e4] mb-0.5 hover:bg-[rgba(255,255,255,0.08)] ${currentTeam?._id === tm._id ? 'bg-[rgba(20,160,125,0.15)]' : 'bg-transparent'}`}
                                         onClick={() => {
                                           handleTeamChange(t._id, tm._id);
                                           setActiveAssignTicket(null);
                                         }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = currentTeam?._id === tm._id ? 'rgba(20,160,125,0.15)' : 'transparent'}
                                       >
-                                        <span style={{ fontWeight: 500 }}>{tm.name}</span>
-                                        <div style={{ display: 'flex', gap: 3 }}>
+                                        <span className="font-medium">{tm.name}</span>
+                                        <div className="flex gap-[3px]">
                                           {tm.categories.map(c => (
-                                            <span key={c} style={{ fontSize: 8, padding: '1px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.1)', color: '#ccc' }}>{c}</span>
+                                            <span key={c} className="text-[8px] px-1 py-[1px] rounded-[3px] bg-[rgba(255,255,255,0.1)] text-[#ccc]">{c}</span>
                                           ))}
                                         </div>
                                       </div>
@@ -492,35 +422,22 @@ const AllTickets = () => {
                                   </>
                                 ) : (
                                   <>
-                                    <div style={{ padding: '6px 8px', fontSize: 11, color: '#ff5f5f', fontStyle: 'italic' }}>No matching team</div>
-                                    <div style={{ padding: '4px 8px 2px 8px', fontSize: 9, color: '#888', fontWeight: 600, textTransform: 'uppercase', borderTop: '1px solid #222', marginTop: 4 }}>Assign Manually (All Teams)</div>
-                                    <div style={{ maxHeight: 150, overflowY: 'auto' }}>
+                                    <div className="px-2 py-1.5 text-[11px] text-[#ff5f5f] italic">No matching team</div>
+                                    <div className="px-2 pt-1 pb-0.5 text-[9px] text-[#888] font-semibold uppercase border-t border-[#222] mt-1">Assign Manually (All Teams)</div>
+                                    <div className="max-h-[150px] overflow-y-auto">
                                       {teams.map(tm => (
                                         <div
                                           key={tm._id}
-                                          style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            padding: '6px 8px',
-                                            borderRadius: 4,
-                                            cursor: 'pointer',
-                                            fontSize: 11,
-                                            color: '#e4e4e4',
-                                            background: currentTeam?._id === tm._id ? 'rgba(20,160,125,0.15)' : 'transparent',
-                                            marginBottom: 2,
-                                          }}
+                                          className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer text-[11px] text-[#e4e4e4] mb-0.5 hover:bg-[rgba(255,255,255,0.08)] ${currentTeam?._id === tm._id ? 'bg-[rgba(20,160,125,0.15)]' : 'bg-transparent'}`}
                                           onClick={() => {
                                             handleTeamChange(t._id, tm._id);
                                             setActiveAssignTicket(null);
                                           }}
-                                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                                          onMouseLeave={(e) => e.currentTarget.style.background = currentTeam?._id === tm._id ? 'rgba(20,160,125,0.15)' : 'transparent'}
                                         >
-                                          <span style={{ fontWeight: 500 }}>{tm.name}</span>
-                                          <div style={{ display: 'flex', gap: 3 }}>
+                                          <span className="font-medium">{tm.name}</span>
+                                          <div className="flex gap-[3px]">
                                             {tm.categories.map(c => (
-                                              <span key={c} style={{ fontSize: 8, padding: '1px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.1)', color: '#ccc' }}>{c}</span>
+                                              <span key={c} className="text-[8px] px-1 py-[1px] rounded-[3px] bg-[rgba(255,255,255,0.1)] text-[#ccc]">{c}</span>
                                             ))}
                                           </div>
                                         </div>
@@ -533,9 +450,9 @@ const AllTickets = () => {
                           </div>
                         )}
                       </td>
-                      <td style={{ padding: '13px 16px', fontSize: 12, color: '#acacac', whiteSpace: 'nowrap' }}>{formatDate(t.createdAt)}</td>
-                      <td style={{ padding: '13px 16px' }} onClick={(e) => e.stopPropagation()}>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <td className="py-3.5 px-4 text-xs text-[#acacac] whitespace-nowrap">{formatDate(t.createdAt)}</td>
+                      <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-2 items-center">
                           <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/tickets/${t._id}`)}>
                             View
                           </button>
@@ -543,7 +460,7 @@ const AllTickets = () => {
                             <>
                               <button
                                 className="btn btn-sm"
-                                style={{ background: 'var(--color-teal)', border: 'none', color: '#000', padding: '4px 8px', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}
+                                className="btn btn-sm bg-[var(--color-teal)] border-none text-black py-1 px-2 rounded cursor-pointer text-[11px] font-semibold"
                                 onClick={async () => {
                                   if (!window.confirm('Are you sure you want to reactivate this ticket?')) return;
                                   setUpdating(t._id);
@@ -563,7 +480,7 @@ const AllTickets = () => {
                               </button>
                               <button
                                 className="btn btn-sm"
-                                style={{ background: '#e53e3e', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}
+                                className="btn btn-sm bg-[#e53e3e] border-none text-white py-1 px-2 rounded cursor-pointer text-[11px] font-semibold"
                                 onClick={async () => {
                                   if (!window.confirm('Are you sure you want to permanently delete this ticket?')) return;
                                   setUpdating(t._id);
@@ -586,10 +503,7 @@ const AllTickets = () => {
                             t.status !== 'closed' && (
                               <>
                                 <select
-                                  style={{
-                                    padding: '4px 6px', fontSize: 11, background: '#111',
-                                    border: '1px solid #3a3a3a', color: '#e4e4e4', borderRadius: 4, cursor: 'pointer',
-                                  }}
+                                  className="select py-1.5 pl-2.5 pr-8 text-xs min-w-[125px] outline-none"
                                   defaultValue=""
                                   onChange={async (e) => {
                                     const cat = e.target.value;
@@ -610,15 +524,13 @@ const AllTickets = () => {
                                   }}
                                 >
                                   <option value="">— Set Cat —</option>
-                                  <option value="General">General</option>
-                                  <option value="Technical">Technical</option>
-                                  <option value="Billing">Billing</option>
-                                  <option value="HR">HR</option>
-                                  <option value="Other">Other</option>
+                                  {categories.map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                  ))}
                                 </select>
                                 <button
                                   className="btn btn-sm"
-                                  style={{ background: '#e53e3e', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}
+                                  className="btn btn-sm bg-[#e53e3e] border-none text-white py-1 px-2 rounded cursor-pointer text-[11px] font-semibold"
                                   onClick={async () => {
                                     const reason = window.prompt('Enter reason to decline this ticket:');
                                     if (reason === null) return;
@@ -662,7 +574,7 @@ const AllTickets = () => {
           {Array.from({ length: Math.min(pages, 7) }, (_, i) => i + 1).map((p) => (
             <button key={p} className={`page-btn${p === page ? ' active' : ''}`} onClick={() => setPage(p)}>{p}</button>
           ))}
-          {pages > 7 && <span style={{ color: '#acacac', padding: '0 4px' }}>…</span>}
+          {pages > 7 && <span className="text-[#acacac] px-1">…</span>}
           <button className="page-btn" onClick={() => setPage((p) => Math.min(pages, p + 1))} disabled={page === pages}>›</button>
         </div>
       )}

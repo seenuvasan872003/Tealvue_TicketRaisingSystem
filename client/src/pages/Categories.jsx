@@ -101,41 +101,32 @@ const Categories = () => {
 
   return (
     <div className="page-body fade-in">
-      <div className="page-header" style={{ marginBottom: 24 }}>
+      <div className="page-header mb-6">
         <div>
           <h1 className="page-title">Manage Categories</h1>
           <p className="page-subtitle">Add, edit, or delete ticket support categories.</p>
         </div>
       </div>
 
-      <div className="card" style={{ padding: 24, maxWidth: 600, background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12 }}>
-        <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+      <div className="card p-6 max-w-[600px] bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl">
+        <form onSubmit={handleAddCategory} className="flex gap-2.5 mb-6">
           <input
             type="text"
             placeholder="Create new category (e.g. Sales, Hardware)..."
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
-            style={{
-              flex: 1,
-              background: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 8,
-              color: '#fff',
-              padding: '10px 14px',
-              fontSize: 13,
-              outline: 'none',
-            }}
+            className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-white py-2.5 px-3.5 text-[13px] outline-none"
             required
           />
-          <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button type="submit" className="btn btn-primary flex items-center gap-1.5">
             <Plus size={16} /> Add Category
           </button>
         </form>
 
         {loading ? (
-          <div style={{ padding: 30, textAlign: 'center' }}><div className="spinner" /></div>
+          <div className="p-[30px] text-center"><div className="spinner" /></div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {categories.map((cat, index) => {
               const isDefault = defaultCategories.includes(cat);
               const isEditing = editingIndex === index;
@@ -143,54 +134,37 @@ const Categories = () => {
               return (
                 <div
                   key={index}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    background: '#161b22',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 8,
-                    padding: '10px 16px',
-                  }}
+                  className="flex justify-between items-center bg-[#161b22] border border-[var(--color-border)] rounded-lg py-2.5 px-4"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
-                    <Tag size={14} style={{ color: isDefault ? 'var(--color-teal)' : '#acacac' }} />
+                  <div className="flex items-center gap-2.5 flex-1">
+                    <Tag size={14} className={isDefault ? 'text-[var(--color-teal)]' : 'text-[#acacac]'} />
                     {isEditing ? (
                       <input
                         type="text"
                         value={editingValue}
                         onChange={(e) => setEditingValue(e.target.value)}
-                        style={{
-                          background: 'var(--color-surface)',
-                          border: '1px solid var(--color-teal)',
-                          borderRadius: 6,
-                          color: '#fff',
-                          padding: '4px 8px',
-                          fontSize: 13,
-                          width: '80%',
-                          outline: 'none',
-                        }}
+                        className="bg-[var(--color-surface)] border border-[var(--color-teal)] rounded-md text-white py-1 px-2 text-[13px] w-4/5 outline-none"
                       />
                     ) : (
-                      <span style={{ fontSize: 14, fontWeight: 500, color: '#fff' }}>
-                        {cat} {isDefault && <span style={{ fontSize: 10, color: 'var(--color-teal)', marginLeft: 6, background: 'rgba(20,160,125,0.08)', padding: '2px 6px', borderRadius: 4 }}>Default</span>}
+                      <span className="text-sm font-medium text-white">
+                        {cat} {isDefault && <span className="text-[10px] text-[var(--color-teal)] ml-1.5 bg-[rgba(20,160,125,0.08)] py-0.5 px-1.5 rounded">Default</span>}
                       </span>
                     )}
                   </div>
 
                   {!isDefault && (
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    <div className="flex gap-1.5">
                       {isEditing ? (
                         <>
                           <button
                             onClick={() => handleSaveEdit(index, cat)}
-                            style={{ background: 'none', border: 'none', color: 'var(--color-success)', cursor: 'pointer', padding: 4 }}
+                            className="bg-none border-none text-[var(--color-success)] cursor-pointer p-1"
                           >
                             <Check size={16} />
                           </button>
                           <button
                             onClick={() => setEditingIndex(null)}
-                            style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 4 }}
+                            className="bg-none border-none text-[#f87171] cursor-pointer p-1"
                           >
                             <X size={16} />
                           </button>
@@ -199,14 +173,14 @@ const Categories = () => {
                         <>
                           <button
                             onClick={() => startEdit(index, cat)}
-                            style={{ background: 'none', border: 'none', color: '#acacac', cursor: 'pointer', padding: 4 }}
+                            className="bg-none border-none text-[#acacac] cursor-pointer p-1"
                             title="Edit"
                           >
                             <Edit2 size={14} />
                           </button>
                           <button
                             onClick={() => handleDeleteCategory(cat)}
-                            style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: 4 }}
+                            className="bg-none border-none text-[#f87171] cursor-pointer p-1"
                             title="Delete"
                           >
                             <Trash2 size={14} />

@@ -88,45 +88,26 @@ const ClientLogs = () => {
 
   return (
     <div className="page-body fade-in">
-      <div className="page-header" style={{ marginBottom: 20 }}>
+      <div className="page-header mb-5 flex-wrap gap-4">
         <div>
           <h1 className="page-title">Client Database Logs</h1>
           <p className="page-subtitle">View active logs initialized by users, client events, and exceptions.</p>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', width: '100%', maxWidth: 460 }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+        <div className="flex flex-col sm:flex-row gap-[12px] items-center w-full sm:w-auto">
+          <div className="relative w-full sm:flex">
+            <Search size={15} className="absolute right-[10px] top-1/2 -translate-y-1/2 text-[#666] pointer-events-none" />
             <input
               type="text"
               placeholder="Search client logs..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              style={{
-                background: 'var(--color-card)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 8,
-                color: 'var(--color-text)',
-                fontSize: 13,
-                padding: '8px 12px 8px 36px',
-                width: '100%',
-                outline: 'none',
-              }}
+              className="bg-[#1a1a1a] border border-solid border-[#4b4b4b] rounded-lg text-[#e4e4e4] text-[13px] h-[40px] py-0 pl-[12px] pr-[36px] w-full outline-none focus:border-[#d3a73c] transition-colors"
             />
           </div>
           <select
             value={statusCodeFilter}
             onChange={(e) => { setStatusCodeFilter(e.target.value); setCurrentPage(1); }}
-            style={{
-              background: 'var(--color-card)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 8,
-              color: 'var(--color-text)',
-              fontSize: 13,
-              padding: '8px 12px',
-              width: 140,
-              outline: 'none',
-              cursor: 'pointer'
-            }}
+            className="bg-[var(--color-card)] border border-solid border-[var(--color-border)] rounded-lg text-[var(--color-text)] text-[13px] px-3 h-[40px] w-full outline-none cursor-pointer"
           >
             <option value="all">All Status Codes</option>
             {availableStatusCodes.map(code => (
@@ -136,7 +117,7 @@ const ClientLogs = () => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20, background: '#161b22', padding: 4, borderRadius: 8, width: 'max-content' }}>
+      <div className="flex gap-2 flex-wrap mb-5 bg-[#161b22] p-1 rounded-lg w-max">
         {[
           { label: 'All Logs', value: 'all' },
           { label: 'Login', value: 'login' },
@@ -147,17 +128,7 @@ const ClientLogs = () => {
           <button
             key={tab.value}
             onClick={() => { setFilterType(tab.value); setCurrentPage(1); }}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 6,
-              border: 'none',
-              background: filterType === tab.value ? 'var(--color-teal)' : 'transparent',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: 12,
-              fontWeight: 600,
-              transition: 'all 0.2s'
-            }}
+            className={`px-[14px] py-[6px] rounded-md border-none text-white cursor-pointer text-xs font-semibold transition-all duration-200 ${filterType === tab.value ? 'bg-[var(--color-teal)]' : 'bg-transparent'}`}
           >
             {tab.label}
           </button>
@@ -165,67 +136,55 @@ const ClientLogs = () => {
       </div>
 
       {loading && logs.length === 0 ? (
-        <div style={{ padding: 60, textAlign: 'center' }}><div className="spinner" /></div>
+        <div className="p-[60px] text-center"><div className="spinner" /></div>
       ) : filteredLogs.length === 0 ? (
-        <div className="card empty-state" style={{ padding: '60px 40px', textAlign: 'center', background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12 }}>
-          <Terminal size={40} style={{ color: 'var(--color-text-muted)', marginBottom: 12, opacity: 0.5 }} />
-          <h3 style={{ fontSize: 16, color: '#fff', margin: '0 0 4px 0' }}>No client logs found</h3>
-          <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: 0 }}>No matches found for your filter criteria.</p>
+        <div className="card empty-state px-10 py-[60px] text-center bg-[var(--color-card)] border border-solid border-[var(--color-border)] rounded-xl">
+          <Terminal size={40} className="text-[var(--color-text-muted)] mb-3 opacity-50 mx-auto" />
+          <h3 className="text-base text-white m-0 mb-1">No client logs found</h3>
+          <p className="text-[13px] text-[var(--color-text-muted)] m-0">No matches found for your filter criteria.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="flex flex-col gap-3">
           {currentLogs.map((log) => {
             const levelColor = log.level === 'error' ? '#ef4444' : log.level === 'warn' ? '#eac253' : '#3b82f6';
             return (
               <div
                 key={log._id}
-                style={{
-                  background: 'var(--color-card)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 12,
-                  padding: 16,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 10,
-                }}
+                className="bg-[var(--color-card)] border border-solid border-[var(--color-border)] rounded-xl p-4 flex flex-col gap-[10px]"
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="flex justify-between items-center flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
                     <span
+                      className="px-2 py-[2px] rounded text-[10px] font-bold uppercase border border-solid"
                       style={{
-                        background: `rgba(${parseInt(levelColor.slice(1,3),16)}, ${parseInt(levelColor.slice(3,5),16)}, ${parseInt(levelColor.slice(5,7),16)}, 0.1)`,
+                        backgroundColor: `rgba(${parseInt(levelColor.slice(1,3),16)}, ${parseInt(levelColor.slice(3,5),16)}, ${parseInt(levelColor.slice(5,7),16)}, 0.1)`,
                         color: levelColor,
-                        border: `1px solid rgba(${parseInt(levelColor.slice(1,3),16)}, ${parseInt(levelColor.slice(3,5),16)}, ${parseInt(levelColor.slice(5,7),16)}, 0.25)`,
-                        padding: '2px 8px',
-                        borderRadius: 4,
-                        fontSize: 10,
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
+                        borderColor: `rgba(${parseInt(levelColor.slice(1,3),16)}, ${parseInt(levelColor.slice(3,5),16)}, ${parseInt(levelColor.slice(5,7),16)}, 0.25)`
                       }}
                     >
                       {log.level}
                     </span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>
+                    <span className="text-[13px] font-semibold text-white">
                       {log.component || 'Global'} &rarr; {log.function || 'root'}
                     </span>
                   </div>
-                  <span style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span className="text-[11px] text-[var(--color-text-muted)] flex items-center gap-1">
                     <Clock size={11} /> {log.timestamp}
                   </span>
                 </div>
 
-                <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, padding: 12 }}>
-                  <div style={{ fontSize: 13, color: '#e4e4e4', fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                <div className="bg-[var(--color-surface)] border border-solid border-[var(--color-border)] rounded-lg p-3">
+                  <div className="text-[13px] text-[#e4e4e4] font-mono whitespace-pre-wrap break-all">
                     {log.message}
                   </div>
                   {log.stack && log.stack !== '—' && (
-                    <div style={{ fontSize: 11, color: '#ff7878', fontFamily: 'monospace', whiteSpace: 'pre-wrap', borderTop: '1px solid var(--color-border)', marginTop: 8, paddingTop: 8, maxHeight: 150, overflowY: 'auto' }}>
+                    <div className="text-[11px] text-[#ff7878] font-mono whitespace-pre-wrap border-t border-solid border-[var(--color-border)] mt-2 pt-2 max-h-[150px] overflow-y-auto">
                       {log.stack}
                     </div>
                   )}
                 </div>
 
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 11, color: 'var(--color-text-muted)', marginTop: 8 }}>
+                <div className="flex gap-4 flex-wrap text-[11px] text-[var(--color-text-muted)] mt-2">
                   <span>
                     <strong>User:</strong>{' '}
                     {log.userId && typeof log.userId === 'object'
@@ -265,7 +224,7 @@ const ClientLogs = () => {
                     <span><strong>User Action:</strong> {log.action}</span>
                   )}
                   {log.api && log.api !== '—' && (
-                    <span style={{ color: log.status >= 400 ? '#f85149' : 'var(--color-teal)' }}>
+                    <span className={log.status >= 400 ? 'text-[#f85149]' : 'text-[var(--color-teal)]'}>
                       <strong>API Trigger:</strong> {log.method} {log.api} (Status: {log.status})
                     </span>
                   )}
@@ -275,21 +234,19 @@ const ClientLogs = () => {
           })}
 
           {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 12 }}>
+            <div className="flex justify-center items-center gap-3 mt-3">
               <button
-                className="btn btn-ghost"
-                style={{ padding: '6px 14px', fontSize: 12 }}
+                className="btn btn-ghost px-[14px] py-[6px] text-xs"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               >
                 &larr; Previous
               </button>
-              <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+              <span className="text-xs text-[var(--color-text-muted)]">
                 Page {currentPage} of {totalPages}
               </span>
               <button
-                className="btn btn-ghost"
-                style={{ padding: '6px 14px', fontSize: 12 }}
+                className="btn btn-ghost px-[14px] py-[6px] text-xs"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               >

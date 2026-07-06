@@ -16,6 +16,7 @@ const requirePathOwnership = (featureId) => {
     }
 
     
+
     // Check if Role is Assigned the Feature
     let allowedApiPath = feature.apiPaths[role];
     if (!allowedApiPath && role === 'super-admin') {

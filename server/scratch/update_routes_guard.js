@@ -23,7 +23,7 @@ dirs.forEach(dir => {
     let content = fs.readFileSync(filePath, 'utf8');
 
     // 1. Remove old custom requires
-    content = content.replace(/const\s*{\s*requireRolePrefix\s*}\s*=\s*require\(['"][^'"]+requireRolePrefix['"]\);\s*\n?/g, '');
+    // content = content.replace(/const\s*{\s*requireRolePrefix\s*}\s*=\s*require\(['"][^'"]+requireRolePrefix['"]\);\s*\n?/g, '');
     content = content.replace(/const\s*{\s*requirePathOwnership\s*}\s*=\s*require\(['"][^'"]+requirePathOwnership['"]\);\s*\n?/g, '');
 
     // 2. Add guardRoute require if not present

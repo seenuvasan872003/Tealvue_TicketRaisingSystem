@@ -119,29 +119,29 @@ const TeamUserTickets = () => {
       </div>
 
       {/* Mini stats dashboard */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mb-6">
         {isFinishedPage ? (
-          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', maxWidth: 300 }}>
-            <CheckCircle size={20} style={{ color: 'var(--color-success)' }} />
+          <div className="card flex items-center gap-3 py-4 px-5 max-w-[300px]">
+            <CheckCircle size={20} className="text-[var(--color-success)]" />
             <div>
-              <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Total Finished Tickets</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-teal)' }}>{totalCount} tickets</div>
+              <div className="text-[11px] text-[var(--color-text-muted)]">Total Finished Tickets</div>
+              <div className="text-lg font-bold text-[var(--color-teal)]">{totalCount} tickets</div>
             </div>
           </div>
         ) : (
           <>
-            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px' }}>
-              <Clock size={20} style={{ color: 'var(--color-yellow)' }} />
+            <div className="card flex items-center gap-3 py-4 px-5">
+              <Clock size={20} className="text-[var(--color-yellow)]" />
               <div>
-                <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Workload in Current Tab</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>{totalAssigned} tickets</div>
+                <div className="text-[11px] text-[var(--color-text-muted)]">Workload in Current Tab</div>
+                <div className="text-lg font-bold text-white">{totalAssigned} tickets</div>
               </div>
             </div>
-            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px' }}>
-              <CheckCircle size={20} style={{ color: 'var(--color-success)' }} />
+            <div className="card flex items-center gap-3 py-4 px-5">
+              <CheckCircle size={20} className="text-[var(--color-success)]" />
               <div>
-                <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Active In-Progress</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-teal)' }}>{inProgressCount} tickets</div>
+                <div className="text-[11px] text-[var(--color-text-muted)]">Active In-Progress</div>
+                <div className="text-lg font-bold text-[var(--color-teal)]">{inProgressCount} tickets</div>
               </div>
             </div>
           </>
@@ -150,18 +150,16 @@ const TeamUserTickets = () => {
 
       {/* Main Tabs */}
       {!isFinishedPage && (
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, borderBottom: '1px solid var(--color-border)', paddingBottom: 12 }}>
+        <div className="flex gap-3 mb-4 border-b border-[var(--color-border)] pb-3 overflow-x-auto whitespace-nowrap w-full [scrollbar-width:none]">
           <button
-            className={`btn ${activeTab === 'active' ? 'btn-primary' : 'btn-ghost'}`}
+            className={`btn ${activeTab === 'active' ? 'btn-primary' : 'btn-ghost'} flex items-center gap-2 shrink-0`}
             onClick={() => setActiveTab('active')}
-            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
           >
             <ClipboardList size={16} /> Active Assigned Tickets ({activeTickets.length})
           </button>
           <button
-            className={`btn ${activeTab === 'transferred' ? 'btn-primary' : 'btn-ghost'}`}
+            className={`btn ${activeTab === 'transferred' ? 'btn-primary' : 'btn-ghost'} flex items-center gap-2 shrink-0`}
             onClick={() => setActiveTab('transferred')}
-            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
           >
             <Send size={16} /> Transferred Tickets ({transferredTickets.length})
           </button>
@@ -170,21 +168,21 @@ const TeamUserTickets = () => {
 
       {/* Tabs Filter - only show for active tickets */}
       {!isFinishedPage && activeTab === 'active' && (
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+        <div className="flex gap-3 mb-4 overflow-x-auto whitespace-nowrap w-full [scrollbar-width:none]">
           <button
-            className={`btn ${statusFilter === '' ? 'btn-primary' : 'btn-ghost'}`}
+            className={`btn ${statusFilter === '' ? 'btn-primary' : 'btn-ghost'} shrink-0`}
             onClick={() => { setStatusFilter(''); setPage(1); }}
           >
             All Assigned
           </button>
           <button
-            className={`btn ${statusFilter === 'in-progress' ? 'btn-primary' : 'btn-ghost'}`}
+            className={`btn ${statusFilter === 'in-progress' ? 'btn-primary' : 'btn-ghost'} shrink-0`}
             onClick={() => { setStatusFilter('in-progress'); setPage(1); }}
           >
             Active In-Progress
           </button>
           <button
-            className={`btn ${statusFilter === 'closed' ? 'btn-primary' : 'btn-ghost'}`}
+            className={`btn ${statusFilter === 'closed' ? 'btn-primary' : 'btn-ghost'} shrink-0`}
             onClick={() => { setStatusFilter('closed'); setPage(1); }}
           >
             Resolved / Closed
@@ -193,28 +191,28 @@ const TeamUserTickets = () => {
       )}
 
       {/* Tickets List */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card p-0 overflow-hidden">
         <div className="table-wrap">
-          <table>
+          <table className="w-full border-collapse text-[13px] min-w-[800px]">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Ticket Title</th>
-                <th>Category</th>
-                <th>Priority</th>
-                <th>Due Date</th>
-                <th>Status</th>
-                <th>Action</th>
+                <th className="w-[80px]">ID</th>
+                <th className="w-[220px] min-w-[220px]">Ticket Title</th>
+                <th className="w-[100px]">Category</th>
+                <th className="w-[100px]">Priority</th>
+                <th className="w-[120px]">Due Date</th>
+                <th className="w-[120px]">Status</th>
+                <th className="w-[150px]">Action</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: 24 }}><div className="spinner" /></td>
+                  <td colSpan="7" className="text-center p-6"><div className="spinner" /></td>
                 </tr>
               ) : displayedTickets.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: 24, color: 'var(--color-text-muted)' }}>
+                  <td colSpan="7" className="text-center p-6 text-[var(--color-text-muted)]">
                     {activeTab === 'active' ? 'No tickets found matching this status filter.' : 'No transferred tickets recorded.'}
                   </td>
                 </tr>
@@ -222,45 +220,44 @@ const TeamUserTickets = () => {
                  displayedTickets.map((t) => (
                   <tr 
                     key={t._id}
-                    style={{ cursor: 'pointer' }}
                     onClick={() => navigate(`/tickets/${t._id}`)}
-                    className="table-row-hover"
+                    className="table-row-hover cursor-pointer"
                   >
-                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--color-teal)' }}>
+                    <td className="font-mono text-xs text-[var(--color-teal)]">
                       {t._id.slice(-6).toUpperCase()}
                     </td>
-                    <td>
-                      <div style={{ fontWeight: 600, color: '#fff' }}>
+                    <td className="min-w-[220px]">
+                      <div className="font-semibold text-white whitespace-normal break-words">
                         {t.title}
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                      <div className="text-[11px] text-[var(--color-text-muted)]">
                         Owner: {t.user_id?.name || 'User'}
                       </div>
                     </td>
-                    <td style={{ textTransform: 'capitalize' }}>{t.category}</td>
+                    <td className="capitalize">{t.category}</td>
                     <td><PriorityBadge priority={t.priority} /></td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-                        <Calendar size={13} style={{ color: 'var(--color-text-muted)' }} />
+                      <div className="flex items-center gap-[6px] text-xs">
+                        <Calendar size={13} className="text-[var(--color-text-muted)]" />
                         <span>{t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'Not set'}</span>
                       </div>
                     </td>
                     <td>
                       {t.approvalStatus === 'suspended' ? (
-                        <span className="badge" style={{ background: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', border: '1px solid rgba(251, 146, 60, 0.2)', fontSize: 11 }}>
+                        <span className="badge bg-[rgba(251,146,60,0.1)] text-[#fb923c] border border-[rgba(251,146,60,0.2)] text-[11px]">
                           Under Review
                         </span>
                       ) : t.approvalStatus === 'rejected' ? (
-                        <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: 11 }}>
+                        <span className="badge bg-[rgba(239,68,68,0.1)] text-[#ef4444] border border-[rgba(239,68,68,0.2)] text-[11px]">
                           Declined
                         </span>
                       ) : activeTab === 'transferred' ? (
                         t.allocationStatus === 'transferred_to_admin' ? (
-                          <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                          <span className="badge bg-[rgba(239,68,68,0.1)] text-[#ef4444] border border-[rgba(239,68,68,0.2)]">
                             Transferred to Admin
                           </span>
                         ) : (
-                          <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
+                          <span className="badge bg-[rgba(139,92,246,0.1)] text-[#a78bfa] border border-[rgba(139,92,246,0.2)]">
                             Reallocated to {t.teamId?.name || 'Other Team'}
                           </span>
                         )
@@ -269,13 +266,12 @@ const TeamUserTickets = () => {
                       )}
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <div className="flex gap-2 items-center">
                         {activeTab === 'transferred' || t.approvalStatus === 'suspended' || t.approvalStatus === 'rejected' ? (
                           <>
-                            <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>Read-Only</span>
+                            <span className="text-[var(--color-text-muted)] text-xs">Read-Only</span>
                             <button
-                              className="btn btn-ghost"
-                              style={{ padding: '6px 12px', fontSize: 11 }}
+                              className="btn btn-ghost py-1.5 px-3 text-[11px]"
                               onClick={() => navigate(`/tickets/${t._id}`)}
                             >
                               View Details
@@ -284,15 +280,13 @@ const TeamUserTickets = () => {
                         ) : t.status === 'in-progress' ? (
                           <>
                             <button
-                              className="btn btn-primary"
-                              style={{ padding: '6px 12px', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                              className="btn btn-primary py-1.5 px-3 text-[11px] inline-flex items-center gap-[6px]"
                               onClick={() => handleCloseTicket(t._id)}
                             >
                               <CheckCircle size={12} /> Resolve & Close
                             </button>
                             <button
-                              className="btn btn-ghost"
-                              style={{ padding: '6px 12px', fontSize: 11 }}
+                              className="btn btn-ghost py-1.5 px-3 text-[11px]"
                               onClick={() => navigate(`/tickets/${t._id}`)}
                             >
                               View Details
@@ -300,10 +294,9 @@ const TeamUserTickets = () => {
                           </>
                         ) : (
                           <>
-                            <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>Resolved ✓</span>
+                            <span className="text-[var(--color-text-muted)] text-xs">Resolved ✓</span>
                             <button
-                              className="btn btn-ghost"
-                              style={{ padding: '6px 12px', fontSize: 11 }}
+                              className="btn btn-ghost py-1.5 px-3 text-[11px]"
                               onClick={() => navigate(`/tickets/${t._id}`)}
                             >
                               View Details
@@ -322,7 +315,7 @@ const TeamUserTickets = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 20 }}>
+        <div className="flex justify-center gap-2 mt-5">
           <button
             disabled={page === 1}
             onClick={() => setPage(p => p - 1)}
@@ -330,7 +323,7 @@ const TeamUserTickets = () => {
           >
             Previous
           </button>
-          <span style={{ display: 'flex', alignItems: 'center', padding: '0 12px', color: 'var(--color-text-muted)' }}>
+          <span className="flex items-center px-3 text-[var(--color-text-muted)]">
             Page {page} of {totalPages}
           </span>
           <button

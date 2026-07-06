@@ -119,7 +119,8 @@ const CreateTicket = () => {
       logger.info('CreateTicket', 'handleSubmit', `Ticket created successfully \u2014 ID: ${data._id}`, { api: '/api/tickets', method: 'POST', status: 201, action: 'Ticket Create Success' });
       navigate(`/tickets/${data._id}`);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create ticket');
+      const errMsg = err.response?.data?.errors?.map(e => e.message).join(', ') || err.response?.data?.message || 'Failed to create ticket';
+      toast.error(errMsg);
       logger.error('CreateTicket', 'handleSubmit', 'Ticket creation FAILED', err, { api: '/api/tickets', method: 'POST', status: err.response?.status, action: 'Ticket Create Failure' });
     } finally {
       setLoading(false);
@@ -169,8 +170,8 @@ const CreateTicket = () => {
         </div>
       </div>
 
-      <div className="create-ticket-form" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: '28px 32px', maxWidth: 680, margin: '0 auto' }}>
-        <h2 style={{ color: '#e4e4e4', marginBottom: 20 }}>Create New Ticket</h2>
+      <div className="create-ticket-form bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl py-7 px-8 max-w-[680px] mx-auto">
+        <h2 className="text-[#e4e4e4] mb-5">Create New Ticket</h2>
         <form onSubmit={handleSubmit}>
           <div className="field-group">
             <label>Title *</label>
@@ -181,8 +182,8 @@ const CreateTicket = () => {
               value={form.title} 
               onChange={(e) => handleTitleChange(e.target.value)} 
             />
-            {errors.title && <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>{errors.title}</span>}
-            {form.title && !errors.title && <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>✓ Title is valid</span>}
+            {errors.title && <span className="error-msg block text-[11px] text-[var(--color-high)] mt-1">{errors.title}</span>}
+            {form.title && !errors.title && <span className="success-msg block text-[11px] text-[var(--color-teal)] mt-1">✓ Title is valid</span>}
           </div>
 
           <div className="field-group">
@@ -192,13 +193,13 @@ const CreateTicket = () => {
               placeholder="Describe the issue in detail (20-2000 chars)..." 
               value={form.description} 
               onChange={(e) => handleDescChange(e.target.value)} 
-              style={{ minHeight: 130, resize: 'vertical' }} 
+              className={`${errors.description ? 'input-error' : form.description ? 'input-success' : ''} min-h-[130px] resize-y`}
             />
-            {errors.description && <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>{errors.description}</span>}
-            {form.description && !errors.description && <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>✓ Description is valid</span>}
+            {errors.description && <span className="error-msg block text-[11px] text-[var(--color-high)] mt-1">{errors.description}</span>}
+            {form.description && !errors.description && <span className="success-msg block text-[11px] text-[var(--color-teal)] mt-1">✓ Description is valid</span>}
           </div>
 
-          <div className="field-group" style={{ maxWidth: 320 }}>
+          <div className="field-group max-w-[320px]">
             <label>Category</label>
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -206,36 +207,36 @@ const CreateTicket = () => {
           </div>
 
           {/* Attachments Section */}
-          <div className="field-group" style={{ marginTop: 20 }}>
+          <div className="field-group mt-5">
             <label>Attachments (Max 20, 5MB each, JPG/PNG/WEBP/PDF only)</label>
-            <div className="attachment-zone" onClick={() => fileInputRef.current.click()} style={{ border: '2px dashed var(--color-border)', padding: 24, textAlign: 'center', borderRadius: 8, cursor: 'pointer', background: 'var(--color-surface)' }}>
-              <Paperclip size={24} style={{ color: 'var(--color-text-muted)' }} />
-              <p style={{ color: '#acacac', marginTop: 8 }}>Click to browse or drag files here</p>
+            <div className="attachment-zone border-2 border-dashed border-[var(--color-border)] p-6 text-center rounded-lg cursor-pointer bg-[var(--color-surface)]" onClick={() => fileInputRef.current.click()}>
+              <Paperclip size={24} className="text-[var(--color-text-muted)]" />
+              <p className="text-[#acacac] mt-2">Click to browse or drag files here</p>
             </div>
-            <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} accept="image/jpeg,image/png,image/webp,application/pdf" />
+            <input type="file" multiple ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/jpeg,image/png,image/webp,application/pdf" />
             
             {files.length > 0 && (
-              <div className="attachment-list" style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
+              <div className="attachment-list flex gap-3 mt-3 flex-wrap">
                 {files.map((file, i) => (
-                  <div key={i} className="attachment-thumb" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: 8, background: 'var(--color-surface)', borderRadius: 6, border: '1px solid var(--color-border)' }}>
+                  <div key={i} className="attachment-thumb relative flex items-center gap-2 p-2 bg-[var(--color-surface)] rounded-md border border-[var(--color-border)]">
                     {file.type.startsWith('image/') ? (
-                      <img src={URL.createObjectURL(file)} alt="preview" style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover' }} />
+                      <img src={URL.createObjectURL(file)} alt="preview" className="w-8 h-8 rounded object-cover" />
                     ) : (
                       <Paperclip size={20} color="var(--color-text-muted)" />
                     )}
-                    <div className="file-name" style={{ fontSize: 12, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</div>
-                    <button type="button" className="remove-btn" onClick={(e) => { e.stopPropagation(); removeFile(i); }} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: 16, padding: '0 4px' }}>&times;</button>
+                    <div className="file-name text-xs max-w-[150px] overflow-hidden text-ellipsis whitespace-nowrap">{file.name}</div>
+                    <button type="button" className="remove-btn bg-none border-none text-[#ff4444] cursor-pointer text-base px-1" onClick={(e) => { e.stopPropagation(); removeFile(i); }}>&times;</button>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-            <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '10px 24px' }}>
+          <div className="flex gap-3 mt-6">
+            <button type="submit" className="btn btn-primary py-2.5 px-6" disabled={loading}>
               {loading ? 'Submitting…' : 'Submit Ticket'}
             </button>
-            <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)} style={{ padding: '10px 24px' }}>
+            <button type="button" className="btn btn-ghost py-2.5 px-6" onClick={() => navigate(-1)}>
               Cancel
             </button>
           </div>

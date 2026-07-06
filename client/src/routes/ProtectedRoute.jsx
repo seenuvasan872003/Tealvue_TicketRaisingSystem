@@ -7,14 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import FEATURES from '../config/featureList';
 
 const LoadingScreen = () => (
-  <div style={{
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'var(--color-bg)',
-  }}>
-    <div className="spinner" style={{ width: 32, height: 32 }} />
+  <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)]">
+    <div className="spinner w-8 h-8" />
   </div>
 );
 

@@ -166,23 +166,12 @@ const Logs = () => {
           <h1 className="page-title">Activity Logs</h1>
           <p className="page-subtitle">Monitor ticket states, admin tasks, and system events.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, background: '#161b22', padding: 4, borderRadius: 8 }}>
+        <div className="flex gap-2 bg-[#161b22] p-1 rounded-lg">
           {['daily', 'weekly', 'monthly'].map(r => (
             <button
               key={r}
               onClick={() => setRange(r)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 6,
-                border: 'none',
-                background: range === r ? 'var(--color-teal)' : 'transparent',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: 600,
-                textTransform: 'capitalize',
-                transition: 'all 0.2s'
-              }}
+              className={`px-[14px] py-[6px] rounded-md border-none text-white cursor-pointer text-xs font-semibold capitalize transition-all duration-200 ${range === r ? 'bg-[var(--color-teal)]' : 'bg-transparent'}`}
             >
               {r}
             </button>
@@ -191,17 +180,17 @@ const Logs = () => {
       </div>
 
       {loading && logs.length === 0 ? (
-        <div style={{ padding: 60, textAlign: 'center' }}><div className="spinner" /></div>
+        <div className="p-[60px] text-center"><div className="spinner" /></div>
       ) : (
         <>
           {/* Charts Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, marginBottom: 28 }}>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5 mb-7">
             
             {/* Chart 1 */}
             <div className="chart-card">
               <div className="chart-title">Daily Ticket Activity</div>
               <div className="chart-subtitle">Created vs Assigned vs Closed</div>
-              <div style={{ height: 200, marginTop: 12 }}>
+              <div className="h-[200px] mt-3">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#2d2d2d" vertical={false} />
@@ -221,7 +210,7 @@ const Logs = () => {
             <div className="chart-card">
               <div className="chart-title">Cumulative Ticket Volume</div>
               <div className="chart-subtitle">Total raised tickets over time</div>
-              <div style={{ height: 200, marginTop: 12 }}>
+              <div className="h-[200px] mt-3">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={lineData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#2d2d2d" vertical={false} />
@@ -238,7 +227,7 @@ const Logs = () => {
             <div className="chart-card">
               <div className="chart-title">State Share</div>
               <div className="chart-subtitle">Status breakdown of logs</div>
-              <div style={{ height: 200, marginTop: 12 }}>
+              <div className="h-[200px] mt-3">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={4} dataKey="value" nameKey="name">
@@ -254,26 +243,17 @@ const Logs = () => {
           </div>
 
           {/* Timeline list */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 600 }}>Activity Timeline</h2>
+          <div className="flex justify-between items-center mb-[14px]">
+            <h2 className="text-[15px] font-semibold">Activity Timeline</h2>
             <button
               onClick={() => fetchLogs(range)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--color-teal)',
-                fontSize: 12,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4
-              }}
+              className="bg-transparent border-none text-[var(--color-teal)] text-xs cursor-pointer flex items-center gap-1"
             >
               <RefreshCw size={12} /> Refresh
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="flex flex-col gap-[10px]">
             {(() => {
               const indexOfLastLog = currentPage * logsPerPage;
               const indexOfFirstLog = indexOfLastLog - logsPerPage;
@@ -282,7 +262,7 @@ const Logs = () => {
 
               if (logs.length === 0) {
                 return (
-                  <div className="card" style={{ textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>
+                  <div className="card text-center p-10 text-[var(--color-text-muted)]">
                     No events recorded in this time range.
                   </div>
                 );
@@ -296,55 +276,36 @@ const Logs = () => {
                     return (
                       <div
                         key={log._id}
-                        className="card"
-                        style={{
-                          padding: '14px 18px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 16,
-                          background: 'var(--color-surface)',
-                          border: '1px solid var(--color-border)',
-                        }}
+                        className="card px-[18px] py-[14px] flex items-center gap-4 bg-[var(--color-surface)] border border-solid border-[var(--color-border)]"
                       >
                         <div
+                          className="w-[36px] h-[36px] rounded-full border border-solid flex items-center justify-center shrink-0"
                           style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: '50%',
-                            background: `rgba(${parseInt(color.slice(1,3),16)}, ${parseInt(color.slice(3,5),16)}, ${parseInt(color.slice(5,7),16)}, 0.08)`,
-                            border: `1px solid ${color}`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: color,
-                            flexShrink: 0
+                            backgroundColor: `rgba(${parseInt(color.slice(1,3),16)}, ${parseInt(color.slice(3,5),16)}, ${parseInt(color.slice(5,7),16)}, 0.08)`,
+                            borderColor: color,
+                            color: color
                           }}
                         >
                           <Icon size={16} />
                         </div>
-                        <div style={{ flex: 1, overflow: 'hidden' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                        <div className="flex-1 overflow-hidden">
+                          <div className="flex justify-between flex-wrap gap-2">
                             <span
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 700,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.05em',
-                                color: color,
-                              }}
+                              className="text-[10px] font-bold uppercase tracking-[0.05em]"
+                              style={{ color: color }}
                             >
                               {formatAction(log.action)}
                             </span>
-                            <span style={{ fontSize: 11, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span className="text-[11px] text-[var(--color-text-muted)] flex items-center gap-1">
                               <Clock size={11} /> {new Date(log.createdAt).toLocaleString()}
                             </span>
                           </div>
-                          <div style={{ fontSize: 13, color: '#e4e4e4', marginTop: 4, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          <div className="text-[13px] text-[#e4e4e4] mt-1 text-ellipsis overflow-hidden whitespace-nowrap">
                             {log.note}
                           </div>
                           {log.ticketId && (
-                            <div style={{ fontSize: 11, color: 'var(--color-teal)', marginTop: 2 }}>
-                              Ticket Link: <a href={`/tickets/${log.ticketId._id || log.ticketId}`} style={{ color: 'var(--color-teal)', textDecoration: 'underline' }}>#{String(log.ticketId._id || log.ticketId).slice(-6).toUpperCase()} - {log.ticketId.title}</a>
+                            <div className="text-[11px] text-[var(--color-teal)] mt-[2px]">
+                              Ticket Link: <a href={`/tickets/${log.ticketId._id || log.ticketId}`} className="text-[var(--color-teal)] underline">#{String(log.ticketId._id || log.ticketId).slice(-6).toUpperCase()} - {log.ticketId.title}</a>
                             </div>
                           )}
                         </div>
@@ -353,21 +314,19 @@ const Logs = () => {
                   })}
 
                   {totalPages > 1 && (
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 20 }}>
+                    <div className="flex justify-center items-center gap-3 mt-5">
                       <button
-                        className="btn btn-ghost"
-                        style={{ padding: '8px 16px', fontSize: 12 }}
+                        className="btn btn-ghost px-4 py-2 text-xs"
                         disabled={currentPage === 1}
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       >
                         &larr; Previous
                       </button>
-                      <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+                      <span className="text-xs text-[var(--color-text-muted)]">
                         Page {currentPage} of {totalPages}
                       </span>
                       <button
-                        className="btn btn-ghost"
-                        style={{ padding: '8px 16px', fontSize: 12 }}
+                        className="btn btn-ghost px-4 py-2 text-xs"
                         disabled={currentPage === totalPages}
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       >

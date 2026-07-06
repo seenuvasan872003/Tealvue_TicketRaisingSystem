@@ -112,7 +112,7 @@ const TeamTickets = () => {
 
   if (loading && !team) {
     return (
-      <div style={{ padding: 60, textAlign: 'center' }}>
+      <div className="p-[60px] text-center">
         <div className="spinner" />
       </div>
     );
@@ -128,25 +128,23 @@ const TeamTickets = () => {
       </div>
 
       {/* Filter bar */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: 8, flex: 1, minWidth: 260 }}>
+      <div className="card mb-5">
+        <div className="flex gap-4 flex-wrap items-center justify-between">
+          <form onSubmit={handleSearchSubmit} className="flex gap-2 flex-1 min-w-[260px]">
             <input
               type="text"
-              className="form-control"
+              className="form-control flex-1"
               placeholder="Search tickets by title..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ flex: 1 }}
             />
             <button type="submit" className="btn btn-primary">Search</button>
           </form>
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div className="flex gap-3">
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="form-control"
-              style={{ width: 160 }}
+              className="form-control w-[160px]"
             >
               <option value="">All Statuses</option>
               <option value="open">Open</option>
@@ -158,31 +156,29 @@ const TeamTickets = () => {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+      <div className="flex gap-3 mb-5">
         <button
-          className={`btn ${activeTab === 'active' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn ${activeTab === 'active' ? 'btn-primary' : 'btn-ghost'} flex items-center gap-2`}
           onClick={() => setActiveTab('active')}
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
         >
           <ClipboardList size={16} /> Active Tickets ({activeTickets.length})
         </button>
         <button
-          className={`btn ${activeTab === 'transferred' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn ${activeTab === 'transferred' ? 'btn-primary' : 'btn-ghost'} flex items-center gap-2`}
           onClick={() => setActiveTab('transferred')}
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
         >
           <Send size={16} /> Transferred Tickets ({transferredTickets.length})
         </button>
       </div>
 
       {/* Tickets Table */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card p-0 overflow-hidden">
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Ticket ID</th>
-                <th>Title</th>
+                <th className="w-[220px] min-w-[220px]">Title</th>
                 <th>Category</th>
                 <th>Priority</th>
                 <th>Due Date</th>
@@ -194,7 +190,7 @@ const TeamTickets = () => {
             <tbody>
               {displayedTickets.length === 0 ? (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: 24, color: 'var(--color-text-muted)' }}>
+                  <td colSpan="8" className="text-center p-6 text-[var(--color-text-muted)]">
                     {activeTab === 'active' ? 'No active tickets currently allocated to your team.' : 'No transferred tickets recorded.'}
                   </td>
                 </tr>
@@ -202,43 +198,42 @@ const TeamTickets = () => {
                  displayedTickets.map((ticket) => (
                   <tr 
                     key={ticket._id} 
-                    style={{ cursor: 'pointer' }}
                     onClick={() => navigate(`/tickets/${ticket._id}`)}
-                    className="table-row-hover"
+                    className="table-row-hover cursor-pointer"
                   >
-                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--color-text-muted)' }}>
+                    <td className="font-mono text-xs text-[var(--color-text-muted)]">
                       {ticket._id.slice(-6).toUpperCase()}
                     </td>
-                    <td>
-                      <div style={{ fontWeight: 600, color: '#fff' }}>{ticket.title}</div>
-                      <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+                    <td className="min-w-[220px]">
+                      <div className="font-semibold text-white whitespace-normal break-words">{ticket.title}</div>
+                      <div className="text-[11px] text-[var(--color-text-muted)]">
                         Raised by: {ticket.user_id?.name || 'Unknown'}
                       </div>
                     </td>
-                    <td style={{ textTransform: 'capitalize' }}>{ticket.category}</td>
+                    <td className="capitalize">{ticket.category}</td>
                     <td><PriorityBadge priority={ticket.priority} /></td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-                        <Calendar size={13} style={{ color: 'var(--color-text-muted)' }} />
+                      <div className="flex items-center gap-[6px] text-xs">
+                        <Calendar size={13} className="text-[var(--color-text-muted)]" />
                         <span>{ticket.dueDate ? new Date(ticket.dueDate).toLocaleDateString() : 'Not Set'}</span>
                       </div>
                     </td>
                     <td>
                       {ticket.approvalStatus === 'suspended' ? (
-                        <span className="badge" style={{ background: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', border: '1px solid rgba(251, 146, 60, 0.2)', fontSize: 11 }}>
+                        <span className="badge bg-[rgba(251,146,60,0.1)] text-[#fb923c] border border-[rgba(251,146,60,0.2)] text-[11px]">
                           Under Review
                         </span>
                       ) : ticket.approvalStatus === 'rejected' ? (
-                        <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: 11 }}>
+                        <span className="badge bg-[rgba(239,68,68,0.1)] text-[#ef4444] border border-[rgba(239,68,68,0.2)] text-[11px]">
                           Declined
                         </span>
                       ) : activeTab === 'transferred' ? (
                         ticket.allocationStatus === 'transferred_to_admin' ? (
-                          <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                          <span className="badge bg-[rgba(239,68,68,0.1)] text-[#ef4444] border border-[rgba(239,68,68,0.2)]">
                             Transferred to Admin
                           </span>
                         ) : (
-                          <span className="badge" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
+                          <span className="badge bg-[rgba(139,92,246,0.1)] text-[#a78bfa] border border-[rgba(139,92,246,0.2)]">
                             Reallocated to {ticket.teamId?.name || 'Other Team'}
                           </span>
                         )
@@ -248,23 +243,22 @@ const TeamTickets = () => {
                     </td>
                     <td>
                       {ticket.assignedToUser ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <User size={13} style={{ color: 'var(--color-teal)' }} />
-                          <span style={{ fontWeight: 500 }}>{ticket.assignedToUser.name}</span>
+                        <div className="flex items-center gap-[6px]">
+                          <User size={13} className="text-[var(--color-teal)]" />
+                          <span className="font-medium">{ticket.assignedToUser.name}</span>
                         </div>
                       ) : (
-                        <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>Unassigned</span>
+                        <span className="text-[var(--color-text-muted)] text-xs">Unassigned</span>
                       )}
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       {activeTab === 'transferred' || ticket.approvalStatus === 'suspended' || ticket.approvalStatus === 'rejected' ? (
-                        <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>Read-Only</span>
+                        <span className="text-[var(--color-text-muted)] text-xs">Read-Only</span>
                       ) : (
                         <select
                           onChange={(e) => handleAssignMember(ticket._id, e.target.value)}
                           value={ticket.assignedToUser?._id || ''}
-                          className="form-control"
-                          style={{ padding: '4px 8px', fontSize: 12, height: 'auto', width: 160 }}
+                          className="form-control px-2 py-1 text-xs h-auto w-[160px]"
                           disabled={ticket.status === 'closed'}
                         >
                           <option value="">-- Choose Agent --</option>
@@ -284,7 +278,7 @@ const TeamTickets = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 20 }}>
+        <div className="flex justify-center gap-2 mt-5">
           <button
             disabled={page === 1}
             onClick={() => setPage(p => p - 1)}
@@ -292,7 +286,7 @@ const TeamTickets = () => {
           >
             Previous
           </button>
-          <span style={{ display: 'flex', alignItems: 'center', padding: '0 12px', color: 'var(--color-text-muted)' }}>
+          <span className="flex items-center px-3 text-[var(--color-text-muted)]">
             Page {page} of {totalPages}
           </span>
           <button

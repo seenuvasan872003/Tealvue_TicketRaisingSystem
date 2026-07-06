@@ -38,6 +38,7 @@ const requireFeature = (featureId) => {
           await user.save();
         }
 
+        
         // Format Timestamp
         const formatTimestamp = () => {
           const now = new Date();

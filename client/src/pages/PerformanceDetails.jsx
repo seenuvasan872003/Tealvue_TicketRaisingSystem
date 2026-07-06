@@ -19,12 +19,16 @@ import { toast } from 'react-toastify';
 import API from '../services/authApi';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import logger from '../utils/logger';
+import { useAuth } from '../context/AuthContext';
 
 const COLORS = ['#eac253', '#3b82f6', '#22c55e', '#fb923c'];
 
 const PerformanceDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const dashboardPath = user?.role === 'super-admin' ? '/super-admin/team-dashboard' : '/admin/team-dashboard';
   
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -60,8 +64,8 @@ const PerformanceDetails = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: 100 }}>
-        <div className="spinner" style={{ width: 32, height: 32 }} />
+      <div className="flex justify-center p-[100px]">
+        <div className="spinner w-8 h-8" />
       </div>
     );
   }
@@ -69,7 +73,7 @@ const PerformanceDetails = () => {
   if (!data || !data.team) {
     return (
       <div className="page-body">
-        <button className="btn btn-ghost btn-sm" onClick={() => navigate('/admin/teams')}>
+        <button className="btn btn-ghost btn-sm" onClick={() => navigate(dashboardPath)}>
           <ArrowLeft size={14} /> Back
         </button>
         <div className="empty-state">
@@ -103,134 +107,105 @@ const PerformanceDetails = () => {
     <div className="page-body fade-in">
       
       {/* Back navigation */}
-      <button className="btn btn-ghost btn-sm" style={{ marginBottom: 16 }} onClick={() => navigate('/admin/teams')}>
+      <button className="btn btn-ghost btn-sm mb-4" onClick={() => navigate(dashboardPath)}>
         <ArrowLeft size={14} /> Back to Dashboard
       </button>
 
       {/* ── 1. Team Header */}
-      <div style={{
-        background: 'var(--color-card)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 12,
-        padding: '24px 28px',
-        marginBottom: 20,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        flexWrap: 'wrap',
-        gap: 20
-      }}>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: 10,
-            background: 'rgba(20,160,125,0.08)', border: '1px solid rgba(20,160,125,0.18)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-teal)'
-          }}>
+      <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl py-6 px-7 mb-5 flex justify-between items-start flex-wrap gap-5">
+        <div className="flex gap-4 items-start">
+          <div className="w-12 h-12 rounded-[10px] bg-[rgba(20,160,125,0.08)] border border-[rgba(20,160,125,0.18)] flex items-center justify-center text-[var(--color-teal)]">
             <Users size={24} />
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: '#fff' }}>{team.name}</h1>
-              <span className={`badge ${team.isActive ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: 10 }}>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl font-bold m-0 text-white">{team.name}</h1>
+              <span className={`badge ${team.isActive ? 'badge-success' : 'badge-danger'} text-[10px]`}>
                 {team.isActive ? 'Active' : 'Inactive'}
               </span>
             </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+            <div className="flex gap-1.5 flex-wrap mt-2">
               {team.categories?.map((c, idx) => (
-                <span key={idx} style={{
-                  fontSize: 9, padding: '2px 8px', borderRadius: 20,
-                  background: 'rgba(255,255,255,0.05)', color: '#ccc',
-                  border: '1px solid rgba(255,255,255,0.08)'
-                }}>{c}</span>
+                <span key={idx} className="text-[9px] py-0.5 px-2 rounded-[20px] bg-[rgba(255,255,255,0.05)] text-[#ccc] border border-[rgba(255,255,255,0.08)]">
+                  {c}
+                </span>
               ))}
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: '#acacac' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Mail size={13} /> Admin: {team.teamAdmin?.name || 'Unassigned'}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Calendar size={13} /> Active Team Profile</div>
+        <div className="flex flex-col gap-1.5 text-[13px] text-[#acacac]">
+          <div className="flex items-center gap-1.5"><Mail size={13} /> Admin: {team.teamAdmin?.name || 'Unassigned'}</div>
+          <div className="flex items-center gap-1.5"><Calendar size={13} /> Active Team Profile</div>
         </div>
       </div>
 
       {/* Team Admin Account Credentials Card */}
       {team.teamAdmin?.email && (
-        <div style={{
-          background: 'rgba(20,160,125,0.04)',
-          border: '1px solid rgba(20,160,125,0.15)',
-          borderRadius: 12,
-          padding: '16px 20px',
-          marginBottom: 20,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 16
-        }}>
+        <div className="bg-[rgba(20,160,125,0.04)] border border-[rgba(20,160,125,0.15)] rounded-xl py-4 px-5 mb-5 flex justify-between items-center flex-wrap gap-4">
           <div>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: 13, color: 'var(--color-teal)', fontWeight: 600 }}>Team Admin Account Credentials</h4>
-            <p style={{ margin: 0, fontSize: 11, color: '#acacac' }}>Use these credentials to log in as this Team's Admin. Copy and share them to hand over access.</p>
+            <h4 className="m-0 mb-1 text-[13px] text-[var(--color-teal)] font-semibold">Team Admin Account Credentials</h4>
+            <p className="m-0 text-[11px] text-[#acacac]">Use these credentials to log in as this Team's Admin. Copy and share them to hand over access.</p>
           </div>
-          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+          <div className="flex gap-6 flex-wrap">
             <div>
-              <span style={{ color: '#acacac', display: 'block', fontSize: 11, marginBottom: 2 }}>Login Email</span>
-              <strong style={{ color: '#fff', fontSize: 13 }}>{team.teamAdmin?.email}</strong>
+              <span className="text-[#acacac] block text-[11px] mb-0.5">Login Email</span>
+              <strong className="text-white text-[13px]">{team.teamAdmin?.email}</strong>
             </div>
             <div>
-              <span style={{ color: '#acacac', display: 'block', fontSize: 11, marginBottom: 2 }}>Login Password</span>
-              <strong style={{ color: '#eac253', fontSize: 13, fontFamily: 'monospace' }}>{team.teamAdminPassword || 'password123'}</strong>
+              <span className="text-[#acacac] block text-[11px] mb-0.5">Login Password</span>
+              <strong className="text-[#eac253] text-[13px] font-mono">{team.teamAdminPassword || 'password123'}</strong>
             </div>
           </div>
         </div>
       )}
 
       {/* ── 2. Summary Stats & Performance Score Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-5">
         
         {/* Total handled */}
-        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 8, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', display: 'flex', alignItems: 'center', justify: 'center', flexShrink: 0, justifyContent: 'center' }}><Sliders size={20} /></div>
+        <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5 flex items-center gap-[14px]">
+          <div className="w-10 h-10 rounded-lg bg-[rgba(59,130,246,0.1)] text-[#3b82f6] flex items-center justify-center shrink-0"><Sliders size={20} /></div>
           <div>
-            <div style={{ fontSize: 11, color: '#acacac', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tickets Handled</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginTop: 2 }}>{stats.total}</div>
+            <div className="text-[11px] text-[#acacac] uppercase tracking-[0.05em]">Tickets Handled</div>
+            <div className="text-[22px] font-bold text-white mt-0.5">{stats.total}</div>
           </div>
         </div>
 
         {/* Open */}
-        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 8, background: 'rgba(234,194,83,0.1)', color: '#eac253', display: 'flex', alignItems: 'center', justify: 'center', flexShrink: 0, justifyContent: 'center' }}><Clock size={20} /></div>
+        <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5 flex items-center gap-[14px]">
+          <div className="w-10 h-10 rounded-lg bg-[rgba(234,194,83,0.1)] text-[#eac253] flex items-center justify-center shrink-0"><Clock size={20} /></div>
           <div>
-            <div style={{ fontSize: 11, color: '#acacac', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Open Tickets</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginTop: 2 }}>{stats.open}</div>
+            <div className="text-[11px] text-[#acacac] uppercase tracking-[0.05em]">Open Tickets</div>
+            <div className="text-[22px] font-bold text-white mt-0.5">{stats.open}</div>
           </div>
         </div>
 
         {/* In Progress */}
-        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 8, background: 'rgba(251,146,60,0.1)', color: '#fb923c', display: 'flex', alignItems: 'center', justify: 'center', flexShrink: 0, justifyContent: 'center' }}><AlertCircle size={20} /></div>
+        <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5 flex items-center gap-[14px]">
+          <div className="w-10 h-10 rounded-lg bg-[rgba(251,146,60,0.1)] text-[#fb923c] flex items-center justify-center shrink-0"><AlertCircle size={20} /></div>
           <div>
-            <div style={{ fontSize: 11, color: '#acacac', textTransform: 'uppercase', letterSpacing: '0.05em' }}>In Progress</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginTop: 2 }}>{stats.inProgress}</div>
+            <div className="text-[11px] text-[#acacac] uppercase tracking-[0.05em]">In Progress</div>
+            <div className="text-[22px] font-bold text-white mt-0.5">{stats.inProgress}</div>
           </div>
         </div>
 
         {/* Closed */}
-        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 8, background: 'rgba(34,197,94,0.1)', color: '#22c55e', display: 'flex', alignItems: 'center', justify: 'center', flexShrink: 0, justifyContent: 'center' }}><CheckCircle size={20} /></div>
+        <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5 flex items-center gap-[14px]">
+          <div className="w-10 h-10 rounded-lg bg-[rgba(34,197,94,0.1)] text-[#22c55e] flex items-center justify-center shrink-0"><CheckCircle size={20} /></div>
           <div>
-            <div style={{ fontSize: 11, color: '#acacac', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Closed Tickets</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginTop: 2 }}>{stats.closed}</div>
+            <div className="text-[11px] text-[#acacac] uppercase tracking-[0.05em]">Closed Tickets</div>
+            <div className="text-[22px] font-bold text-white mt-0.5">{stats.closed}</div>
           </div>
         </div>
 
         {/* Performance Score */}
-        <div style={{
-          background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 20,
-          display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
-          borderColor: getScoreColor(stats.completionRate) + '40', background: `linear-gradient(to bottom, var(--color-card), ${getScoreColor(stats.completionRate)}05)`
-        }}>
-          <div style={{ fontSize: 11, color: '#acacac', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 4 }}><TrendingUp size={11} /> Completion Rate</div>
-          <div style={{ fontSize: 32, fontWeight: 800, color: getScoreColor(stats.completionRate), marginTop: 4 }}>
+        <div 
+          className="border rounded-xl p-5 flex flex-col justify-center items-center"
+          style={{ borderColor: getScoreColor(stats.completionRate) + '40', background: `linear-gradient(to bottom, var(--color-card), ${getScoreColor(stats.completionRate)}05)` }}
+        >
+          <div className="text-[11px] text-[#acacac] uppercase tracking-[0.05em] flex items-center gap-1"><TrendingUp size={11} /> Completion Rate</div>
+          <div className="text-[32px] font-extrabold mt-1" style={{ color: getScoreColor(stats.completionRate) }}>
             {stats.completionRate}%
           </div>
         </div>
@@ -238,12 +213,12 @@ const PerformanceDetails = () => {
       </div>
 
       {/* ── 3. Charts Section */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20, marginBottom: 20 }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-5 mb-5">
         
         {/* Weekly tickets received */}
-        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 20 }}>
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 16 }}>Weekly Tickets (Last 8 Weeks)</h3>
-          <div style={{ width: '100%', height: 200 }}>
+        <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5">
+          <h3 className="text-[13px] font-semibold text-white mb-4">Weekly Tickets (Last 8 Weeks)</h3>
+          <div className="w-full h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2d2d2d" />
@@ -257,11 +232,11 @@ const PerformanceDetails = () => {
         </div>
 
         {/* Status Breakdown */}
-        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 20 }}>
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 16 }}>Status Breakdown</h3>
-          <div style={{ width: '100%', height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5">
+          <h3 className="text-[13px] font-semibold text-white mb-4">Status Breakdown</h3>
+          <div className="w-full h-[200px] flex items-center justify-center">
             {statusPieData.length === 0 ? (
-              <span style={{ color: '#555', fontSize: 12 }}>No ticket data available</span>
+              <span className="text-[#555] text-xs">No ticket data available</span>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -287,9 +262,9 @@ const PerformanceDetails = () => {
         </div>
 
         {/* Cumulative tickets closed */}
-        <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 20 }}>
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 16 }}>Closed Tickets History (Last 6 Months)</h3>
-          <div style={{ width: '100%', height: 200 }}>
+        <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5">
+          <h3 className="text-[13px] font-semibold text-white mb-4">Closed Tickets History (Last 6 Months)</h3>
+          <div className="w-full h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={monthlyClosedData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2d2d2d" />
@@ -305,16 +280,15 @@ const PerformanceDetails = () => {
       </div>
 
       {/* ── 4. Ticket History Table */}
-      <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'hidden' }}>
+      <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl overflow-hidden">
         
         {/* Table Filters header */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: '#fff', margin: 0 }}>Ticket Allocation History</h3>
+        <div className="py-4 px-5 border-b border-[var(--color-border)] flex flex-col lg:flex-row justify-between lg:items-center gap-4">
+          <h3 className="text-sm font-semibold text-white m-0">Ticket Allocation History</h3>
           
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
             <select
-              className="select"
-              style={{ padding: '4px 8px', fontSize: 12, width: 130 }}
+              className="select py-1 px-2 text-xs w-full sm:w-[130px]"
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
             >
@@ -326,23 +300,21 @@ const PerformanceDetails = () => {
 
             <input
               type="date"
-              className="input"
-              style={{ padding: '4px 8px', fontSize: 12, width: 135 }}
+              className="input py-1 px-2 text-xs w-full sm:w-[135px]"
               value={startDate}
               onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
               placeholder="Start Date"
             />
             <input
               type="date"
-              className="input"
-              style={{ padding: '4px 8px', fontSize: 12, width: 135 }}
+              className="input py-1 px-2 text-xs w-full sm:w-[135px]"
               value={endDate}
               onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
               placeholder="End Date"
             />
 
             {(statusFilter || startDate || endDate) && (
-              <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', fontSize: 11 }} onClick={() => { setStatusFilter(''); setStartDate(''); setEndDate(''); setPage(1); }}>
+              <button className="btn btn-ghost btn-sm py-1 px-2 text-[11px] w-full sm:w-auto" onClick={() => { setStatusFilter(''); setStartDate(''); setEndDate(''); setPage(1); }}>
                 Reset
               </button>
             )}
@@ -351,37 +323,41 @@ const PerformanceDetails = () => {
 
         {/* History Table */}
         <div className="table-wrap">
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <table className="w-full border-collapse text-[13px]">
             <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--color-border)' }}>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11 }}>#ID</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11 }}>Title</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11 }}>Category</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11 }}>Priority</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11 }}>Status</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11 }}>Allocated</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#acacac', fontWeight: 600, fontSize: 11 }}>Actions</th>
+              <tr className="bg-[rgba(255,255,255,0.02)] border-b border-[var(--color-border)]">
+                <th className="py-3 px-4 text-left text-[#acacac] font-semibold text-[11px]">#ID</th>
+                <th className="py-3 px-4 text-left text-[#acacac] font-semibold text-[11px]">Title</th>
+                <th className="py-3 px-4 text-left text-[#acacac] font-semibold text-[11px]">Category</th>
+                <th className="py-3 px-4 text-left text-[#acacac] font-semibold text-[11px]">Priority</th>
+                <th className="py-3 px-4 text-left text-[#acacac] font-semibold text-[11px]">Status</th>
+                <th className="py-3 px-4 text-left text-[#acacac] font-semibold text-[11px]">Allocated</th>
+                <th className="py-3 px-4 text-left text-[#acacac] font-semibold text-[11px]">Actions</th>
               </tr>
             </thead>
             <tbody>
               {tickets.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ padding: 30, textAlign: 'center', color: '#555' }}>
+                  <td colSpan="7" className="p-[30px] text-center text-[#555]">
                     No tickets allocated to this team yet.
                   </td>
                 </tr>
               ) : (
                 tickets.map(t => (
-                  <tr key={t._id} style={{ borderBottom: '1px solid var(--color-border-soft)' }}>
-                    <td style={{ padding: '13px 16px', color: '#555', fontFamily: 'monospace', fontSize: 11 }}>
+                  <tr
+                    key={t._id}
+                    onClick={() => navigate(`/tickets/${t._id}`)}
+                    className="border-b border-[var(--color-border-soft)] cursor-pointer transition-colors duration-150 hover:bg-[rgba(255,255,255,0.03)]"
+                  >
+                    <td className="py-[13px] px-4 text-[#555] font-mono text-[11px]">
                       #{t._id.slice(-6).toUpperCase()}
                     </td>
-                    <td style={{ padding: '13px 16px', fontWeight: 500, color: '#e4e4e4' }}>{t.title}</td>
-                    <td style={{ padding: '13px 16px', textTransform: 'capitalize', color: '#acacac' }}>{t.category}</td>
-                    <td style={{ padding: '13px 16px' }}><PriorityBadge priority={t.priority} /></td>
-                    <td style={{ padding: '13px 16px' }}><StatusBadge status={t.status} /></td>
-                    <td style={{ padding: '13px 16px', color: '#acacac', fontSize: 11 }}>{formatDate(t.allocatedAt)}</td>
-                    <td style={{ padding: '13px 16px' }}>
+                    <td className="py-[13px] px-4 font-medium text-[#e4e4e4]">{t.title}</td>
+                    <td className="py-[13px] px-4 capitalize text-[#acacac]">{t.category}</td>
+                    <td className="py-[13px] px-4" onClick={(e) => e.stopPropagation()}><PriorityBadge priority={t.priority} /></td>
+                    <td className="py-[13px] px-4" onClick={(e) => e.stopPropagation()}><StatusBadge status={t.status} /></td>
+                    <td className="py-[13px] px-4 text-[#acacac] text-[11px]">{formatDate(t.allocatedAt)}</td>
+                    <td className="py-[13px] px-4" onClick={(e) => e.stopPropagation()}>
                       <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/tickets/${t._id}`)}>
                         View Details
                       </button>
@@ -395,9 +371,9 @@ const PerformanceDetails = () => {
 
         {/* Pagination */}
         {pages > 1 && (
-          <div className="pagination" style={{ padding: '12px 20px', borderTop: '1px solid var(--color-border)', justifyContent: 'flex-end', margin: 0 }}>
+          <div className="pagination py-3 px-5 border-t border-[var(--color-border)] justify-end m-0">
             <button className="page-btn" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>‹</button>
-            <span style={{ fontSize: 12, color: '#acacac', padding: '0 8px' }}>Page {page} of {pages}</span>
+            <span className="text-xs text-[#acacac] px-2">Page {page} of {pages}</span>
             <button className="page-btn" onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages}>›</button>
           </div>
         )}

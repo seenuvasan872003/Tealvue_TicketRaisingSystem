@@ -123,7 +123,13 @@ const CreateUserAccount = () => {
 
       toast.success('User account created successfully');
       logger.info('CreateUserAccount', 'handleSubmit', `User account created for: ${formData.email}`, { api: '/api/users/create-user', method: 'POST', status: 201, action: 'User Account Create Success' });
-      navigate('/super-admin/users');
+      const redirectPaths = {
+        'super-admin': '/super-admin/users',
+        'admin': '/admin/users',
+        'team_admin': '/team-admin/users',
+        'team_user': '/team-user/users'
+      };
+      navigate(redirectPaths[user?.role] || '/users');
     } catch (err) {
       const serverMessage = err?.response?.data?.message || 'Failed to create user account';
       const errorsList = err?.response?.data?.errors;
@@ -146,31 +152,22 @@ const CreateUserAccount = () => {
 
   return (
     <div className="page-body fade-in">
-      <div style={{ maxWidth: 520, margin: '20px auto 0 auto' }}>
+      <div className="max-w-[520px] mt-5 mx-auto mb-0">
         
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <div style={{
-            width: 42, height: 42, borderRadius: 10,
-            background: 'rgba(20, 160, 125, 0.1)', color: 'var(--color-teal)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-[42px] h-[42px] rounded-lg bg-[rgba(20,160,125,0.1)] text-[var(--color-teal)] flex items-center justify-center">
             <UserPlus size={20} />
           </div>
           <div>
-            <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: '#e4e4e4' }}>Create User Account</h1>
-            <p style={{ fontSize: 12, color: '#acacac', margin: '2px 0 0 0' }}>Super Admin tool to create standard user accounts directly.</p>
+            <h1 className="text-lg font-bold m-0 text-[#e4e4e4]">Create User Account</h1>
+            <p className="text-xs text-[#acacac] m-0 mt-0.5">Super Admin tool to create standard user accounts directly.</p>
           </div>
         </div>
 
         {/* Card Form */}
-        <div style={{
-          background: 'var(--color-card)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 12,
-          padding: 28,
-        }}>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-7">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             
             {/* Name */}
             <div className="field-group">
@@ -203,43 +200,38 @@ const CreateUserAccount = () => {
             {/* Password */}
             <div className="field-group">
               <label>Temporary Password</label>
-              <div style={{ position: 'relative' }}>
+              <div className="relative">
                 <input
-                  className={`input ${errors.password ? 'input-error' : formData.password ? 'input-success' : ''}`}
+                  className={`input w-full pr-10 ${errors.password ? 'input-error' : formData.password ? 'input-success' : ''}`}
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••"
                   value={formData.password}
                   onChange={(e) => handlePasswordChange(e.target.value)}
-                  style={{ width: '100%', paddingRight: 40 }}
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', color: '#888', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none text-[#888] cursor-pointer flex items-center justify-center"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
               {errors.password && <span className="error-text">{errors.password}</span>}
-              <div style={{ marginTop: 6, padding: 8, background: '#161b22', borderRadius: 6, border: '1px solid var(--color-border)' }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 4 }}>Password Requirements:</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 8px', fontSize: 10 }}>
-                  <span style={{ color: formData.password.length >= 8 ? 'var(--color-teal)' : '#acacac' }}>
+              <div className="mt-1.5 p-2 bg-[#161b22] rounded-md border border-[var(--color-border)]">
+                <div className="text-[11px] font-semibold text-[var(--color-text-muted)] mb-1">Password Requirements:</div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
+                  <span className={formData.password.length >= 8 ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
                     {formData.password.length >= 8 ? '✓' : '•'} Min 8 chars
                   </span>
-                  <span style={{ color: /[A-Z]/.test(formData.password) ? 'var(--color-teal)' : '#acacac' }}>
+                  <span className={/[A-Z]/.test(formData.password) ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
                     {/[A-Z]/.test(formData.password) ? '✓' : '•'} 1 Uppercase (A-Z)
                   </span>
-                  <span style={{ color: /[0-9]/.test(formData.password) ? 'var(--color-teal)' : '#acacac' }}>
+                  <span className={/[0-9]/.test(formData.password) ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
                     {/[0-9]/.test(formData.password) ? '✓' : '•'} 1 Number (0-9)
                   </span>
-                  <span style={{ color: /[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(formData.password) ? 'var(--color-teal)' : '#acacac' }}>
-                    {/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]/.test(formData.password) ? '✓' : '•'} 1 Special symbol
+                  <span className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(formData.password) ? 'text-[var(--color-teal)]' : 'text-[#acacac]'}>
+                    {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(formData.password) ? '✓' : '•'} 1 Special symbol
                   </span>
                 </div>
               </div>
@@ -248,24 +240,19 @@ const CreateUserAccount = () => {
             {/* Confirm Password */}
             <div className="field-group">
               <label>Confirm Password</label>
-              <div style={{ position: 'relative' }}>
+              <div className="relative">
                 <input
-                  className={`input ${errors.confirmPassword ? 'input-error' : formData.confirmPassword ? 'input-success' : ''}`}
+                  className={`input w-full pr-10 ${errors.confirmPassword ? 'input-error' : formData.confirmPassword ? 'input-success' : ''}`}
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••"
                   value={formData.confirmPassword}
                   onChange={(e) => handleConfirmPasswordChange(e.target.value)}
-                  style={{ width: '100%', paddingRight: 40 }}
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={{
-                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', color: '#888', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none text-[#888] cursor-pointer flex items-center justify-center"
                 >
                   {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -276,8 +263,7 @@ const CreateUserAccount = () => {
             {/* Submit */}
             <button
               type="submit"
-              className="btn btn-primary"
-              style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}
+              className="btn btn-primary w-full justify-center mt-2.5"
               disabled={loading || Object.keys(errors).length > 0}
             >
               {loading ? 'Creating...' : 'Create Account'}

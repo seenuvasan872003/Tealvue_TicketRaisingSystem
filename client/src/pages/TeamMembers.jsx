@@ -107,7 +107,7 @@ const TeamMembers = () => {
 
   if (loading && !team) {
     return (
-      <div style={{ padding: 60, textAlign: 'center' }}>
+      <div className="p-[60px] text-center">
         <div className="spinner" />
       </div>
     );
@@ -126,7 +126,7 @@ const TeamMembers = () => {
       </div>
 
       {/* Members Grid/List */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card p-0 overflow-hidden">
         <div className="table-wrap">
           <table>
             <thead>
@@ -143,7 +143,7 @@ const TeamMembers = () => {
             <tbody>
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: 24, color: 'var(--color-text-muted)' }}>
+                  <td colSpan="7" className="text-center p-6 text-[var(--color-text-muted)]">
                     No members added to this team yet.
                   </td>
                 </tr>
@@ -151,41 +151,31 @@ const TeamMembers = () => {
                 members.map((member) => (
                   <tr key={member._id}>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{
-                          width: 32, height: 32, borderRadius: '50%',
-                          background: 'linear-gradient(135deg, var(--color-teal-dark), var(--color-teal))',
-                          color: '#fff', display: 'flex', alignItems: 'center',
-                          justifyContent: 'center', fontSize: 12, fontWeight: 700
-                        }}>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--color-teal-dark)] to-[var(--color-teal)] text-white flex items-center justify-center text-xs font-bold">
                           {member.name?.[0]?.toUpperCase()}
                         </div>
-                        <span style={{ fontWeight: 600, color: '#fff' }}>{member.name}</span>
+                        <span className="font-semibold text-white">{member.name}</span>
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Mail size={13} style={{ color: 'var(--color-text-muted)' }} />
+                      <div className="flex items-center gap-[6px]">
+                        <Mail size={13} className="text-[var(--color-text-muted)]" />
                         <span>{member.email}</span>
                       </div>
                     </td>
                     <td>{new Date(member.createdAt).toLocaleDateString()}</td>
-                    <td style={{ fontWeight: 600 }}>{member.assignedCount || 0}</td>
-                    <td style={{ fontWeight: 600, color: 'var(--color-success)' }}>{member.closedCount || 0}</td>
+                    <td className="font-semibold">{member.assignedCount || 0}</td>
+                    <td className="font-semibold text-[var(--color-success)]">{member.closedCount || 0}</td>
                     <td>
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 4,
-                        color: member.isActive ? 'var(--color-success)' : 'var(--color-error)',
-                        fontSize: 12, fontWeight: 500
-                      }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: member.isActive ? 'var(--color-success)' : 'var(--color-error)' }} />
+                      <span className={`inline-flex items-center gap-1 text-xs font-medium ${member.isActive ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${member.isActive ? 'bg-[var(--color-success)]' : 'bg-[var(--color-error)]'}`} />
                         {member.isActive ? 'Active' : 'Suspended'}
                       </span>
                     </td>
                     <td>
                       <button
-                        className="btn btn-ghost"
-                        style={{ padding: 6, color: 'var(--color-error)' }}
+                        className="btn btn-ghost p-1.5 text-[var(--color-error)]"
                         onClick={() => handleDeleteMember(member._id)}
                         title="Remove member"
                       >
@@ -203,14 +193,14 @@ const TeamMembers = () => {
       {/* Add Member Modal */}
       {showModal && (
         <div className="modal-backdrop">
-          <div className="modal-content" style={{ maxWidth: 450 }}>
+          <div className="modal-content max-w-[450px]">
             <div className="modal-header">
               <h3>Add Team Agent</h3>
               <button onClick={() => setShowModal(false)} className="modal-close">
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleAddMember} style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '0 28px 28px 28px' }}>
+            <form onSubmit={handleAddMember} className="flex flex-col gap-4 px-7 pb-7">
               <div className="form-group">
                 <label>Agent Name *</label>
                 <input
@@ -221,7 +211,7 @@ const TeamMembers = () => {
                   placeholder="e.g. Alice Smith"
                   required
                 />
-                {errors.name && <span style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>{errors.name}</span>}
+                {errors.name && <span className="text-xs text-[#f87171] mt-1">{errors.name}</span>}
               </div>
 
               <div className="form-group">
@@ -234,7 +224,7 @@ const TeamMembers = () => {
                   placeholder="e.g. alice@tealvue.com"
                   required
                 />
-                {errors.email && <span style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>{errors.email}</span>}
+                {errors.email && <span className="text-xs text-[#f87171] mt-1">{errors.email}</span>}
               </div>
 
               <div className="form-group">
@@ -247,10 +237,10 @@ const TeamMembers = () => {
                   placeholder="At least 6 characters"
                   required
                 />
-                {errors.password && <span style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>{errors.password}</span>}
+                {errors.password && <span className="text-xs text-[#f87171] mt-1">{errors.password}</span>}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 14 }}>
+              <div className="flex justify-end gap-3 mt-3.5">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>
                   Cancel
                 </button>

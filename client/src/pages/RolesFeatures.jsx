@@ -25,11 +25,11 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 // ── Role styling ───────────────────────────────────────────
 const ROLE_META = {
-  'super-admin': { label: 'Super Admin', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', Icon: Crown },
-  'admin':       { label: 'Admin',       color: '#14b8a6', bg: 'rgba(20,184,166,0.12)', Icon: ShieldCheck },
-  'user':        { label: 'User',        color: '#94a3b8', bg: 'rgba(148,163,184,0.12)', Icon: User },
-  'team_admin':  { label: 'Team Admin',  color: '#818cf8', bg: 'rgba(129,140,248,0.12)', Icon: ShieldCheck },
-  'team_user':   { label: 'Team Agent',  color: '#60a5fa', bg: 'rgba(96,165,250,0.12)', Icon: User },
+  'super-admin': { label: 'Super Admin', textCls: 'text-[#f59e0b]', bgCls: 'bg-[rgba(245,158,11,0.12)]', borderCls: 'border-[#f59e0b]/20', borderHoverCls: 'border-[#f59e0b]/40', avatarBgCls: 'bg-gradient-to-br from-[#f59e0b]/20 to-[#f59e0b]/40', avatarBorderCls: 'border-[#f59e0b]/25', badgeBgCls: 'bg-[#f59e0b]/10', Icon: Crown },
+  'admin':       { label: 'Admin',       textCls: 'text-[#14b8a6]', bgCls: 'bg-[rgba(20,184,166,0.12)]', borderCls: 'border-[#14b8a6]/20', borderHoverCls: 'border-[#14b8a6]/40', avatarBgCls: 'bg-gradient-to-br from-[#14b8a6]/20 to-[#14b8a6]/40', avatarBorderCls: 'border-[#14b8a6]/25', badgeBgCls: 'bg-[#14b8a6]/10', Icon: ShieldCheck },
+  'user':        { label: 'User',        textCls: 'text-[#94a3b8]', bgCls: 'bg-[rgba(148,163,184,0.12)]', borderCls: 'border-[#94a3b8]/20', borderHoverCls: 'border-[#94a3b8]/40', avatarBgCls: 'bg-gradient-to-br from-[#94a3b8]/20 to-[#94a3b8]/40', avatarBorderCls: 'border-[#94a3b8]/25', badgeBgCls: 'bg-[#94a3b8]/10', Icon: User },
+  'team_admin':  { label: 'Team Admin',  textCls: 'text-[#818cf8]', bgCls: 'bg-[rgba(129,140,248,0.12)]', borderCls: 'border-[#818cf8]/20', borderHoverCls: 'border-[#818cf8]/40', avatarBgCls: 'bg-gradient-to-br from-[#818cf8]/20 to-[#818cf8]/40', avatarBorderCls: 'border-[#818cf8]/25', badgeBgCls: 'bg-[#818cf8]/10', Icon: ShieldCheck },
+  'team_user':   { label: 'Team Agent',  textCls: 'text-[#60a5fa]', bgCls: 'bg-[rgba(96,165,250,0.12)]', borderCls: 'border-[#60a5fa]/20', borderHoverCls: 'border-[#60a5fa]/40', avatarBgCls: 'bg-gradient-to-br from-[#60a5fa]/20 to-[#60a5fa]/40', avatarBorderCls: 'border-[#60a5fa]/25', badgeBgCls: 'bg-[#60a5fa]/10', Icon: User },
 };
 
 const ROLE_ORDER = ['super-admin', 'admin', 'team_admin', 'team_user', 'user'];
@@ -49,7 +49,7 @@ const UserAvatar = ({ user }) => {
   }
   const meta = ROLE_META[user.role] || ROLE_META['user'];
   return (
-    <div className="w-[38px] h-[38px] rounded-full shrink-0 flex items-center justify-center text-white text-[15px] font-bold border-2" style={{ background: `linear-gradient(135deg, ${meta.color}33, ${meta.color}66)`, borderColor: `${meta.color}44` }}>
+    <div className={`w-[38px] h-[38px] rounded-full shrink-0 flex items-center justify-center text-white text-[15px] font-bold border-2 ${meta.avatarBgCls} ${meta.avatarBorderCls}`}>
       {user.name?.[0]?.toUpperCase()}
     </div>
   );
@@ -66,8 +66,7 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
   const enabledCount = localFeatures.length;          // out of ALL 20 features
   const pct          = Math.round((enabledCount / TOTAL_FEATURES) * 100);
 
-  // Color the bar green if high, amber if mid, red if low
-  const barColor = pct >= 70 ? '#10b981' : pct >= 40 ? '#f59e0b' : '#ef4444';
+  const barColorCls = pct > 80 ? 'bg-[#10b981]' : pct > 40 ? 'bg-[#f59e0b]' : 'bg-[#ef4444]';
 
   const handleSaved = (newFeatures) => {
     setLocalFeatures(newFeatures);
@@ -97,8 +96,7 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
       {/* Card Header */}
       <div
         onClick={() => setExpanded(e => !e)}
-        className="flex flex-col sm:flex-row sm:items-center sm:gap-[14px] px-4 py-3 sm:px-[18px] sm:py-[14px] cursor-pointer transition-colors duration-200"
-        style={{ background: expanded ? "rgba(20,184,166,0.04)" : "var(--color-surface)" }}
+        className={`flex flex-col sm:flex-row sm:items-center sm:gap-[14px] px-4 py-3 sm:px-[18px] sm:py-[14px] cursor-pointer transition-colors duration-200 ${expanded ? "bg-[rgba(20,184,166,0.04)]" : "bg-[var(--color-surface)]"}`}
       >
         {/* Row 1: Avatar + Name/Email + Chevron */}
         <div className="flex items-center gap-3 w-full sm:contents">
@@ -113,12 +111,12 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
                 <span className="bg-[rgba(20,184,166,0.15)] text-[var(--color-teal)] border border-[rgba(20,184,166,0.3)] rounded-[20px] px-2 py-[1px] text-[10px] font-bold shrink-0">YOU</span>
               )}
               {flags >= 5 && (
-                <span className="status-blocked" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '4px 8px', borderRadius: 6, fontSize: 11, border: '1px solid rgba(239,68,68,0.2)' }}>
+                <span className="status-blocked inline-flex items-center gap-1 bg-[rgba(239,68,68,0.1)] text-[#ef4444] px-2 py-1 rounded-md text-[11px] border border-[rgba(239,68,68,0.2)]">
                   <ShieldAlert size={11} /> Blocked
                 </span>
               )}
               {flags > 0 && flags < 5 && (
-                <span className="status-blocked" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '4px 8px', borderRadius: 6, fontSize: 11, border: '1px solid rgba(239,68,68,0.2)' }}>
+                <span className="status-blocked inline-flex items-center gap-1 bg-[rgba(239,68,68,0.1)] text-[#ef4444] px-2 py-1 rounded-md text-[11px] border border-[rgba(239,68,68,0.2)]">
                   <ShieldAlert size={11} /> Flags: {flags}
                 </span>
               )}
@@ -136,7 +134,7 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
               <button
                 type="button"
                 className="btn btn-secondary"
-                style={{ padding: '4px 12px', fontSize: 11, height: 28, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)', cursor: 'pointer', zIndex: 10 }}
+                className="btn btn-secondary px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1 bg-[rgba(245,158,11,0.1)] text-[#f59e0b] border border-[rgba(245,158,11,0.25)] cursor-pointer z-10"
                 onClick={(e) => { e.stopPropagation(); handleUnblock(); }}
                 disabled={unblocking}
               >
@@ -153,13 +151,13 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
 
         {/* Row 2 (mobile): Feature count badge + progress bar — full width below */}
         <div className="flex flex-col items-start mt-2.5 sm:mt-0 sm:items-end sm:min-w-[130px] sm:mr-3 sm:ml-auto w-full sm:w-auto">
-          <div className="inline-flex items-center gap-[5px] rounded-[20px] px-3 py-[3px] text-[11px] font-bold mb-1.5" style={{ background: meta.bg, color: meta.color, borderColor: `${meta.color}33`, borderWidth: 1 }}>
+          <div className={`inline-flex items-center gap-[5px] rounded-[20px] px-3 py-[3px] text-[11px] font-bold mb-1.5 border ${meta.bgCls} ${meta.textCls} ${meta.borderCls}`}>
             <Layers size={11} />
             {enabledCount} <span className="opacity-60 font-normal">/ {TOTAL_FEATURES}</span>
           </div>
           {/* Mini progress bar */}
           <div className="w-full sm:w-[120px] h-1.5 bg-[var(--color-border)] rounded-md overflow-hidden">
-            <div className="h-full rounded-md transition-all duration-300 ease-in-out" style={{ width: `${pct}%`, background: barColor }} />
+            <div className={`h-full rounded-md transition-all duration-300 ease-in-out w-[${pct}%] ${barColorCls}`} />
           </div>
           <div className="text-[10.5px] text-[var(--color-text-muted)] mt-1">
             {pct}% features enabled
@@ -217,11 +215,11 @@ const RoleSection = ({ role, users, currentUserId, onSaved }) => {
   return (
     <div className="mb-9">
       {/* Section Header */}
-      <div className="flex items-center justify-between flex-wrap sm:flex-nowrap gap-2 sm:gap-0 mb-[14px] px-4 py-[10px] rounded-[10px]" style={{ background: meta.bg, border: `1px solid ${meta.color}33` }}>
+      <div className={`flex items-center justify-between flex-wrap sm:flex-nowrap gap-2 sm:gap-0 mb-[14px] px-4 py-[10px] rounded-[10px] border ${meta.bgCls} ${meta.borderCls}`}>
         <div className="flex items-center gap-[10px]">
-          <Icon size={16} color={meta.color} />
-          <span className="font-bold text-[14px]" style={{ color: meta.color }}>{meta.label}</span>
-          <span className="rounded-[20px] px-[10px] py-[1px] text-[11px] font-bold border" style={{ background: `${meta.color}22`, color: meta.color, borderColor: `${meta.color}33` }}>
+          <Icon size={16} className={meta.textCls} />
+          <span className={`font-bold text-[14px] ${meta.textCls}`}>{meta.label}</span>
+          <span className={`rounded-[20px] px-[10px] py-[1px] text-[11px] font-bold border ${meta.badgeBgCls} ${meta.textCls} ${meta.borderCls}`}>
             {users.length} {users.length === 1 ? 'user' : 'users'}
           </span>
         </div>
@@ -229,7 +227,7 @@ const RoleSection = ({ role, users, currentUserId, onSaved }) => {
         <button
           onClick={handleBulkReset}
           disabled={bulkLoading}
-          className="bg-transparent cursor-pointer text-[11px] font-semibold px-3 py-1 rounded-lg flex items-center gap-[5px] transition-all duration-150" style={{ color: meta.color, border: `1px solid ${meta.color}44`, opacity: bulkLoading ? 0.5 : 1 }}
+          className={`bg-transparent cursor-pointer text-[11px] font-semibold px-3 py-1 rounded-lg flex items-center gap-[5px] transition-all duration-150 border ${meta.textCls} ${meta.borderHoverCls} ${bulkLoading ? 'opacity-50' : 'opacity-100'}`}
         >
           <RefreshCw size={11} />
           {bulkLoading ? 'Resetting...' : 'Reset all to defaults'}
@@ -342,7 +340,7 @@ const RolesFeatures = () => {
           { label: 'Avg Enabled',    value: allUsers.length > 0 ? Math.round(allUsers.reduce((s, u) => s + (u.features?.length || 0), 0) / allUsers.length) : 0, color: '#10b981', sub: 'Features per user' },
         ].map(stat => (
           <div key={stat.label} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl sm:rounded-2xl px-4 sm:px-6 py-4 sm:py-5 shadow-[0_4px_20px_rgba(0,0,0,0.15)] flex flex-col gap-1">
-            <div className="text-[32px] font-black leading-none tracking-tight" style={{ color: stat.color }}>{stat.value}</div>
+            <div className={`text-[32px] font-black leading-none tracking-tight text-[${stat.color}]`}>{stat.value}</div>
             <div>
               <div className="text-[13px] text-[var(--color-text)] font-bold">{stat.label}</div>
               <div className="text-[11px] text-[var(--color-text-muted)] mt-[2px]">{stat.sub}</div>

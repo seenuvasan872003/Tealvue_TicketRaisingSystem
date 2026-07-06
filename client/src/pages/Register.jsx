@@ -86,8 +86,8 @@ const Register = () => {
 
         {/* ── Logo ──────────────────────────────────── */}
         <div className="auth-logo">
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
-            <img src={tealvueLogo} alt="Tealvue Logo" width="66" height="66" style={{ height: 66, width: 66 }} />
+          <div className="flex justify-center mb-[14px]">
+            <img src={tealvueLogo} alt="Tealvue Logo" width="66" height="66" className="h-[66px] w-[66px]" />
           </div>
           <h1>Tealvue</h1>
           <p>Create your account</p>
@@ -95,11 +95,7 @@ const Register = () => {
 
         {/* ── Error alert ───────────────────────────── */}
         {error && (
-          <div style={{
-            background: 'var(--color-high-bg)', border: '1px solid rgba(248,81,73,0.3)',
-            borderRadius: 8, padding: '10px 14px', marginBottom: 18,
-            fontSize: 13, color: 'var(--color-high)',
-          }}>
+          <div className="bg-[var(--color-high-bg)] border border-solid border-[rgba(248,81,73,0.3)] rounded-lg px-[14px] py-[10px] mb-[18px] text-[13px] text-[var(--color-high)]">
             {error}
           </div>
         )}
@@ -119,12 +115,12 @@ const Register = () => {
               required
             />
             {form.name && !/^[a-zA-Z\s-]{2,50}$/.test(form.name) && (
-              <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>
+              <span className="error-msg block text-[11px] text-[var(--color-high)] mt-1">
                 Name: 2–50 letters, spaces, or hyphens only
               </span>
             )}
             {form.name && /^[a-zA-Z\s-]{2,50}$/.test(form.name) && (
-              <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>
+              <span className="success-msg block text-[11px] text-[var(--color-teal)] mt-1">
                 ✓ Name is valid
               </span>
             )}
@@ -143,12 +139,12 @@ const Register = () => {
               required
             />
             {form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && (
-              <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>
+              <span className="error-msg block text-[11px] text-[var(--color-high)] mt-1">
                 Enter a valid email address
               </span>
             )}
             {form.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && (
-              <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>
+              <span className="success-msg block text-[11px] text-[var(--color-teal)] mt-1">
                 ✓ Email is valid
               </span>
             )}
@@ -157,39 +153,32 @@ const Register = () => {
           {/* Password + show/hide toggle */}
           <div className="form-group">
             <label htmlFor="reg-password">Password</label>
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
               <input
                 id="reg-password"
-                className={`input ${form.password && (form.password.length < 6 ? 'input-error' : 'input-success')}`}
+                className={`input pr-[40px] ${form.password && (form.password.length < 6 ? 'input-error' : 'input-success')}`}
                 type={showPass ? 'text' : 'password'}
                 placeholder="Min. 6 characters"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 required
-                style={{ paddingRight: 40 }}
               />
               {/* [ICON] Eye / EyeOff toggle */}
               <button
                 type="button"
                 onClick={() => setShowPass((s) => !s)}
-                style={{
-                  position: 'absolute', right: 12, top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none', border: 'none',
-                  color: 'var(--color-text-dim)', cursor: 'pointer',
-                  display: 'flex', padding: 0,
-                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none text-[var(--color-text-dim)] cursor-pointer flex p-0"
               >
                 {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
             {form.password && form.password.length < 6 && (
-              <span className="error-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-high)', marginTop: 4 }}>
+              <span className="error-msg block text-[11px] text-[var(--color-high)] mt-1">
                 Password must be at least 6 characters
               </span>
             )}
             {form.password && form.password.length >= 6 && (
-              <span className="success-msg" style={{ display: 'block', fontSize: 11, color: 'var(--color-teal)', marginTop: 4 }}>
+              <span className="success-msg block text-[11px] text-[var(--color-teal)] mt-1">
                 ✓ Password length is valid
               </span>
             )}
@@ -199,8 +188,7 @@ const Register = () => {
           <button
             id="reg-submit"
             type="submit"
-            className="btn btn-primary btn-lg"
-            style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
+            className="btn btn-primary btn-lg w-full justify-center mt-1"
             disabled={
               loading ||
               !form.name || !form.email || !form.password ||
@@ -210,15 +198,15 @@ const Register = () => {
             }
           >
             {loading
-              ? <><span className="spinner" style={{ width: 16, height: 16 }} /> Creating account…</>
+              ? <><span className="spinner w-4 h-4" /> Creating account…</>
               : <><UserPlus size={16} /> Create Account</>
             }
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: 'var(--color-text-muted)' }}>
+        <p className="text-center mt-5 text-[13px] text-[var(--color-text-muted)]">
           Already have an account?{' '}
-          <Link to="/login" style={{ color: 'var(--color-teal)', fontWeight: 500 }}>
+          <Link to="/login" className="text-[var(--color-teal)] font-medium">
             Sign in
           </Link>
         </p>

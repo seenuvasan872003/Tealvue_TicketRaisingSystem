@@ -112,96 +112,84 @@ const UserManagement = () => {
 
   // ── UI Helpers ───────────────────────────────────────────
   const getRoleBadge = (role) => {
-    if (role === 'super-admin') return <span className="badge role-badge-superadmin" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Crown size={11} /> Super Admin</span>;
-    if (role === 'admin')       return <span className="badge role-badge-admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><ShieldCheck size={11} /> Admin</span>;
-    if (role === 'team_admin')  return <span className="badge role-badge-admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(20,160,125,0.1)', color: 'var(--color-teal)', border: '1px solid rgba(20,160,125,0.2)' }}><ShieldCheck size={11} /> Team Admin</span>;
-    if (role === 'team_user')   return <span className="badge role-badge-user" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)' }}><User size={11} /> Team User</span>;
-    return <span className="badge role-badge-user" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><User size={11} /> User</span>;
+    if (role === 'super-admin') return <span className="badge role-badge-superadmin inline-flex items-center gap-1"><Crown size={11} /> Super Admin</span>;
+    if (role === 'admin')       return <span className="badge role-badge-admin inline-flex items-center gap-1"><ShieldCheck size={11} /> Admin</span>;
+    if (role === 'team_admin')  return <span className="badge role-badge-admin inline-flex items-center gap-1 bg-[rgba(20,160,125,0.1)] text-[var(--color-teal)] border border-[rgba(20,160,125,0.2)]"><ShieldCheck size={11} /> Team Admin</span>;
+    if (role === 'team_user')   return <span className="badge role-badge-user inline-flex items-center gap-1 bg-[rgba(59,130,246,0.1)] text-[#3b82f6] border border-[rgba(59,130,246,0.2)]"><User size={11} /> Team User</span>;
+    return <span className="badge role-badge-user inline-flex items-center gap-1"><User size={11} /> User</span>;
   };
 
   return (
     <div className="page-body fade-in">
       {/* Header */}
-      <div className="page-header" style={{ marginBottom: 24 }}>
+      <div className="page-header mb-6">
         <div>
           <h1 className="page-title">User Management</h1>
           <p className="page-subtitle">Manage accounts, roles, and access controls</p>
         </div>
-        <button className="btn btn-secondary" onClick={() => { loadUsers(); loadStats(); }} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <button className="btn btn-secondary flex items-center gap-1.5" onClick={() => { loadUsers(); loadStats(); }}>
           <RefreshCw size={14} className={loading ? 'spin' : ''} />
           Refresh
         </button>
       </div>
 
       {/* Stats Bar */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
-        <div className="stat-card" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 18, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: 'rgba(255,255,255,0.04)', padding: 10, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Users size={24} style={{ color: 'var(--color-teal)' }} />
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mb-6">
+        <div className="stat-card bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-[18px] flex items-center gap-4">
+          <div className="bg-[rgba(255,255,255,0.04)] p-2.5 rounded-[10px] flex items-center justify-center">
+            <Users size={24} className="text-[var(--color-teal)]" />
           </div>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Total Accounts</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#fff' }}>{stats.totalUsers.toLocaleString()}</div>
+            <div className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-[0.05em] mb-0.5">Total Accounts</div>
+            <div className="text-2xl font-bold text-white">{stats.totalUsers.toLocaleString()}</div>
           </div>
         </div>
-        <div className="stat-card" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 18, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: 'rgba(134,239,172,0.06)', padding: 10, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle size={24} style={{ color: '#86efac' }} />
+        <div className="stat-card bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-[18px] flex items-center gap-4">
+          <div className="bg-[rgba(134,239,172,0.06)] p-2.5 rounded-[10px] flex items-center justify-center">
+            <CheckCircle size={24} className="text-[#86efac]" />
           </div>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Active Users</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#86efac' }}>{stats.activeUsers.toLocaleString()}</div>
+            <div className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-[0.05em] mb-0.5">Active Users</div>
+            <div className="text-2xl font-bold text-[#86efac]">{stats.activeUsers.toLocaleString()}</div>
           </div>
         </div>
-        <div className="stat-card" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 18, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: 'rgba(239, 68, 68, 0.06)', padding: 10, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <XCircle size={24} style={{ color: '#f87171' }} />
+        <div className="stat-card bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-[18px] flex items-center gap-4">
+          <div className="bg-[rgba(239,68,68,0.06)] p-2.5 rounded-[10px] flex items-center justify-center">
+            <XCircle size={24} className="text-[#f87171]" />
           </div>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Suspended</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#f87171' }}>{stats.suspendedUsers.toLocaleString()}</div>
+            <div className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-[0.05em] mb-0.5">Suspended</div>
+            <div className="text-2xl font-bold text-[#f87171]">{stats.suspendedUsers.toLocaleString()}</div>
           </div>
         </div>
-        <div className="stat-card" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 18, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ background: 'rgba(251, 146, 60, 0.06)', padding: 10, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ShieldAlert size={24} style={{ color: '#fb923c' }} />
+        <div className="stat-card bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-[18px] flex items-center gap-4">
+          <div className="bg-[rgba(251,146,60,0.06)] p-2.5 rounded-[10px] flex items-center justify-center">
+            <ShieldAlert size={24} className="text-[#fb923c]" />
           </div>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Pending Approval</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#fb923c' }}>{stats.pendingApprovals.toLocaleString()}</div>
+            <div className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-[0.05em] mb-0.5">Pending Approval</div>
+            <div className="text-2xl font-bold text-[#fb923c]">{stats.pendingApprovals.toLocaleString()}</div>
           </div>
         </div>
       </div>
 
       {/* Filters & Search */}
-      <div className="card" style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12 }}>
-        <div className="search-box" style={{ flex: 1, minWidth: 240, position: 'relative' }}>
-          <Search size={16} style={{ position: 'absolute', left: 12, top: 10, color: 'var(--color-text-muted)' }} />
+      <div className="card px-5 py-4 mb-5 flex gap-4 items-center flex-wrap bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl">
+        <div className="search-box flex-1 min-w-[240px] relative">
+          <Search size={16} className="absolute left-3 top-2.5 text-[var(--color-text-muted)]" />
           <input
-            className="form-input"
-            style={{ paddingLeft: 38, background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: '#fff', borderRadius: 8, height: 38, width: '100%', outline: 'none' }}
+            className="form-input pl-[38px] bg-[var(--color-surface)] border border-[var(--color-border)] text-white rounded-lg h-[38px] w-full outline-none"
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="filter-tabs" style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.02)', padding: 4, borderRadius: 8, border: '1px solid var(--color-border)' }}>
+        <div className="filter-tabs flex gap-1 bg-[rgba(255,255,255,0.02)] p-1 rounded-lg border border-[var(--color-border)]">
           {['all', 'admin', 'user', 'teams', 'team_user', 'pending', 'suspended'].map(f => (
             <button
               key={f}
-              className={`filter-tab ${filter === f ? 'active' : ''}`}
+              className={`filter-tab px-3.5 py-1.5 border-none rounded-md font-semibold text-xs cursor-pointer transition-all duration-200 ${filter === f ? 'active bg-[var(--color-teal)] text-black' : 'bg-transparent text-[#acacac]'}`}
               onClick={() => setFilter(f)}
-              style={{
-                padding: '6px 14px',
-                background: filter === f ? 'var(--color-teal)' : 'transparent',
-                border: 'none',
-                borderRadius: 6,
-                color: filter === f ? '#000' : '#acacac',
-                fontWeight: 600,
-                fontSize: 12,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
             >
               {f === 'team_user' ? 'Team Users' : f === 'teams' ? 'Team Admins' : f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
@@ -210,20 +198,20 @@ const UserManagement = () => {
       </div>
 
       {/* User Table */}
-      <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, overflow: 'hidden' }}>
+      <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl overflow-hidden">
         {loading ? (
-          <div style={{ padding: 60, textAlign: 'center' }}><div className="spinner" style={{ width: 28, height: 28 }} /></div>
+          <div className="p-[60px] text-center"><div className="spinner w-7 h-7 mx-auto" /></div>
         ) : users.length === 0 ? (
-          <div style={{ padding: 60, textAlign: 'center', color: 'var(--color-text-muted)' }}>No users found matching filters.</div>
+          <div className="p-[60px] text-center text-[var(--color-text-muted)]">No users found matching filters.</div>
         ) : (
           <div className="table-wrap">
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
+            <table className="w-full border-collapse text-left text-[13px]">
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                  <th style={{ padding: '14px 20px', fontWeight: 600, color: '#acacac', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>User</th>
-                  <th style={{ padding: '14px 20px', fontWeight: 600, color: '#acacac', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</th>
-                  <th style={{ padding: '14px 20px', fontWeight: 600, color: '#acacac', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
-                  <th style={{ padding: '14px 20px', fontWeight: 600, color: '#acacac', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Actions</th>
+                <tr className="border-b border-[var(--color-border)] bg-[rgba(255,255,255,0.03)]">
+                  <th className="px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em]">User</th>
+                  <th className="px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em]">Role</th>
+                  <th className="px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em]">Status</th>
+                  <th className="px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em] text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -232,50 +220,49 @@ const UserManagement = () => {
                   const isSelf  = u._id === currentUser._id;
 
                   return (
-                    <tr key={u._id} style={{ borderBottom: '1px solid var(--color-border-soft)', transition: 'background 0.2s' }} className="table-row-hover">
-                      <td style={{ padding: '14px 20px' }}>
-                        <div style={{ fontWeight: 600, color: '#e4e4e4' }}>{u.name}</div>
-                        <div style={{ fontSize: 12, color: '#888' }}>{u.email}</div>
+                    <tr key={u._id} className="border-b border-[var(--color-border-soft)] transition-colors duration-200 table-row-hover">
+                      <td className="px-5 py-3.5">
+                        <div className="font-semibold text-[#e4e4e4]">{u.name}</div>
+                        <div className="text-xs text-[#888]">{u.email}</div>
                       </td>
-                      <td style={{ padding: '14px 20px' }}>{getRoleBadge(u.role)}</td>
-                      <td style={{ padding: '14px 20px' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+                      <td className="px-5 py-3.5">{getRoleBadge(u.role)}</td>
+                      <td className="px-5 py-3.5">
+                        <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
                           {u.securityFlags >= 5 || (u.securityBlockUntil && new Date(u.securityBlockUntil) > new Date()) ? (
-                            <span className="status-blocked" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '4px 8px', borderRadius: 6, fontSize: 11, border: '1px solid rgba(239,68,68,0.2)' }}>
+                            <span className="status-blocked inline-flex items-center gap-1 bg-[rgba(239,68,68,0.1)] text-[#ef4444] py-1 px-2 rounded-md text-[11px] border border-[rgba(239,68,68,0.2)]">
                               <ShieldAlert size={11} /> Blocked
                             </span>
                           ) : !u.isApproved ? (
-                            <span className="status-pending" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(251,146,60,0.1)', color: '#fb923c', padding: '4px 8px', borderRadius: 6, fontSize: 11, border: '1px solid rgba(251,146,60,0.2)' }}>
+                            <span className="status-pending inline-flex items-center gap-1 bg-[rgba(251,146,60,0.1)] text-[#fb923c] py-1 px-2 rounded-md text-[11px] border border-[rgba(251,146,60,0.2)]">
                               <RefreshCw size={11} className="spin" /> Pending Approval
                             </span>
                           ) : !u.isActive ? (
-                            <span className="status-suspended" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(239,68,68,0.1)', color: '#f87171', padding: '4px 8px', borderRadius: 6, fontSize: 11, border: '1px solid rgba(239,68,68,0.2)' }}>
+                            <span className="status-suspended inline-flex items-center gap-1 bg-[rgba(239,68,68,0.1)] text-[#f87171] py-1 px-2 rounded-md text-[11px] border border-[rgba(239,68,68,0.2)]">
                               <XCircle size={11} /> Suspended
                             </span>
                           ) : (
-                            <span className="status-active" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '4px 8px', borderRadius: 6, fontSize: 11, border: '1px solid rgba(16,185,129,0.2)' }}>
+                            <span className="status-active inline-flex items-center gap-1 bg-[rgba(16,185,129,0.1)] text-[#10b981] py-1 px-2 rounded-md text-[11px] border border-[rgba(16,185,129,0.2)]">
                               <CheckCircle size={11} /> Active
                             </span>
                           )}
                         </div>
                       </td>
-                      <td style={{ padding: '14px 20px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex gap-2 justify-end items-center">
                            {canEdit && !isSelf && (
                             <>
                               {!u.isApproved ? (
-                                <div style={{ display: 'inline-flex', gap: 6 }}>
-                                  <button className="btn btn-primary" style={{ padding: '4px 12px', fontSize: 11, height: 28, display: 'inline-flex', alignItems: 'center', gap: 4 }} onClick={() => handleToggleStatus(u, 'isApproved', true)}>
+                                <div className="inline-flex gap-1.5">
+                                  <button className="btn btn-primary px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1" onClick={() => handleToggleStatus(u, 'isApproved', true)}>
                                     <Check size={11} /> Approve
                                   </button>
-                                  <button className="btn btn-danger" style={{ padding: '4px 12px', fontSize: 11, height: 28, display: 'inline-flex', alignItems: 'center', gap: 4, background: '#e53e3e', border: 'none' }} onClick={() => handleToggleStatus(u, { isApproved: true, isActive: false })}>
+                                  <button className="btn btn-danger px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1 bg-[#e53e3e] border-none" onClick={() => handleToggleStatus(u, { isApproved: true, isActive: false })}>
                                     <XCircle size={11} /> Suspend
                                   </button>
                                 </div>
                               ) : (
                                 <button
-                                  className={`btn ${u.isActive ? 'btn-danger' : 'btn-primary'}`}
-                                  style={{ padding: '4px 12px', fontSize: 11, height: 28, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                                  className={`btn ${u.isActive ? 'btn-danger' : 'btn-primary'} px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1`}
                                   onClick={() => {
                                     if (u.isActive) {
                                       setStatusModal({ user: u });
@@ -294,8 +281,7 @@ const UserManagement = () => {
                                 <>
                                   {(u.securityFlags >= 5 || (u.securityBlockUntil && new Date(u.securityBlockUntil) > new Date())) && (
                                     <button
-                                      className="btn btn-secondary"
-                                      style={{ padding: '4px 12px', fontSize: 11, height: 28, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}
+                                      className="btn btn-secondary px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1 bg-[rgba(245,158,11,0.1)] text-[#f59e0b] border border-[rgba(245,158,11,0.25)]"
                                       onClick={async () => {
                                         if (window.confirm(`Are you sure you want to unblock user "${u.name}"?`)) {
                                           try {
@@ -312,9 +298,8 @@ const UserManagement = () => {
                                       <Unlock size={11} /> Unblock
                                     </button>
                                   )}
-                                  <button
-                                    className="btn btn-danger"
-                                    style={{ padding: '4px 12px', fontSize: 11, height: 28, display: 'inline-flex', alignItems: 'center', gap: 4, background: '#ef4444', color: 'white', border: 'none' }}
+                                    <button
+                                      className="btn btn-danger px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1 bg-[#ef4444] text-white border-none"
                                     onClick={async () => {
                                       if (window.confirm(`Are you sure you want to permanently delete user "${u.name}"?`)) {
                                         try {
@@ -335,12 +320,11 @@ const UserManagement = () => {
                               )}
                             </>
                           )}
-                          {isSelf && <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontStyle: 'italic' }}>It's you</span>}
-                          {!canEdit && !isSelf && <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>No access</span>}
+                          {isSelf && <span className="text-[11px] text-[var(--color-text-muted)] italic">It's you</span>}
+                          {!canEdit && !isSelf && <span className="text-[11px] text-[var(--color-text-muted)]">No access</span>}
                           <Link 
                             to={`/admin/users/${u._id}/activity`} 
-                            className="btn btn-secondary flex items-center gap-1" 
-                            style={{ padding: '4px 12px', fontSize: 11, height: 28, background: 'rgba(20,160,125,0.1)', color: 'var(--color-teal)', border: '1px solid rgba(20,160,125,0.25)' }}
+                            className="btn btn-secondary flex items-center gap-1 px-3 py-1 text-[11px] h-7 bg-[rgba(20,160,125,0.1)] text-[var(--color-teal)] border border-[rgba(20,160,125,0.25)]"
                           >
                             <Eye size={12} /> Activity
                           </Link>
@@ -354,28 +338,26 @@ const UserManagement = () => {
           </div>
         )}
         
-        {/* Pagination Footer */}
+      {/* Pagination Footer */}
         {users.length > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderTop: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.01)' }}>
-            <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+          <div className="flex justify-between items-center px-5 py-3.5 border-t border-[var(--color-border)] bg-[rgba(255,255,255,0.01)]">
+            <span className="text-xs text-[var(--color-text-muted)]">
               Showing <strong>{total === 0 ? 0 : ((page - 1) * 15) + 1}</strong> to <strong>{Math.min(page * 15, total)}</strong> of <strong>{total}</strong> users
             </span>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="flex gap-2">
               <button
                 type="button"
-                className="btn btn-ghost btn-sm"
+                className={`btn btn-ghost btn-sm px-3 py-1.5 flex items-center gap-1 ${page === 1 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                 disabled={page === 1}
                 onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 4, cursor: page === 1 ? 'not-allowed' : 'pointer' }}
               >
                 Previous
               </button>
               <button
                 type="button"
-                className="btn btn-ghost btn-sm"
+                className={`btn btn-ghost btn-sm px-3 py-1.5 flex items-center gap-1 ${(page === pages || pages === 0) ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                 disabled={page === pages || pages === 0}
                 onClick={() => setPage(prev => Math.min(prev + 1, pages))}
-                style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 4, cursor: (page === pages || pages === 0) ? 'not-allowed' : 'pointer' }}
               >
                 Next
               </button>
@@ -386,17 +368,16 @@ const UserManagement = () => {
 
       {/* Choose Action Modal for Suspension */}
       {statusModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12, padding: 28, width: '100%', maxWidth: 480 }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#fb923c', fontWeight: 600 }}>Choose Action for {statusModal.user.name}</h3>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: 14, marginBottom: 24, lineHeight: 1.5 }}>
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.85)] flex items-center justify-center z-[1000] backdrop-blur-[4px]">
+          <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-7 w-full max-w-[480px]">
+            <h3 className="m-0 mb-4 text-base text-[#fb923c] font-semibold">Choose Action for {statusModal.user.name}</h3>
+            <p className="text-[var(--color-text-muted)] text-sm mb-6 leading-relaxed">
               Select whether you want to completely suspend this user or move their account status back to pending approval.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="flex flex-col gap-3">
               <button 
                 type="button" 
-                className="btn btn-danger" 
-                style={{ display: 'flex', justifyContent: 'center', background: '#d32f2f', color: '#fff', border: 'none', padding: '10px 0', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 13 }}
+                className="btn btn-danger flex justify-center bg-[#d32f2f] text-white border-none py-2.5 rounded-md cursor-pointer font-semibold text-[13px]"
                 onClick={() => {
                   handleToggleStatus(statusModal.user, { isActive: false });
                   setStatusModal(null);
@@ -406,8 +387,7 @@ const UserManagement = () => {
               </button>
               <button 
                 type="button" 
-                className="btn" 
-                style={{ display: 'flex', justifyContent: 'center', background: '#fb923c', color: '#000', border: 'none', padding: '10px 0', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 13 }}
+                className="btn flex justify-center bg-[#fb923c] text-black border-none py-2.5 rounded-md cursor-pointer font-semibold text-[13px]"
                 onClick={() => {
                   handleToggleStatus(statusModal.user, { isApproved: false });
                   setStatusModal(null);
@@ -417,8 +397,7 @@ const UserManagement = () => {
               </button>
               <button 
                 type="button" 
-                className="btn btn-ghost" 
-                style={{ display: 'flex', justifyContent: 'center', border: '1px solid var(--color-border)', padding: '10px 0', borderRadius: 6, cursor: 'pointer', fontWeight: 600, color: '#fff', fontSize: 13 }}
+                className="btn btn-ghost flex justify-center border border-[var(--color-border)] py-2.5 rounded-md cursor-pointer font-semibold text-white text-[13px]"
                 onClick={() => setStatusModal(null)}
               >
                 Cancel
