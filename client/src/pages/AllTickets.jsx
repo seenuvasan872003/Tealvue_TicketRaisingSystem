@@ -371,7 +371,6 @@ const AllTickets = () => {
                         ) : (
                           <div className="relative">
                             <button
-                              className="btn btn-sm btn-ghost"
                               disabled={updating === t._id}
                               className="btn btn-sm btn-ghost border border-[var(--color-border)] bg-[var(--color-bg)] text-white text-xs py-1.5 px-3 rounded-md min-w-[140px] text-left flex justify-between items-center cursor-pointer"
                               onClick={() => setActiveAssignTicket(activeAssignTicket === t._id ? null : t._id)}
@@ -459,7 +458,6 @@ const AllTickets = () => {
                           {t.approvalStatus === 'rejected' ? (
                             <>
                               <button
-                                className="btn btn-sm"
                                 className="btn btn-sm bg-[var(--color-teal)] border-none text-black py-1 px-2 rounded cursor-pointer text-[11px] font-semibold"
                                 onClick={async () => {
                                   if (!window.confirm('Are you sure you want to reactivate this ticket?')) return;
@@ -479,7 +477,6 @@ const AllTickets = () => {
                                 Reactivate
                               </button>
                               <button
-                                className="btn btn-sm"
                                 className="btn btn-sm bg-[#e53e3e] border-none text-white py-1 px-2 rounded cursor-pointer text-[11px] font-semibold"
                                 onClick={async () => {
                                   if (!window.confirm('Are you sure you want to permanently delete this ticket?')) return;
@@ -529,7 +526,6 @@ const AllTickets = () => {
                                   ))}
                                 </select>
                                 <button
-                                  className="btn btn-sm"
                                   className="btn btn-sm bg-[#e53e3e] border-none text-white py-1 px-2 rounded cursor-pointer text-[11px] font-semibold"
                                   onClick={async () => {
                                     const reason = window.prompt('Enter reason to decline this ticket:');
