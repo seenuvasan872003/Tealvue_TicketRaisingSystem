@@ -65,24 +65,28 @@ const StatCard = ({ label, value, color, Icon }) => {
   );
 };
 
+import { getCache, setCache } from '../utils/cache';
+
 const Dashboard = () => {
   const { user, isAdminLevel } = useAuth();
   const navigate = useNavigate();
 
-  const [stats, setStats] = useState(null);
-  const [recent, setRecent] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = isAdminLevel ? 'dashboard_stats' : 'my_stats';
+
+  const [stats, setStats] = useState(() => getCache(cacheKey));
+  const [recent, setRecent] = useState(() => getCache('recent_tickets') || []);
+  const [loading, setLoading] = useState(!stats);
 
   // Chart Data State
-  const [growthData, setGrowthData] = useState([]);
-  const [pieData, setPieData] = useState([]);
-  const [priorityChartData, setPriorityChartData] = useState([]);
-  const [teamMembers, setTeamMembers] = useState([]);
-  const [teamMembersChartData, setTeamMembersChartData] = useState([]);
+  const [growthData, setGrowthData] = useState(() => getCache('dashboard_growth') || []);
+  const [pieData, setPieData] = useState(() => getCache('dashboard_pie') || []);
+  const [priorityChartData, setPriorityChartData] = useState(() => getCache('dashboard_priority') || []);
+  const [teamMembers, setTeamMembers] = useState(() => getCache('dashboard_team_members') || []);
+  const [teamMembersChartData, setTeamMembersChartData] = useState(() => getCache('dashboard_team_members_chart') || []);
   const [memberPage, setMemberPage] = useState(1);
   const membersPerPage = 4;
 
-  const [chartsLoaded, setChartsLoaded] = useState(false);
+  const [chartsLoaded, setChartsLoaded] = useState(() => !!getCache('dashboard_growth'));
 
   useEffect(() => {
     const loadCriticalData = async () => {
@@ -120,23 +124,30 @@ const Dashboard = () => {
           const medium = activeTickets.filter(t => t.priority === 'medium' && t.approvalStatus !== 'suspended' && t.approvalStatus !== 'rejected').length;
           const low = activeTickets.filter(t => t.priority === 'low' && t.approvalStatus !== 'suspended' && t.approvalStatus !== 'rejected').length;
 
-          setStats({ total, open, inProgress, closed, transferred, underReview, declined, urgent, high, medium, low });
+           setStats({ total, open, inProgress, closed, transferred, underReview, declined, urgent, high, medium, low });
           setRecent(activeTickets.slice(0, 5));
 
-          setPieData([
+          const newPie = [
             { name: 'Open', value: open, color: '#3fb950' },
             { name: 'In Progress', value: inProgress, color: '#d29922' },
             { name: 'Closed', value: closed, color: '#6e7681' },
             { name: 'Under Review', value: underReview, color: '#fb923c' },
             { name: 'Declined', value: declined, color: '#f85149' },
-          ].filter(x => x.value > 0));
+          ].filter(x => x.value > 0);
+          setPieData(newPie);
 
-          setPriorityChartData([
+          const newPriority = [
             { name: 'Low', value: low, color: '#3fb950' },
             { name: 'Medium', value: medium, color: '#d29922' },
             { name: 'High', value: high, color: '#f85149' },
             { name: 'Urgent', value: urgent, color: '#f85149' },
-          ]);
+          ];
+          setPriorityChartData(newPriority);
+
+          setCache(cacheKey, { total, open, inProgress, closed, transferred, underReview, declined, urgent, high, medium, low }, 5);
+          setCache('recent_tickets', activeTickets.slice(0, 5), 3);
+          setCache('dashboard_pie', newPie, 5);
+          setCache('dashboard_priority', newPriority, 5);
 
           // Fetch team members workload for team_admin
           if (user?.role === 'team_admin' && myTeam) {
@@ -155,11 +166,15 @@ const Dashboard = () => {
                 };
               });
               setTeamMembers(membersWithStats);
-              setTeamMembersChartData(membersWithStats.map(m => ({
+              const newTeamMembersChart = membersWithStats.map(m => ({
                 name: m.name,
                 'Active Tickets': m.activeCount,
                 'Resolved Tickets': m.resolvedCount,
-              })));
+              }));
+              setTeamMembersChartData(newTeamMembersChart);
+
+              setCache('dashboard_team_members', membersWithStats, 10);
+              setCache('dashboard_team_members_chart', newTeamMembersChart, 10);
             } catch (err) {
               console.error('[Dashboard] Team members load error:', err);
             }
@@ -171,6 +186,8 @@ const Dashboard = () => {
           ]);
           setStats(statsRes.data);
           setRecent(ticketsRes.data.tickets);
+          setCache(cacheKey, statsRes.data, 5);
+          setCache('recent_tickets', ticketsRes.data.tickets, 3);
         }
       } catch (e) {
         console.error('[Dashboard] load error:', e);
@@ -179,7 +196,7 @@ const Dashboard = () => {
       }
     };
     loadCriticalData();
-  }, [isAdminLevel, user]);
+  }, [isAdminLevel, user, cacheKey]);
 
   useEffect(() => {
     if (loading || !isAdminLevel || user?.role === 'team_admin' || user?.role === 'team_user') return;
@@ -190,15 +207,19 @@ const Dashboard = () => {
           getGrowthData(), getStatusBreakdown()
         ]);
         setGrowthData(gRes.data);
+        setCache('dashboard_growth', gRes.data, 5);
         
         const rawPie = pRes.data || [];
-        setPieData([
+        const newPieData = [
           { name: 'Open', value: rawPie.find(x => x.status === 'open' || x._id === 'open')?.count || 0, color: '#3fb950' },
           { name: 'In Progress', value: rawPie.find(x => x.status === 'in-progress' || x._id === 'in-progress')?.count || 0, color: '#d29922' },
           { name: 'Closed', value: rawPie.find(x => x.status === 'closed' || x._id === 'closed')?.count || 0, color: '#6e7681' },
           { name: 'Declined', value: rawPie.find(x => x.status === 'declined' || x._id === 'declined')?.count || 0, color: '#f85149' },
           { name: 'Under Review', value: rawPie.find(x => x.status === 'suspended' || x._id === 'suspended')?.count || 0, color: '#fb923c' },
-        ].filter(x => x.value > 0));
+        ].filter(x => x.value > 0);
+        setPieData(newPieData);
+        setCache('dashboard_pie', newPieData, 5);
+        
         setChartsLoaded(true);
       } catch (err) {
         console.error('[Dashboard] Non-critical charts load error:', err);
@@ -210,7 +231,41 @@ const Dashboard = () => {
     return () => clearTimeout(timer);
   }, [loading, isAdminLevel, user]);
 
-  if (loading) return <div className="p-[60px] text-center"><div className="spinner" /></div>;
+  if (loading) {
+    return (
+      <div className="page-body fade-in">
+        <div className="page-header flex justify-between mb-5">
+          <div className="flex flex-col gap-2">
+            <div className="skeleton-box w-[250px] h-7" />
+            <div className="skeleton-box w-[380px] h-4" />
+          </div>
+        </div>
+        <div className="stat-grid mb-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card p-5 flex flex-col gap-3 h-[100px]">
+              <div className="flex justify-between">
+                <div className="skeleton-box w-[80px] h-3.5" />
+                <div className="skeleton-box w-5 h-5 rounded-full" />
+              </div>
+              <div className="skeleton-box w-[60px] h-8" />
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-5 mb-7">
+          <div className="card p-5 h-[280px] flex flex-col gap-3">
+            <div className="skeleton-box w-[180px] h-5" />
+            <div className="skeleton-box w-[220px] h-3.5" />
+            <div className="skeleton-box w-full flex-1 rounded mt-2" />
+          </div>
+          <div className="card p-5 h-[280px] flex flex-col gap-3">
+            <div className="skeleton-box w-[180px] h-5" />
+            <div className="skeleton-box w-[220px] h-3.5" />
+            <div className="skeleton-box w-full flex-1 rounded mt-2" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Sliced team members for pagination (3-4 users, others are slider/paginated)
   const indexOfLastMember = memberPage * membersPerPage;

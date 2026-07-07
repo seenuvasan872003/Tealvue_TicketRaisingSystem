@@ -15,17 +15,31 @@ import { toast } from 'react-toastify';
 import API from '../services/authApi';
 import logger from '../utils/logger';
 
+import { getCache, setCache } from '../utils/cache';
+
 const AllTickets = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [tickets,  setTickets]  = useState([]);
-  const [teams,    setTeams]    = useState([]);
+  const [tickets,  setTickets]  = useState(() => {
+    const cached = getCache('all_tickets');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [teams,    setTeams]    = useState(() => {
+    const cached = getCache('teams_list');
+    return Array.isArray(cached) ? cached : [];
+  });
   const [categories, setCategories] = useState(['General', 'Technical', 'Billing', 'HR', 'Other']);
-  const [total,    setTotal]    = useState(0);
+  const [total,    setTotal]    = useState(() => {
+    const cached = getCache('all_tickets');
+    return Array.isArray(cached) ? cached.length : 0;
+  });
   const [page,     setPage]     = useState(1);
   const [pages,    setPages]    = useState(1);
-  const [loading,  setLoading]  = useState(true);
+  const [loading,  setLoading]  = useState(() => {
+    const cached = getCache('all_tickets');
+    return !Array.isArray(cached);
+  });
   const [filters,  setFilters]  = useState({ status: '', priority: '', search: '', team: '', unassignedOnly: false, needsAttention: false, showDeclined: false });
   const [updating, setUpdating] = useState(null);
   const [activeAssignTicket, setActiveAssignTicket] = useState(null);
@@ -36,8 +50,10 @@ const AllTickets = () => {
     logger.info('AllTickets', 'loadTeams', 'Loading teams list', { api: '/api/teams', method: 'GET', action: 'Teams Load Start' });
     try {
       const { data } = await getTeams();
-      setTeams(data.teams || data || []);
-      logger.info('AllTickets', 'loadTeams', `Teams loaded — ${(data.teams || data || []).length} teams`, { api: '/api/teams', method: 'GET', status: 200, action: 'Teams Load Success' });
+      const teamsList = data.teams || data || [];
+      setTeams(teamsList);
+      setCache('teams_list', teamsList, 15);
+      logger.info('AllTickets', 'loadTeams', `Teams loaded — ${teamsList.length} teams`, { api: '/api/teams', method: 'GET', status: 200, action: 'Teams Load Success' });
     } catch (e) {
       logger.error('AllTickets', 'loadTeams', 'Failed to load teams', e, { api: '/api/teams', method: 'GET', action: 'Teams Load Failure' });
       console.error('[AllTickets] load teams error:', e);
@@ -45,7 +61,9 @@ const AllTickets = () => {
   };
 
   const load = useCallback(async () => {
-    setLoading(true);
+    if (page !== 1 || filters.status || filters.priority || filters.search || filters.team || filters.unassignedOnly || filters.needsAttention || filters.showDeclined) {
+      setLoading(true);
+    }
     logger.info('AllTickets', 'load', `Loading all tickets — page: ${page}`, { api: '/api/tickets', method: 'GET', action: 'All Tickets Load Start' });
     try {
       const params = { page, limit: LIMIT };
@@ -67,6 +85,12 @@ const AllTickets = () => {
       setTickets(fetched);
       setTotal(data.total || 0);
       setPages(data.pages || 1);
+      
+      // Cache unfiltered first page
+      if (page === 1 && !filters.status && !filters.priority && !filters.search && !filters.team && !filters.unassignedOnly && !filters.needsAttention && !filters.showDeclined) {
+        setCache('all_tickets', fetched, 3);
+      }
+      
       logger.info('AllTickets', 'load', `Tickets loaded — ${fetched.length} of ${data.total} total`, { api: '/api/tickets', method: 'GET', status: 200, action: 'All Tickets Load Success' });
     } catch (e) {
       logger.error('AllTickets', 'load', 'Failed to load all tickets', e, { api: '/api/tickets', method: 'GET', action: 'All Tickets Load Failure' });
@@ -104,6 +128,12 @@ const AllTickets = () => {
       const { data } = await API.put(`/tickets/${ticketId}/status`, { status });
       const updatedTicket = data.ticket || data;
       setTickets((ts) => ts.map((t) => (t._id === ticketId ? { ...t, status: updatedTicket.status } : t)));
+      
+      // Invalidate relevant caches
+      invalidateCache('all_tickets');
+      invalidateCache('my_tickets');
+      invalidateCache('dashboard_stats');
+      
       toast.success(`Status updated to "${status}"`);
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Update failed');
@@ -119,6 +149,11 @@ const AllTickets = () => {
       const { data } = await API.put(`/tickets/${ticketId}/priority`, { priority });
       const updatedTicket = data.ticket || data;
       setTickets((ts) => ts.map((t) => (t._id === ticketId ? { ...t, priority: updatedTicket.priority } : t)));
+      
+      // Invalidate relevant caches
+      invalidateCache('all_tickets');
+      invalidateCache('my_tickets');
+      
       toast.success(`Priority updated to "${priority}"`);
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Priority update failed');
@@ -133,6 +168,11 @@ const AllTickets = () => {
     try {
       const { data } = await assignTicketTeam(ticketId, teamId || null);
       setTickets((ts) => ts.map((t) => (t._id === ticketId ? { ...t, teamId: data.ticket?.teamId || data.teamId || null } : t)));
+      
+      // Invalidate relevant caches
+      invalidateCache('all_tickets');
+      invalidateCache('agencies_dashboard');
+      
       toast.success(`Team reassigned successfully`);
       load();
     } catch (err) {
@@ -277,8 +317,20 @@ const AllTickets = () => {
 
       {/* ── Table */}
       {loading ? (
-        <div className="flex justify-center p-[60px]">
-          <div className="spinner w-7 h-7" />
+        <div className="flex flex-col gap-3 w-full bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex gap-4 items-center w-full py-1">
+              <div className="skeleton-box w-[70px] h-4" />
+              <div className="skeleton-box flex-1 h-4" />
+              <div className="skeleton-box w-[90px] h-4" />
+              <div className="skeleton-box w-[100px] h-4" />
+              <div className="skeleton-box w-[100px] h-4" />
+              <div className="skeleton-box w-[90px] h-4" />
+              <div className="skeleton-box w-[120px] h-4" />
+              <div className="skeleton-box w-[80px] h-4" />
+              <div className="skeleton-box w-[160px] h-7 rounded" />
+            </div>
+          ))}
         </div>
       ) : tickets.length === 0 ? (
         <div className="empty-state border border-[var(--color-border)] rounded-xl">

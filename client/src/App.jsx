@@ -9,6 +9,7 @@ import { Menu }             from 'lucide-react';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { DataProvider } from './context/DataContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Sidebar from './components/Sidebar';
 
@@ -21,6 +22,7 @@ const Register     = lazy(() => import('./pages/Register'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
 const Profile      = lazy(() => import('./pages/Profile'));
 const TicketDetails = lazy(() => import('./pages/TicketDetails'));
+const Notifications = lazy(() => import('./pages/Notifications'));
 const PerformanceDetails = lazy(() => import('./pages/PerformanceDetails'));
 
 // ── App Shell — wraps all authenticated pages ──────────────
@@ -109,29 +111,32 @@ const App = () => {
 
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Suspense fallback={<div className="spinner-container flex items-center justify-center h-screen w-screen bg-[var(--color-bg)]"><div className="spinner" /></div>}>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login"    element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/access-denied" element={<AccessDenied />} />
-
-            {/* Protected shell — ONE ProtectedRoute wraps the entire shell */}
-            <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
-              <Route index element={<DashboardRouter />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/tickets/:id" element={<TicketDetails />} />
-              <Route path="/teams/:id/performance" element={<PerformanceDetails />} />
-              {dynamicRoutes}
-            </Route>
-
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-
+      <DataProvider>
+        <BrowserRouter>
+          <Suspense fallback={<div className="spinner-container flex items-center justify-center h-screen w-screen bg-[var(--color-bg)]"><div className="spinner" /></div>}>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login"    element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/access-denied" element={<AccessDenied />} />
+  
+              {/* Protected shell — ONE ProtectedRoute wraps the entire shell */}
+              <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
+                <Route index element={<DashboardRouter />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/tickets/:id" element={<TicketDetails />} />
+                <Route path="/teams/:id/performance" element={<PerformanceDetails />} />
+                {dynamicRoutes}
+              </Route>
+  
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </DataProvider>
+  
       <ToastContainer
         position="bottom-right"
         autoClose={3500}

@@ -15,6 +15,8 @@ import { toast } from 'react-toastify';
 import API from '../services/authApi';
 import FeatureChecklist from '../components/FeatureChecklist';
 import { useAuth } from '../context/AuthContext';
+import { invalidateCache } from '../utils/cache';
+import { SkeletonCard } from '../components/skeletons';
 import { FEATURES } from '../config/featureList';
 import { ROLE_DEFAULTS } from '../config/roleDefaults';
 import { getFeatureApiPath } from '../config/featureHelpers';
@@ -25,11 +27,11 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 // ── Role styling ───────────────────────────────────────────
 const ROLE_META = {
-  'super-admin': { label: 'Super Admin', textCls: 'text-[#f59e0b]', bgCls: 'bg-[rgba(245,158,11,0.12)]', borderCls: 'border-[#f59e0b]/20', borderHoverCls: 'border-[#f59e0b]/40', avatarBgCls: 'bg-gradient-to-br from-[#f59e0b]/20 to-[#f59e0b]/40', avatarBorderCls: 'border-[#f59e0b]/25', badgeBgCls: 'bg-[#f59e0b]/10', Icon: Crown },
-  'admin':       { label: 'Admin',       textCls: 'text-[#14b8a6]', bgCls: 'bg-[rgba(20,184,166,0.12)]', borderCls: 'border-[#14b8a6]/20', borderHoverCls: 'border-[#14b8a6]/40', avatarBgCls: 'bg-gradient-to-br from-[#14b8a6]/20 to-[#14b8a6]/40', avatarBorderCls: 'border-[#14b8a6]/25', badgeBgCls: 'bg-[#14b8a6]/10', Icon: ShieldCheck },
-  'user':        { label: 'User',        textCls: 'text-[#94a3b8]', bgCls: 'bg-[rgba(148,163,184,0.12)]', borderCls: 'border-[#94a3b8]/20', borderHoverCls: 'border-[#94a3b8]/40', avatarBgCls: 'bg-gradient-to-br from-[#94a3b8]/20 to-[#94a3b8]/40', avatarBorderCls: 'border-[#94a3b8]/25', badgeBgCls: 'bg-[#94a3b8]/10', Icon: User },
-  'team_admin':  { label: 'Team Admin',  textCls: 'text-[#818cf8]', bgCls: 'bg-[rgba(129,140,248,0.12)]', borderCls: 'border-[#818cf8]/20', borderHoverCls: 'border-[#818cf8]/40', avatarBgCls: 'bg-gradient-to-br from-[#818cf8]/20 to-[#818cf8]/40', avatarBorderCls: 'border-[#818cf8]/25', badgeBgCls: 'bg-[#818cf8]/10', Icon: ShieldCheck },
-  'team_user':   { label: 'Team Agent',  textCls: 'text-[#60a5fa]', bgCls: 'bg-[rgba(96,165,250,0.12)]', borderCls: 'border-[#60a5fa]/20', borderHoverCls: 'border-[#60a5fa]/40', avatarBgCls: 'bg-gradient-to-br from-[#60a5fa]/20 to-[#60a5fa]/40', avatarBorderCls: 'border-[#60a5fa]/25', badgeBgCls: 'bg-[#60a5fa]/10', Icon: User },
+  'super-admin': { label: 'Super Admin', textCls: 'text-[#f59e0b]', bgCls: 'bg-[rgba(245,158,11,0.12)]', borderCls: 'border-[#f59e0b]/20', borderHoverCls: 'border-[#f59e0b]/40', avatarBgCls: 'bg-gradient-to-br from-[#f59e0b]/20 to-[#f59e0b]/40', avatarBorderCls: 'border-[#f59e0b]/25', badgeBgCls: 'bg-[#f59e0b]/10', Icon: Crown, barBgCls: 'bg-[#f59e0b]' },
+  'admin':       { label: 'Admin',       textCls: 'text-[#14b8a6]', bgCls: 'bg-[rgba(20,184,166,0.12)]', borderCls: 'border-[#14b8a6]/20', borderHoverCls: 'border-[#14b8a6]/40', avatarBgCls: 'bg-gradient-to-br from-[#14b8a6]/20 to-[#14b8a6]/40', avatarBorderCls: 'border-[#14b8a6]/25', badgeBgCls: 'bg-[#14b8a6]/10', Icon: ShieldCheck, barBgCls: 'bg-[#14b8a6]' },
+  'user':        { label: 'User',        textCls: 'text-[#94a3b8]', bgCls: 'bg-[rgba(148,163,184,0.12)]', borderCls: 'border-[#94a3b8]/20', borderHoverCls: 'border-[#94a3b8]/40', avatarBgCls: 'bg-gradient-to-br from-[#94a3b8]/20 to-[#94a3b8]/40', avatarBorderCls: 'border-[#94a3b8]/25', badgeBgCls: 'bg-[#94a3b8]/10', Icon: User, barBgCls: 'bg-[#94a3b8]' },
+  'team_admin':  { label: 'Team Admin',  textCls: 'text-[#818cf8]', bgCls: 'bg-[rgba(129,140,248,0.12)]', borderCls: 'border-[#818cf8]/20', borderHoverCls: 'border-[#818cf8]/40', avatarBgCls: 'bg-gradient-to-br from-[#818cf8]/20 to-[#818cf8]/40', avatarBorderCls: 'border-[#818cf8]/25', badgeBgCls: 'bg-[#818cf8]/10', Icon: ShieldCheck, barBgCls: 'bg-[#818cf8]' },
+  'team_user':   { label: 'Team Agent',  textCls: 'text-[#60a5fa]', bgCls: 'bg-[rgba(96,165,250,0.12)]', borderCls: 'border-[#60a5fa]/20', borderHoverCls: 'border-[#60a5fa]/40', avatarBgCls: 'bg-gradient-to-br from-[#60a5fa]/20 to-[#60a5fa]/40', avatarBorderCls: 'border-[#60a5fa]/25', badgeBgCls: 'bg-[#60a5fa]/10', Icon: User, barBgCls: 'bg-[#60a5fa]' },
 };
 
 const ROLE_ORDER = ['super-admin', 'admin', 'team_admin', 'team_user', 'user'];
@@ -157,7 +159,7 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
           </div>
           {/* Mini progress bar */}
           <div className="w-full sm:w-[120px] h-1.5 bg-[var(--color-border)] rounded-md overflow-hidden">
-            <div className={`h-full rounded-md transition-all duration-300 ease-in-out w-[${pct}%] ${barColorCls}`} />
+            <div className={`h-full rounded-md transition-all duration-300 ease-in-out ${meta.barBgCls || 'bg-[#10b981]'}`} style={{ width: `${pct}%` }} />
           </div>
           <div className="text-[10.5px] text-[var(--color-text-muted)] mt-1">
             {pct}% features enabled
@@ -297,6 +299,10 @@ const RolesFeatures = () => {
   }, [filtered]);
 
   const handleSaved = (userIdOrRole, newFeatures) => {
+    // Invalidate role features cache
+    invalidateCache('role_features');
+    invalidateCache('role_features_all');
+
     setAllUsers(prev => {
       // Single user save
       if (typeof userIdOrRole === 'string' && userIdOrRole.length === 24) {
@@ -399,9 +405,11 @@ const RolesFeatures = () => {
 
       {/* ── Loading ─────────────────────────────────────── */}
       {loading && (
-        <div className="text-center py-20 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)]">
-          <div className="spinner mx-auto mb-4" />
-          <p className="text-[var(--color-text-muted)] text-[14px]">Retrieving users list features mapping...</p>
+        <div className="flex flex-col gap-[10px] mt-5">
+          <SkeletonCard height="80px" />
+          <SkeletonCard height="80px" />
+          <SkeletonCard height="80px" />
+          <SkeletonCard height="80px" />
         </div>
       )}
 

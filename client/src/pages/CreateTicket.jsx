@@ -13,6 +13,7 @@ import { Paperclip } from 'lucide-react';
 import { createTicket, getCategories } from '../services/ticketApi';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
+import { invalidateCache } from '../utils/cache';
 
 const CreateTicket = () => {
   const navigate = useNavigate();
@@ -115,6 +116,12 @@ const CreateTicket = () => {
       files.forEach(f => fd.append('attachments', f));
 
       const { data } = await createTicket(fd);
+      
+      // Invalidate relevant caches
+      invalidateCache('my_tickets');
+      invalidateCache('all_tickets');
+      invalidateCache('dashboard_stats');
+      
       toast.success('Ticket created successfully!');
       logger.info('CreateTicket', 'handleSubmit', `Ticket created successfully \u2014 ID: ${data._id}`, { api: '/api/tickets', method: 'POST', status: 201, action: 'Ticket Create Success' });
       navigate(`/tickets/${data._id}`);

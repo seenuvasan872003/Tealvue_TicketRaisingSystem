@@ -33,11 +33,19 @@ import logger from '../utils/logger';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
+import { getCache, setCache } from '../utils/cache';
+
 const TicketApproval = () => {
   const { user } = useAuth();
-  const [tickets, setTickets] = useState([]);
+  const [tickets, setTickets] = useState(() => {
+    const cached = getCache('ticket_approval');
+    return Array.isArray(cached) ? cached : [];
+  });
   const [activeTab, setActiveTab] = useState('all'); // all | suspended | rejected
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    const cached = getCache('ticket_approval');
+    return !Array.isArray(cached);
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
@@ -45,7 +53,10 @@ const TicketApproval = () => {
   // Server-side Pagination & Stats State
   const [page, setPage]         = useState(1);
   const [pages, setPages]       = useState(1);
-  const [total, setTotal]       = useState(0);
+  const [total, setTotal]       = useState(() => {
+    const cached = getCache('ticket_approval');
+    return Array.isArray(cached) ? cached.length : 0;
+  });
   const [stats, setStats]       = useState({ totalReviewed: 0, totalSuspended: 0, totalRejected: 0 });
   const [categories, setCategories] = useState(['General', 'Technical', 'Billing', 'HR', 'Other']);
 
@@ -72,7 +83,9 @@ const TicketApproval = () => {
   const [modalNote, setModalNote] = useState('');
 
   const loadTickets = async () => {
-    setLoading(true);
+    if (page !== 1 || activeTab !== 'all' || searchQuery || categoryFilter || priorityFilter || dateRangeType) {
+      setLoading(true);
+    }
     logger.info('TicketApproval', 'loadTickets', `Loading moderation tickets — tab: ${activeTab} | page: ${page}`, { api: '/api/tickets/all', method: 'GET', action: 'Ticket Approval Load Start' });
     try {
       const params = {
@@ -94,6 +107,12 @@ const TicketApproval = () => {
       if (data.stats) {
         setStats(data.stats);
       }
+      
+      // Cache unfiltered page 1
+      if (page === 1 && activeTab === 'all' && !searchQuery && !categoryFilter && !priorityFilter && !dateRangeType) {
+        setCache('ticket_approval', data.tickets || [], 3);
+      }
+      
       setSelectedIds([]);
       logger.info('TicketApproval', 'loadTickets', `Moderation tickets loaded — ${(data.tickets || []).length} of ${data.total || 0}`, { api: '/api/tickets/all', method: 'GET', status: 200, action: 'Ticket Approval Load Success' });
     } catch (err) {
@@ -468,8 +487,21 @@ const TicketApproval = () => {
 
       {/* Tickets List Table */}
       {loading ? (
-        <div className="flex justify-center p-[60px]">
-          <div className="spinner w-7 h-7" />
+        <div className="flex flex-col gap-3 w-full bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl p-5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex gap-4 items-center w-full py-1">
+              <div className="skeleton-box w-[24px] h-4" />
+              <div className="skeleton-box w-[70px] h-4" />
+              <div className="skeleton-box flex-1 h-4" />
+              <div className="skeleton-box w-[90px] h-4" />
+              <div className="skeleton-box w-[80px] h-4" />
+              <div className="skeleton-box w-[90px] h-4" />
+              <div className="skeleton-box w-[24px] h-4" />
+              <div className="skeleton-box w-[100px] h-4" />
+              <div className="skeleton-box w-[120px] h-4" />
+              <div className="skeleton-box w-[100px] h-6 rounded" />
+            </div>
+          ))}
         </div>
       ) : filteredTickets.length === 0 ? (
         <div className="empty-state border border-[var(--color-border)] rounded-xl">

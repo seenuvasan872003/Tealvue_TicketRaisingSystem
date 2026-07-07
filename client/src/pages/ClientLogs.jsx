@@ -9,6 +9,7 @@ import {
 import API from '../services/authApi';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
+import { SkeletonCard } from '../components/skeletons';
 
 const ClientLogs = () => {
   const [logs, setLogs] = useState([]);
@@ -136,7 +137,13 @@ const ClientLogs = () => {
       </div>
 
       {loading && logs.length === 0 ? (
-        <div className="p-[60px] text-center"><div className="spinner" /></div>
+        <div className="flex flex-col gap-3">
+          <SkeletonCard height="80px" />
+          <SkeletonCard height="80px" />
+          <SkeletonCard height="80px" />
+          <SkeletonCard height="80px" />
+          <SkeletonCard height="80px" />
+        </div>
       ) : filteredLogs.length === 0 ? (
         <div className="card empty-state px-10 py-[60px] text-center bg-[var(--color-card)] border border-solid border-[var(--color-border)] rounded-xl">
           <Terminal size={40} className="text-[var(--color-text-muted)] mb-3 opacity-50 mx-auto" />

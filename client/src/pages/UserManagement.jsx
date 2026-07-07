@@ -14,10 +14,18 @@ import { ShieldCheck, User, Search, RefreshCw, XCircle, CheckCircle, Crown, Eye,
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
 
+import { getCache, setCache, invalidateCache } from '../utils/cache';
+
 const UserManagement = () => {
   const { user: currentUser, isSuperAdmin } = useAuth();
-  const [users, setUsers]       = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [users, setUsers]       = useState(() => {
+    const cached = getCache('all_users');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [loading, setLoading]   = useState(() => {
+    const cached = getCache('all_users');
+    return !Array.isArray(cached);
+  });
   const [search, setSearch]     = useState('');
   const [filter, setFilter]     = useState('all'); // all, admin, user, teams, pending, suspended
   const [statusModal, setStatusModal] = useState(null);
@@ -25,8 +33,8 @@ const UserManagement = () => {
   // Server-side Pagination & Stats State
   const [page, setPage]         = useState(1);
   const [pages, setPages]       = useState(1);
-  const [total, setTotal]       = useState(0);
-  const [stats, setStats]       = useState({ totalUsers: 0, activeUsers: 0, suspendedUsers: 0, pendingApprovals: 0 });
+  const [total, setTotal]       = useState(() => (getCache('all_users') ? getCache('all_users').length : 0));
+  const [stats, setStats]       = useState(() => getCache('user_stats') || { totalUsers: 0, activeUsers: 0, suspendedUsers: 0, pendingApprovals: 0 });
 
   const loadStats = async () => {
     logger.info('UserManagement', 'loadStats', 'Loading user statistics', { api: '/api/users/stats', method: 'GET', action: 'User Stats Load Start' });
@@ -34,6 +42,7 @@ const UserManagement = () => {
       const { data } = await getUserStats();
       if (data) {
         setStats(data);
+        setCache('user_stats', data, 10);
         logger.info('UserManagement', 'loadStats', `User stats loaded — total: ${data.totalUsers}`, { api: '/api/users/stats', method: 'GET', status: 200, action: 'User Stats Load Success' });
       }
     } catch (e) {
@@ -45,7 +54,9 @@ const UserManagement = () => {
   const loadUsers = async () => {
     logger.info('UserManagement', 'loadUsers', `Loading users — filter: ${filter} | page: ${page}`, { api: '/api/users', method: 'GET', action: 'Users Load Start' });
     try {
-      setLoading(true);
+      if (page !== 1 || filter !== 'all' || search.trim()) {
+        setLoading(true);
+      }
       const params = {
         page,
         limit: 15,
@@ -64,6 +75,12 @@ const UserManagement = () => {
       setUsers(data.users || []);
       setTotal(data.total || 0);
       setPages(data.pages || 1);
+
+      // Cache page 1 all users
+      if (page === 1 && filter === 'all' && !search.trim()) {
+        setCache('all_users', data.users || [], 10);
+      }
+
       logger.info('UserManagement', 'loadUsers', `Users loaded — ${(data.users || []).length} of ${data.total || 0} total`, { api: '/api/users', method: 'GET', status: 200, action: 'Users Load Success' });
     } catch (e) {
       logger.error('UserManagement', 'loadUsers', 'Failed to load users', e, { api: '/api/users', method: 'GET', action: 'Users Load Failure' });
@@ -102,6 +119,10 @@ const UserManagement = () => {
         : updatesOrField;
 
       await updateUserStatus(targetUser._id, updates);
+      
+      // Invalidate cache
+      invalidateCache('all_users');
+      
       setUsers(prev => prev.map(u => u._id === targetUser._id ? { ...u, ...updates } : u));
       toast.success(`${targetUser.name} updated successfully`);
       loadStats(); // Reload stats counts

@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import TicketTimeline from '../components/TicketTimeline';
 import logger from '../utils/logger';
+import { SkeletonCard, SkeletonText } from '../components/skeletons';
 
 const ACTION_ICONS = {
   TICKET_CREATED: { Icon: Plus, color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
@@ -183,8 +184,13 @@ const TicketLogs = () => {
           </div>
 
           {loading ? (
-            <div className="flex justify-center p-12">
-              <Clock className="w-6 h-6 animate-spin text-teal-400" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <SkeletonCard height="110px" />
+              <SkeletonCard height="110px" />
+              <SkeletonCard height="110px" />
+              <SkeletonCard height="110px" />
+              <SkeletonCard height="110px" />
+              <SkeletonCard height="110px" />
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="bg-[#1c2128] border border-dashed border-zinc-800 rounded-2xl p-12 text-center text-zinc-500">
@@ -253,8 +259,10 @@ const TicketLogs = () => {
           </div>
 
           {loading ? (
-            <div className="flex justify-center p-12">
-              <Clock className="w-6 h-6 animate-spin text-teal-400" />
+            <div className="flex flex-col gap-3">
+              <SkeletonCard height="100px" />
+              <SkeletonCard height="100px" />
+              <SkeletonCard height="100px" />
             </div>
           ) : filteredTickets.length === 0 ? (
             <div className="bg-[#1c2128] border border-dashed border-zinc-800 rounded-2xl p-12 text-center text-zinc-500">

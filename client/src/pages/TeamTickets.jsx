@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import { User, ClipboardList, Send, Calendar } from 'lucide-react';
 import logger from '../utils/logger';
+import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/skeletons';
 
 const TeamTickets = () => {
   const navigate = useNavigate();
@@ -112,8 +113,18 @@ const TeamTickets = () => {
 
   if (loading && !team) {
     return (
-      <div className="p-[60px] text-center">
-        <div className="spinner" />
+      <div className="page-body fade-in">
+        <div className="page-header flex justify-between items-center mb-6">
+          <div className="flex flex-col gap-2 w-1/3">
+            <SkeletonText height="24px" width="60%" />
+            <SkeletonText height="14px" width="100%" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-3">
+          <SkeletonCard height="100px" />
+          <SkeletonCard height="100px" />
+          <SkeletonCard height="100px" />
+        </div>
       </div>
     );
   }

@@ -29,13 +29,21 @@ const typeColorMap = {
   TICKET_RESOLVED: '#86efac',               // green
 };
 
+import { getCache, setCache } from '../utils/cache';
+
 const Notifications = () => {
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState(() => {
+    const cached = getCache('notifications');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [unreadCount, setUnreadCount] = useState(() => getCache('unread_count') || 0);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'unread', 'read'
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    const cached = getCache('notifications');
+    return !Array.isArray(cached);
+  });
   const navigate = useNavigate();
 
   const LIMIT = 20;
@@ -45,12 +53,21 @@ const Notifications = () => {
   }, [page, activeTab]);
 
   const loadNotifications = async () => {
-    setLoading(true);
+    if (page !== 1 || activeTab !== 'all') {
+      setLoading(true);
+    }
     logger.info('Notifications', 'loadNotifications', `Loading notifications — page: ${page} | tab: ${activeTab}`, { api: '/api/notifications', method: 'GET', action: 'Notifications Load Start' });
     try {
       const res = await notificationApi.getAll(page);
       const allNotifs = res.data.notifications || [];
-      setUnreadCount(res.data.unreadCount || 0);
+      const currentUnread = res.data.unreadCount || 0;
+      setUnreadCount(currentUnread);
+
+      // Cache page 1 all notifications
+      if (page === 1 && activeTab === 'all') {
+        setCache('notifications', allNotifs, 1);
+        setCache('unread_count', currentUnread, 1);
+      }
 
       // Client-side tab filter because the API returns all, or we can filter it here
       let filtered = allNotifs;

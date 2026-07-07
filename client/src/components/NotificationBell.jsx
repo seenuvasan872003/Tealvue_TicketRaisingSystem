@@ -29,9 +29,14 @@ const typeColorMap = {
   TICKET_RESOLVED: '#86efac',               // green
 };
 
+import { getCache, setCache } from '../utils/cache';
+
 const NotificationBell = () => {
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(() => getCache('unread_count') || 0);
+  const [notifications, setNotifications] = useState(() => {
+    const cached = getCache('notifications');
+    return Array.isArray(cached) ? cached : [];
+  });
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const wrapRef = useRef(null);
@@ -59,6 +64,7 @@ const NotificationBell = () => {
     try {
       const res = await notificationApi.getUnreadCount();
       setUnreadCount(res.data.count);
+      setCache('unread_count', res.data.count, 1);
     } catch (err) {
       logger.error('NotificationBell', 'fetchUnreadCount', 'Error fetching unread count', err, { api: '/api/notifications/unread-count', method: 'GET', action: 'Unread Count Fetch Failure' });
       console.error('Error fetching unread count:', err);
@@ -68,10 +74,16 @@ const NotificationBell = () => {
   const fetchNotifications = async () => {
     logger.info('NotificationBell', 'fetchNotifications', 'Fetching notifications dropdown', { api: '/api/notifications', method: 'GET', action: 'Notification Bell Open' });
     try {
-      setLoading(true);
+      // Only show loading indicator if cache is empty
+      if (notifications.length === 0) {
+        setLoading(true);
+      }
       const res = await notificationApi.getAll(1);
-      setNotifications(res.data.notifications || []);
+      const notifs = res.data.notifications || [];
+      setNotifications(notifs);
       setUnreadCount(res.data.unreadCount || 0);
+      setCache('notifications', notifs, 1);
+      setCache('unread_count', res.data.unreadCount || 0, 1);
     } catch (err) {
       logger.error('NotificationBell', 'fetchNotifications', 'Error fetching notifications', err, { api: '/api/notifications', method: 'GET', action: 'Notifications Fetch Failure' });
       console.error('Error fetching notifications:', err);
@@ -93,8 +105,11 @@ const NotificationBell = () => {
     logger.info('NotificationBell', 'handleMarkAllRead', 'Marking all notifications as read', { api: '/api/notifications/mark-all-read', method: 'PUT', action: 'Mark All Read' });
     try {
       await notificationApi.markAllRead();
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      const updated = notifications.map(n => ({ ...n, isRead: true }));
+      setNotifications(updated);
       setUnreadCount(0);
+      setCache('notifications', updated, 1);
+      setCache('unread_count', 0, 1);
     } catch (err) {
       logger.error('NotificationBell', 'handleMarkAllRead', 'Error marking all notifications read', err, { api: '/api/notifications/mark-all-read', method: 'PUT', action: 'Mark All Read Failure' });
       console.error('Error marking all read:', err);
@@ -105,10 +120,12 @@ const NotificationBell = () => {
     try {
       if (!notif.isRead) {
         await notificationApi.markRead(notif._id);
-        setNotifications(prev =>
-          prev.map(n => n._id === notif._id ? { ...n, isRead: true } : n)
-        );
-        setUnreadCount(c => Math.max(0, c - 1));
+        const updated = notifications.map(n => n._id === notif._id ? { ...n, isRead: true } : n);
+        setNotifications(updated);
+        const newCount = Math.max(0, unreadCount - 1);
+        setUnreadCount(newCount);
+        setCache('notifications', updated, 1);
+        setCache('unread_count', newCount, 1);
         logger.info('NotificationBell', 'handleItemClick', `Notification marked as read: ${notif._id}`, { api: `/api/notifications/${notif._id}/read`, method: 'PUT', action: 'Notification Mark Read' });
       }
       if (notif.ticketId) {

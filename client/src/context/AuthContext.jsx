@@ -14,6 +14,7 @@ import { loginUser, registerUser, fetchProfile, updateProfileApi } from '../serv
 import logger from '../utils/logger';
 import API from '../services/authApi';
 import { ROLE_DEFAULTS } from '../config/roleDefaults';
+import { clearCache } from '../utils/cache';
 
 const AuthContext = createContext(null);
 
@@ -23,7 +24,7 @@ export const AuthProvider = ({ children }) => {
   const [loading,  setLoading]  = useState(true);
   const [features, setFeatures] = useState([]);
 
-  // ── Fetch user features from API ──────────────────────────
+  // ── Fetch user features from API ──────────────────────
   const fetchFeatures = async (role) => {
     try {
       const res = await API.get('/role-features/me');
@@ -134,6 +135,10 @@ export const AuthProvider = ({ children }) => {
   // ── Logout ──────────────────────────────────────────────────
   const logout = () => {
     logger.info('AuthContext', 'logout', `User logged out${user ? ` — was: ${user.email}` : ''}`, { action: 'Logout' });
+    
+    // Wipe all cached data
+    clearCache();
+    
     localStorage.removeItem('tealue_token');
     localStorage.removeItem('user_role');
     setToken(null);

@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import { callFeatureApi } from '../services/apiResolver';
 import { useAuth } from '../context/AuthContext';
 import logger from '../utils/logger';
+import { invalidateCache } from '../utils/cache';
 
 const CreateUserAccount = () => {
   const { user } = useAuth();
@@ -120,6 +121,9 @@ const CreateUserAccount = () => {
         email: formData.email,
         password: formData.password,
       });
+
+      // Invalidate users cache
+      invalidateCache('all_users');
 
       toast.success('User account created successfully');
       logger.info('CreateUserAccount', 'handleSubmit', `User account created for: ${formData.email}`, { api: '/api/users/create-user', method: 'POST', status: 201, action: 'User Account Create Success' });

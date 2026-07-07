@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
+import { invalidateCache } from '../utils/cache';
 
 const CreateAdminAccount = () => {
   const { user } = useAuth();
@@ -117,6 +118,10 @@ const CreateAdminAccount = () => {
     logger.info('CreateAdminAccount', 'handleSubmit', `Creating ${formData.role} account for: ${formData.email}`, { api: '/api/users/create-admin', method: 'POST', action: 'Admin Account Create Start' });
     try {
       await callFeatureApi('create_admin', user.role, 'POST', formData);
+      
+      // Invalidate users cache
+      invalidateCache('all_users');
+      
       toast.success(`${formData.role === 'super-admin' ? 'Super Admin' : 'Admin'} account created successfully`);
       logger.info('CreateAdminAccount', 'handleSubmit', `${formData.role} account created for: ${formData.email}`, { api: '/api/users/create-admin', method: 'POST', status: 201, action: 'Admin Account Create Success' });
       setFormData({

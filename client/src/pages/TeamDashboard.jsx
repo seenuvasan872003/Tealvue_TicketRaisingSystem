@@ -18,6 +18,8 @@ import { useAuth } from '../context/AuthContext';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import logger from '../utils/logger';
 
+import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/skeletons';
+
 const TeamDashboard = () => {
   const { isSuperAdmin } = useAuth();
   const navigate = useNavigate();
@@ -75,7 +77,23 @@ const TeamDashboard = () => {
   };
 
   if (loading && !data) {
-    return <div style={{ padding: 60, textAlign: 'center' }}><div className="spinner" /></div>;
+    return (
+      <div className="page-body fade-in">
+        <div className="page-header flex justify-between items-center mb-6">
+          <div className="flex flex-col gap-2 w-1/3">
+            <SkeletonText height="24px" width="60%" />
+            <SkeletonText height="14px" width="100%" />
+          </div>
+        </div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4 mb-6">
+          <SkeletonCard height="110px" />
+          <SkeletonCard height="110px" />
+          <SkeletonCard height="110px" />
+          <SkeletonCard height="110px" />
+        </div>
+        <SkeletonTable rows={4} columns={5} />
+      </div>
+    );
   }
 
   const { summary, teams = [] } = data || {};

@@ -14,14 +14,25 @@ import { getTickets } from '../services/ticketApi';
 import logger from '../utils/logger';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 
+import { getCache, setCache } from '../utils/cache';
+
 const MyTickets = () => {
   const navigate = useNavigate();
 
-  const [tickets, setTickets] = useState([]);
-  const [total,   setTotal]   = useState(0);
+  const [tickets, setTickets] = useState(() => {
+    const cached = getCache('my_tickets');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [total,   setTotal]   = useState(() => {
+    const cached = getCache('my_tickets');
+    return Array.isArray(cached) ? cached.length : 0;
+  });
   const [page,    setPage]    = useState(1);
   const [pages,   setPages]   = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    const cached = getCache('my_tickets');
+    return !Array.isArray(cached);
+  });
   const [filters, setFilters] = useState({ status: '', priority: '', search: '' });
 
   // [CONFIG] Tickets per page
@@ -29,7 +40,10 @@ const MyTickets = () => {
 
   // [API] GET /api/tickets — load page with filters
   const load = useCallback(async () => {
-    setLoading(true);
+    // Only show loading if there are no items cached
+    if (page !== 1 || filters.status || filters.priority || filters.search) {
+      setLoading(true);
+    }
     logger.info('MyTickets', 'load', `Fetching tickets — page: ${page}`, { api: '/api/tickets', method: 'GET', action: 'Tickets Load Start' });
     try {
       const params = { page, limit: LIMIT };
@@ -41,6 +55,12 @@ const MyTickets = () => {
       setTickets(data.tickets);
       setTotal(data.total);
       setPages(data.pages);
+      
+      // Cache the unfiltered first page
+      if (page === 1 && !filters.status && !filters.priority && !filters.search) {
+        setCache('my_tickets', data.tickets, 3);
+      }
+      
       logger.info('MyTickets', 'load', `Tickets loaded — ${data.tickets.length} of ${data.total} total`, { api: '/api/tickets', method: 'GET', status: 200, action: 'Tickets Load Success' });
     } catch (e) {
       logger.error('MyTickets', 'load', 'Failed to load tickets', e, { api: '/api/tickets', method: 'GET', action: 'Tickets Load Failure' });
@@ -132,8 +152,17 @@ const MyTickets = () => {
 
       {/* ── Ticket List ─────────────────────────── */}
       {loading ? (
-        <div className="flex justify-center p-[60px]">
-          <div className="spinner w-7 h-7" />
+        <div className="flex flex-col gap-3 w-full bg-[var(--color-card)] border border-solid border-[var(--color-border)] rounded-xl p-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex gap-4 items-center w-full py-1">
+              <div className="skeleton-box w-[80px] h-4" />
+              <div className="skeleton-box flex-1 h-4" />
+              <div className="skeleton-box w-[90px] h-4" />
+              <div className="skeleton-box w-[80px] h-5 rounded-full" />
+              <div className="skeleton-box w-[70px] h-5 rounded-full" />
+              <div className="skeleton-box w-[120px] h-4" />
+            </div>
+          ))}
         </div>
       ) : tickets.length === 0 ? (
         // [UI] Empty state

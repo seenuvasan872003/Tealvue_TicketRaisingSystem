@@ -14,6 +14,8 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import tealvueLogo from '../assets/tealvue1.png';
 import logger from '../utils/logger';
+import LoginLoader from '../components/LoginLoader';
+import { preloadByRole } from '../services/preloadService';
 
 const Login = () => {
   const { login } = useAuth();
@@ -24,6 +26,11 @@ const Login = () => {
   const [error,     setError]   = useState('');
   const [showPass,  setShowPass] = useState(false); // [STATE] toggle password visibility
 
+  // Preloading states
+  const [showPreloader, setShowPreloader] = useState(false);
+  const [preloadProgress, setPreloadProgress] = useState(0);
+  const [preloadStatus, setPreloadStatus] = useState('Workspace authenticating...');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -32,26 +39,68 @@ const Login = () => {
     try {
       // [API] POST /api/auth/login
       const user = await login(form.email, form.password);
-      toast.success(`Welcome back, ${user.name}!`);
-      logger.info('Login', 'handleSubmit', `Login SUCCESS → navigating for role: ${user.role}`, {
-        api: '/api/auth/login', method: 'POST', status: 200, action: 'Login Success + Navigate',
-      });
-      switch (user.role) {
-        case 'super-admin':
-          navigate('/super-admin/dashboard');
-          break;
-        case 'admin':
-          navigate('/admin/dashboard');
-          break;
-        case 'team_admin':
-          navigate('/team-admin/dashboard');
-          break;
-        case 'team_user':
-          navigate('/team-user/dashboard');
-          break;
-        case 'user':
-        default:
-          navigate('/dashboard');
+      
+      // Start Preloading UI
+      setShowPreloader(true);
+      setPreloadProgress(10);
+      setPreloadStatus('Initializing secure session...');
+
+      let hasNavigated = false;
+      const navigateToDashboard = () => {
+        if (hasNavigated) return;
+        hasNavigated = true;
+        
+        toast.success(`Welcome back, ${user.name}!`);
+        logger.info('Login', 'handleSubmit', `Login SUCCESS → navigating for role: ${user.role}`, {
+          api: '/api/auth/login', method: 'POST', status: 200, action: 'Login Success + Navigate',
+        });
+
+        switch (user.role) {
+          case 'super-admin':
+            navigate('/super-admin/dashboard');
+            break;
+          case 'admin':
+            navigate('/admin/dashboard');
+            break;
+          case 'team_admin':
+            navigate('/team-admin/dashboard');
+            break;
+          case 'team_user':
+            navigate('/team-user/dashboard');
+            break;
+          case 'user':
+          default:
+            navigate('/dashboard');
+        }
+      };
+
+      // Safety timeout guard (5 seconds)
+      const safetyTimeout = setTimeout(() => {
+        navigateToDashboard();
+      }, 5000);
+
+      try {
+        let currentProgress = 10;
+        await preloadByRole(user, async (targetProgress, statusText) => {
+          // Smoothly step the progress state forward to slow it down slightly
+          while (currentProgress < targetProgress) {
+            currentProgress += 5;
+            if (currentProgress > targetProgress) {
+              currentProgress = targetProgress;
+            }
+            setPreloadProgress(currentProgress);
+            setPreloadStatus(statusText);
+            // Introduce a short transition pause per step
+            await new Promise(resolve => setTimeout(resolve, 80));
+          }
+        });
+      } catch (preloadErr) {
+        console.warn('Preloading failed, proceeding to dashboard directly:', preloadErr);
+      } finally {
+        clearTimeout(safetyTimeout);
+        setTimeout(() => {
+          navigateToDashboard();
+        }, 500);
       }
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed';
@@ -69,6 +118,7 @@ const Login = () => {
 
   return (
     <div className="auth-page">
+      <LoginLoader progress={preloadProgress} statusText={preloadStatus} visible={showPreloader} />
       <div className="auth-card fade-in">
 
         {/* ── Logo ──────────────────────────────────── */}

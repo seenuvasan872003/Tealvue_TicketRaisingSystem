@@ -20,6 +20,7 @@ import {
 } from '../services/ticketApi';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
+import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/skeletons';
 
 const Teams = () => {
   const [teams, setTeams] = useState([]);
@@ -250,8 +251,19 @@ const Teams = () => {
 
   if (loading && teams.length === 0) {
     return (
-      <div className="p-[60px] text-center">
-        <div className="spinner" />
+      <div className="page-body fade-in">
+        <div className="page-header flex justify-between items-center mb-6">
+          <div className="flex flex-col gap-2 w-1/3">
+            <SkeletonText height="24px" width="60%" />
+            <SkeletonText height="14px" width="100%" />
+          </div>
+        </div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mb-6">
+          <SkeletonCard height="90px" />
+          <SkeletonCard height="90px" />
+          <SkeletonCard height="90px" />
+        </div>
+        <SkeletonTable rows={4} columns={6} />
       </div>
     );
   }
@@ -611,7 +623,7 @@ const Teams = () => {
                       id="isActive"
                       checked={isActive}
                       onChange={(e) => setIsActive(e.target.checked)}
-                      className="w-4 h-4"
+                      className="!w-auto h-4"
                     />
                     <label htmlFor="isActive" className="cursor-pointer">Active and accepting ticket allocations</label>
                   </div>

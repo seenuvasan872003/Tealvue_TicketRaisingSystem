@@ -7,14 +7,23 @@ import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import { CheckCircle, Clock, Calendar, ClipboardList, Send } from 'lucide-react';
 import logger from '../utils/logger';
 
+import { getCache, setCache } from '../utils/cache';
+
 const TeamUserTickets = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
   const isFinishedPage = location.pathname.includes('finished-tickets');
+  const cacheKey = isFinishedPage ? 'finished_tickets' : 'assigned_tickets';
 
-  const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [tickets, setTickets] = useState(() => {
+    const cached = getCache(cacheKey);
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [loading, setLoading] = useState(() => {
+    const cached = getCache(cacheKey);
+    return !Array.isArray(cached);
+  });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -36,7 +45,9 @@ const TeamUserTickets = () => {
   const loadAssignedTickets = async () => {
     logger.info('TeamUserTickets', 'loadAssignedTickets', `Loading assigned tickets — page: ${page}`, { api: '/api/tickets', method: 'GET', action: 'Assigned Tickets Load Start' });
     try {
-      setLoading(true);
+      if (page !== 1 || statusFilter !== (isFinishedPage ? 'closed' : '')) {
+        setLoading(true);
+      }
 
       // Load team if not loaded yet
       let currentTeam = team;
@@ -61,6 +72,12 @@ const TeamUserTickets = () => {
       setTickets(data.tickets || []);
       setTotalPages(data.pages || 1);
       setTotalCount(data.total || 0);
+
+      // Cache page 1 results
+      if (page === 1 && statusFilter === (isFinishedPage ? 'closed' : '')) {
+        setCache(cacheKey, data.tickets || [], 3);
+      }
+
       logger.info('TeamUserTickets', 'loadAssignedTickets', `Assigned tickets loaded — ${(data.tickets || []).length} tickets`, { api: '/api/tickets', method: 'GET', status: 200, action: 'Assigned Tickets Load Success' });
     } catch (err) {
       logger.error('TeamUserTickets', 'loadAssignedTickets', 'Failed to load assigned tickets', err, { api: '/api/tickets', method: 'GET', action: 'Assigned Tickets Load Failure' });
@@ -79,6 +96,13 @@ const TeamUserTickets = () => {
     if (!window.confirm('Are you sure you want to mark this ticket as Closed and notify the owner?')) return;
     try {
       await closeTicket(ticketId);
+      
+      // Invalidate relevant caches
+      invalidateCache('assigned_tickets');
+      invalidateCache('finished_tickets');
+      invalidateCache('all_tickets');
+      invalidateCache('dashboard_stats');
+      
       toast.success('Ticket marked as resolved and closed!');
       loadAssignedTickets();
     } catch (err) {
@@ -207,9 +231,25 @@ const TeamUserTickets = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan="7" className="text-center p-6"><div className="spinner" /></td>
-                </tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    <td><div className="skeleton-box w-[60px] h-4" /></td>
+                    <td>
+                      <div className="skeleton-box w-[200px] h-4 mb-1" />
+                      <div className="skeleton-box w-[120px] h-3" />
+                    </td>
+                    <td><div className="skeleton-box w-[80px] h-4" /></td>
+                    <td><div className="skeleton-box w-[60px] h-4" /></td>
+                    <td><div className="skeleton-box w-[100px] h-4" /></td>
+                    <td><div className="skeleton-box w-[80px] h-4" /></td>
+                    <td>
+                      <div className="flex gap-2">
+                        <div className="skeleton-box w-[90px] h-6 rounded" />
+                        <div className="skeleton-box w-[90px] h-6 rounded" />
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : displayedTickets.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="text-center p-6 text-[var(--color-text-muted)]">

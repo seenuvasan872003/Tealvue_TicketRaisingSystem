@@ -18,6 +18,7 @@ import {
 import API from '../services/authApi';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
+import { SkeletonCard, SkeletonChart, SkeletonText } from '../components/skeletons';
 
 const Logs = () => {
   const [range, setRange] = useState('daily'); // 'daily', 'weekly', 'monthly'
@@ -180,7 +181,19 @@ const Logs = () => {
       </div>
 
       {loading && logs.length === 0 ? (
-        <div className="p-[60px] text-center"><div className="spinner" /></div>
+        <div className="fade-in">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5 mb-7">
+            <SkeletonChart height="250px" />
+            <SkeletonChart height="250px" />
+            <SkeletonChart height="250px" />
+          </div>
+          <div className="flex flex-col gap-[10px]">
+            <SkeletonCard height="64px" />
+            <SkeletonCard height="64px" />
+            <SkeletonCard height="64px" />
+            <SkeletonCard height="64px" />
+          </div>
+        </div>
       ) : (
         <>
           {/* Charts Grid */}
