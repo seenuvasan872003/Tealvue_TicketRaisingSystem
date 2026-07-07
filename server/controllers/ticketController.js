@@ -1116,7 +1116,12 @@ const closeTicket = async (req, res) => {
       ticket.timeTracking.timeInProgress = now - ticket.timeTracking.inProgressAt;
     }
 
+    // Set feedback fields
+    ticket.closedAt        = now;
+    ticket.feedbackStatus  = 'pending';
+
     await ticket.save();
+
 
     await createLog({
       ticketId: ticket._id,

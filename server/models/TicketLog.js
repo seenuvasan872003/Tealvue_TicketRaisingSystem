@@ -43,7 +43,10 @@ const ticketLogSchema = new mongoose.Schema(
         'TRANSFERRED_TO_ADMIN_BY_TEAM_USER',
         'CATEGORY_SET_BY_ADMIN',
         'TICKET_DECLINED_BY_ADMIN',
-        'TICKET_CLOSED_BY_TEAM_USER'
+        'TICKET_CLOSED_BY_TEAM_USER',
+        'TICKET_REOPENED',
+        'TICKET_DECLINED_REOPEN_LIMIT',
+        'TICKET_FLAG_ADDED'
       ]
     },
     performedBy: {

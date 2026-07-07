@@ -67,7 +67,7 @@ export default function UserActivityDetails() {
   const BASE     = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/${prefix}/user-activity`;
   const headers  = { Authorization: `Bearer ${token}` };
 
-  const [tab,       setTab]       = useState('activity_logs'); // Tabs: activity_logs, error_logs, sessions
+  const [tab,       setTab]       = useState('warning_logs'); // Tabs: warning_logs, error_logs, sessions
   const [profile,   setProfile]   = useState(null);
   const [summary,   setSummary]   = useState(null);
   const [logs,      setLogs]      = useState([]);
@@ -101,16 +101,13 @@ export default function UserActivityDetails() {
       
       let filteredLogs = res.data.logs || [];
       
-      if (tab === 'activity_logs') {
-        // Activity Logs -> Show everything except actual error status codes (statusCode >= 400 or failed logins/unauth)
-        // Keep all warning/triggers/logs
+      if (tab === 'warning_logs') {
+        // Warning Logs -> Only show warning logs (statusCode >= 300 and statusCode < 400)
         filteredLogs = filteredLogs.filter(log => 
-          log.eventType !== 'FAILED_LOGIN' && 
-          log.eventType !== 'UNAUTHORIZED_ATTEMPT' && 
-          (!log.details?.statusCode || log.details?.statusCode < 400)
+          log.details?.statusCode && log.details.statusCode >= 300 && log.details.statusCode < 400
         );
       } else if (tab === 'error_logs') {
-        // Error Logs -> Show only errors
+        // Error Logs -> Show only errors (statusCode >= 400 or failed logins/unauth)
         filteredLogs = filteredLogs.filter(log => 
           log.eventType === 'FAILED_LOGIN' || 
           log.eventType === 'UNAUTHORIZED_ATTEMPT' || 
@@ -143,12 +140,21 @@ export default function UserActivityDetails() {
     }
   }, [tab, fetchLogs, fetchSessions]);
 
-  const formatDuration = (ms) => {
-    if (!ms) return '—';
-    const s = Math.round(ms / 1000);
-    if (s < 60) return `${s}s`;
-    const m = Math.floor(s / 60);
-    return `${m}m ${s % 60}s`;
+  const formatTime = (dateStr) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDurationText = (s) => {
+    const loginT = formatTime(s.loginAt);
+    const logoutT = s.logoutAt ? formatTime(s.logoutAt) : 'Present';
+    if (!s.logoutAt) {
+      return `Active: ${loginT} - ${logoutT}`;
+    }
+    const diff = Math.round((new Date(s.logoutAt) - new Date(s.loginAt)) / 1000);
+    const m = Math.floor(diff / 60);
+    const durationStr = m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`;
+    return `Active: ${loginT} - ${logoutT} (${durationStr})`;
   };
 
   return (
@@ -196,8 +202,8 @@ export default function UserActivityDetails() {
       {/* Tabs / Log Segments */}
       <div className="flex flex-wrap gap-1.5 bg-white/5 border border-white/5 rounded-xl p-1 w-fit">
         {[
-          { id: 'activity_logs', label: 'Activity Logs', icon: 'ti-activity' },
-          { id: 'error_logs',    label: 'Error Logs',    icon: 'ti-alert' },
+          { id: 'warning_logs', label: 'Warning Logs', icon: 'ti-alert' },
+          { id: 'error_logs',    label: 'Error Logs',    icon: 'ti-close' },
           { id: 'sessions',      label: 'Sessions',      icon: 'ti-login' }
         ].map(t => (
           <button
@@ -232,7 +238,7 @@ export default function UserActivityDetails() {
           ) : logs.length === 0 ? (
             <div className="flex flex-col items-center py-20 text-white/30">
               <i className="ti-face-sad text-4xl mb-3 text-white/20"></i>
-              <p className="text-sm">No activity logs recorded under this category</p>
+              <p className="text-sm">No logs recorded under this category</p>
             </div>
           ) : (
             logs.map(log => {
@@ -274,16 +280,19 @@ export default function UserActivityDetails() {
       ) : (
         <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
           {/* Table Header */}
-          <div className="hidden md:grid grid-cols-[2.5fr_1.5fr_1.5fr_1.2fr_1fr] gap-4 px-6 py-4 border-b border-white/10 text-xs font-bold text-white/40 uppercase tracking-wider">
-            <span>Session Identifier</span>
+          <div className="hidden md:grid grid-cols-[1.5fr_1.2fr_1fr_1.5fr_1.5fr_0.8fr_2.5fr_1fr] gap-4 px-6 py-4 border-b border-white/10 text-[10px] font-bold text-white/40 uppercase tracking-wider">
+            <span>Session ID</span>
+            <span>User Name</span>
+            <span>Role</span>
             <span>Login Time</span>
             <span>Logout Time</span>
-            <span>Duration</span>
-            <span>Session Status</span>
+            <span>Log Count</span>
+            <span>Duration (Active window)</span>
+            <span>Status</span>
           </div>
 
           {sessLoading ? (
-            Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={5} />)
+            Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={8} />)
           ) : sessions.length === 0 ? (
             <div className="flex flex-col items-center py-20 text-white/30">
               <i className="ti-info-alt text-4xl mb-3 text-white/20"></i>
@@ -293,14 +302,19 @@ export default function UserActivityDetails() {
             sessions.map(s => (
               <div
                 key={s._id}
-                className="grid grid-cols-1 md:grid-cols-[2.5fr_1.5fr_1.5fr_1.2fr_1fr] gap-4 items-center px-6 py-4 border-b border-white/5 hover:bg-white/5 transition-all duration-200"
+                className="grid grid-cols-1 md:grid-cols-[1.5fr_1.2fr_1fr_1.5fr_1.5fr_0.8fr_2.5fr_1fr] gap-4 items-center px-6 py-4 border-b border-white/5 hover:bg-white/5 transition-all duration-200"
               >
                 <span className="text-xs font-mono text-white/50 truncate" title={s.sessionId}>
-                  {s.sessionId}
+                  {s.sessionId?.slice(0, 8)}...
                 </span>
+                <span className="text-xs text-white/70 truncate">{s.userName || profile?.name}</span>
+                <span className="text-xs text-white/50">{s.userRole?.replace('_', ' ').replace('-', ' ')}</span>
                 <span className="text-xs text-white/70">{s.loginAt ? new Date(s.loginAt).toLocaleString() : '—'}</span>
                 <span className="text-xs text-white/70">{s.logoutAt ? new Date(s.logoutAt).toLocaleString() : '—'}</span>
-                <span className="text-xs text-white/70">{formatDuration(s.duration)}</span>
+                <span className="text-xs text-white/80 font-bold text-center md:text-left">{s.pageLogCount ?? 0}</span>
+                <span className="text-xs text-teal-400 font-medium truncate" title={formatDurationText(s)}>
+                  {formatDurationText(s)}
+                </span>
                 <div>
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
                     s.isActive 

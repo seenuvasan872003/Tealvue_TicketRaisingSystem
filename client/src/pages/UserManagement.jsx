@@ -13,11 +13,13 @@ import { useAuth } from '../context/AuthContext';
 import { ShieldCheck, User, Search, RefreshCw, XCircle, CheckCircle, Crown, Eye, Users, ShieldAlert, Check, Unlock } from 'lucide-react';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
+import ExportButton from '../components/ExportButton';
 
 import { getCache, setCache, invalidateCache } from '../utils/cache';
 
 const UserManagement = () => {
   const { user: currentUser, isSuperAdmin } = useAuth();
+  const rolePrefix = currentUser?.role === 'super-admin' ? 'super-admin' : 'admin';
   const [users, setUsers]       = useState(() => {
     const cached = getCache('all_users');
     return Array.isArray(cached) ? cached : [];
@@ -148,10 +150,17 @@ const UserManagement = () => {
           <h1 className="page-title">User Management</h1>
           <p className="page-subtitle">Manage accounts, roles, and access controls</p>
         </div>
-        <button className="btn btn-secondary flex items-center gap-1.5" onClick={() => { loadUsers(); loadStats(); }}>
-          <RefreshCw size={14} className={loading ? 'spin' : ''} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <ExportButton
+            endpoint={`/api/${rolePrefix}/export/users`}
+            filename="users"
+            filters={{ role: filter !== 'all' ? filter : undefined }}
+          />
+          <button className="btn btn-secondary flex items-center gap-1.5" onClick={() => { loadUsers(); loadStats(); }}>
+            <RefreshCw size={14} className={loading ? 'spin' : ''} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Stats Bar */}

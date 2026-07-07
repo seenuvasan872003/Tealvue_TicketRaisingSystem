@@ -88,7 +88,25 @@ const getUserSessions = async (req, res) => {
     const { uid } = req.params;
     const sessions = await UserSession.find({ userId: uid }).sort({ loginAt: -1 });
     const user     = await User.findById(uid).select('name email role avatar createdAt');
-    res.json({ sessions, user });
+
+    // Count page logs for each session
+    const sessionIds = sessions.map(s => s.sessionId);
+    const logCounts = await UserActivityLog.aggregate([
+      { $match: { 'details.sessionId': { $in: sessionIds } } },
+      { $group: { _id: '$details.sessionId', count: { $sum: 1 } } }
+    ]);
+    
+    const countMap = {};
+    logCounts.forEach(lc => {
+      if (lc._id) countMap[lc._id] = lc.count;
+    });
+
+    const sessionsWithCount = sessions.map(s => ({
+      ...s.toObject(),
+      pageLogCount: countMap[s.sessionId] || 0
+    }));
+
+    res.json({ sessions: sessionsWithCount, user });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

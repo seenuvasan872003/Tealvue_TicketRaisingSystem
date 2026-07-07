@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { getMyTeam, getTeamPerformance, getTeams } from '../services/ticketApi';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
+import ExportButton from '../components/ExportButton';
 import {
   TrendingUp,
   CheckCircle2,
@@ -25,6 +27,10 @@ const TeamPerformance = () => {
   const [team, setTeam] = useState(() => getCache('my_team'));
   const [performance, setPerformance] = useState(() => getCache('team_performance'));
   const [loading, setLoading] = useState(() => !getCache('team_performance'));
+  
+  const [activeTab, setActiveTab] = useState('overview');
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [teamData, setTeamData] = useState(null);
 
   const loadPerformanceData = async (selectedTeamId = null) => {
     logger.info('TeamPerformance', 'loadPerformanceData', 'Loading team performance data', { action: 'Team Performance Load Start' });
@@ -70,6 +76,18 @@ const TeamPerformance = () => {
         logger.info('TeamPerformance', 'loadPerformanceData', `Performance data loaded for team: ${activeTeam.name}`, {
           api: `/api/teams/${activeTeamId}/performance`, method: 'GET', action: 'Team Performance Load Success',
         });
+
+        // Load feedback comments
+        try {
+          const rolePrefix = user?.role === 'super-admin' ? 'super-admin' : user?.role === 'admin' ? 'admin' : 'team-admin';
+          const fbRes = await API.get(`/${rolePrefix}/feedback/team/${activeTeamId}`);
+          setFeedbacks(fbRes.data.feedbacks || []);
+          if (fbRes.data.team) {
+            setTeamData(fbRes.data.team);
+          }
+        } catch (err) {
+          console.error('Failed to load feedback comments:', err);
+        }
       }
     } catch (err) {
       logger.error('TeamPerformance', 'loadPerformanceData', 'Failed to load team performance analytics', err, {
@@ -151,7 +169,26 @@ const TeamPerformance = () => {
         )}
       </div>
 
-      {/* Summary Cards */}
+      {/* ── Tab Navigation */}
+      <div className="flex gap-1 border-b border-[var(--color-border)] mb-5">
+        {['overview', 'feedback'].map(t => (
+          <button
+            key={t}
+            onClick={() => setActiveTab(t)}
+            className={`px-4 py-2.5 bg-transparent border-none font-semibold cursor-pointer text-sm capitalize ${
+              activeTab === t
+                ? 'border-b-2 border-[var(--color-teal)] text-[var(--color-teal)]'
+                : 'border-b-2 border-transparent text-[#acacac]'
+            }`}
+          >
+            {t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'overview' && (
+        <>
+          {/* Summary Cards */}
       <div className="stat-grid mb-7">
         <div className="stat-card teal p-6">
           <div className="flex justify-between items-start">
@@ -287,6 +324,93 @@ const TeamPerformance = () => {
           </table>
         </div>
       </div>
+      </>
+      )}
+
+      {activeTab === 'feedback' && (
+        <div className="space-y-6">
+          {/* Average Rating */}
+          {(() => {
+            const resolvedTeam = teamData || team;
+            return (
+              <>
+                <div className="card p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <p className="text-5xl font-bold text-yellow-400">{resolvedTeam?.averageRating?.toFixed(1) || '—'}</p>
+                      <div className="flex justify-center gap-0.5 mt-1">
+                        {[1,2,3,4,5].map(s => (
+                          <span key={s} style={{ color: s <= Math.round(resolvedTeam?.averageRating || 0) ? '#eac253' : '#3a3a3a' }}>★</span>
+                        ))}
+                      </div>
+                      <p className="text-xs text-white/40 mt-1">Average Rating</p>
+                    </div>
+                    <div className="ml-8">
+                      <p className="text-2xl font-bold text-white">{resolvedTeam?.totalFeedbacks || 0}</p>
+                      <p className="text-xs text-white/40">Total Feedbacks</p>
+                    </div>
+                  </div>
+
+                  {/* Star Breakdown */}
+                  <div className="mt-6 space-y-2">
+                    {['five','four','three','two','one'].map((key, i) => {
+                      const stars = 5 - i;
+                      const count = resolvedTeam?.ratingBreakdown?.[key] || 0;
+                      const total = resolvedTeam?.totalFeedbacks || 1;
+                      const pct   = Math.round((count / total) * 100);
+                      return (
+                        <div key={key} className="flex items-center gap-3">
+                          <span className="text-xs text-white/50 w-8 text-right">{stars}★</span>
+                          <div className="flex-1 bg-[#252525] rounded-full h-2">
+                            <div
+                              className="h-2 rounded-full bg-yellow-400 transition-all duration-500"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-white/50 w-10">{pct}%</span>
+                          <span className="text-xs text-white/30 w-8">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+
+          {/* Recent Comments */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-semibold text-white/70">Recent Feedback Comments</h4>
+              {team && (
+                <ExportButton
+                  endpoint={`/api/team-admin/export/feedback`}
+                  filename="feedback"
+                  filters={{ teamId: team._id }}
+                  label="Export Feedback"
+                />
+              )}
+            </div>
+             {feedbacks.length === 0 ? (
+              <p className="text-sm text-white/30 text-center py-8">No feedback yet</p>
+            ) : feedbacks.map(fb => (
+              <div key={fb._id} className="border-b border-white/5 py-4 flex items-start justify-between gap-4">
+                <div className="space-y-1.5">
+                  <div className="text-sm font-semibold text-white/90">{fb.userId?.name || 'Anonymous'}</div>
+                  <div className="text-xs text-white/60 leading-relaxed">{fb.comment || <em className="text-white/20">No comment</em>}</div>
+                  {fb.teamUserId && (
+                    <div className="text-[11px] text-teal-400 font-semibold mt-1">Solved by: {fb.teamUserId.name}</div>
+                  )}
+                </div>
+                <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                  <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">{fb.rating}★</span>
+                  <span className="text-[10px] text-white/30">{new Date(fb.submittedAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

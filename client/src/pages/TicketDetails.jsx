@@ -12,7 +12,7 @@ import {
   ArrowLeft, Hash, Calendar, User, Target, Tag,
   MessageSquare, Send, Lock, ShieldCheck, Paperclip,
   Clock, FileText, Plus, Edit3, Save, X, Crown,
-  UserCheck, CheckCircle, XCircle
+  UserCheck, CheckCircle, XCircle, RotateCcw
 } from 'lucide-react';
 import {
   getTicketById,
@@ -42,6 +42,8 @@ import TicketTimeline from '../components/TicketTimeline';
 import { io } from 'socket.io-client';
 import logger from '../utils/logger';
 import { SkeletonCard, SkeletonText } from '../components/skeletons';
+import FeedbackCard from '../components/FeedbackCard';
+import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 const PRIORITIES  = ['low', 'medium', 'high', 'urgent'];
@@ -50,6 +52,9 @@ const TicketDetails = () => {
   const { id } = useParams();
   const { user, isSuperAdmin, isAdminLevel } = useAuth();
   const navigate = useNavigate();
+  const [showReopenModal, setShowReopenModal] = useState(false);
+  const [reopenReason, setReopenReason]       = useState('');
+  const [reopenLoading, setReopenLoading]     = useState(false);
 
   const [ticket,   setTicket]   = useState(null);
   const [categories, setCategories] = useState(['General', 'Technical', 'Billing', 'HR', 'Other']);
@@ -129,6 +134,43 @@ const TicketDetails = () => {
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleReopen = async () => {
+    if (!reopenReason || reopenReason.trim().length < 10) {
+      toast.error('Reason must be at least 10 characters');
+      return;
+    }
+    if (reopenReason.trim().length > 500) {
+      toast.error('Reason must be 500 characters or less');
+      return;
+    }
+    setReopenLoading(true);
+    try {
+      const BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/user`;
+      const token = localStorage.getItem('token');
+      const res = await axios.put(`${BASE}/tickets/my/${ticket._id}/reopen`, 
+        { reason: reopenReason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Ticket reopened successfully');
+      setShowReopenModal(false);
+      setReopenReason('');
+      setTicket(prev => ({ 
+        ...prev, 
+        status: 'open', 
+        reopenCount: res.data.ticket.reopenCount,
+        feedbackStatus: null
+      }));
+    } catch (err) {
+      if (err.response?.data?.isDeclinedByReopen) {
+        toast.error('Ticket cannot be reopened. Your account has been flagged multiple times.');
+        setTicket(prev => ({ ...prev, isDeclinedByReopen: true }));
+      } else {
+        toast.error(err.response?.data?.message || 'Failed to reopen ticket');
+      }
+    }
+    setReopenLoading(false);
   };
 
   const handleReallocateSubmit = async (e) => {
@@ -575,6 +617,14 @@ const TicketDetails = () => {
 
         {/* ── Left column: ticket body + comments */}
         <div className="flex flex-col gap-4">
+          
+          {/* Feedback Prompt Card */}
+          {ticket?.feedbackStatus === 'sent' && String(ticket?.user_id?._id || ticket?.user_id) === String(user?._id) && (
+            <FeedbackCard
+              ticket={ticket}
+              onDone={() => setTicket(prev => ({ ...prev, feedbackStatus: 'submitted' }))}
+            />
+          )}
 
           {/* Main Ticket Card */}
           <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl px-7 py-6">
@@ -834,6 +884,24 @@ const TicketDetails = () => {
                 <p className="m-0 text-xs text-[#acacac] leading-[1.5]">
                   This ticket has been marked as completed. No further allocations or state updates are permitted.
                 </p>
+                
+                {/* Reopen Button — shown only to ticket owner when closed */}
+                {String(ticket?.user_id?._id || ticket?.user_id) === String(user?._id) && !ticket?.isDeclinedByReopen && (
+                  <button
+                    onClick={() => setShowReopenModal(true)}
+                    className="mt-3 flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-white/20 text-white hover:border-yellow-500/50 hover:text-yellow-400 transition-all text-xs font-semibold bg-transparent w-full"
+                  >
+                    <RotateCcw size={12} />
+                    Reopen Ticket
+                  </button>
+                )}
+
+                {ticket?.isDeclinedByReopen && (
+                  <span className="mt-3 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold w-full">
+                    <XCircle size={12} />
+                    Ticket Declined
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -1325,6 +1393,54 @@ const TicketDetails = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reopen Modal */}
+      {showReopenModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
+            <h3 className="text-lg font-bold text-white">Reopen Ticket</h3>
+            <p className="text-sm text-white/50">Please describe why this issue is not resolved.</p>
+            
+            {/* Warning if reopened before */}
+            {(ticket?.reopenCount >= 1) && (
+              <div className="flex gap-2 p-3 bg-orange-500/10 border border-orange-500/30 rounded-xl">
+                <p className="text-xs text-orange-300">
+                  <strong>Warning:</strong> This ticket has been reopened before. 
+                  Reopening again will add a flag to your account.
+                </p>
+              </div>
+            )}
+
+            <div className="relative">
+              <textarea
+                rows={4}
+                value={reopenReason}
+                onChange={e => setReopenReason(e.target.value)}
+                maxLength={500}
+                placeholder="Describe the issue... (min 10 characters)"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-teal-500/50 transition-colors"
+              />
+              <span className="absolute bottom-3 right-4 text-[10px] text-white/30">{reopenReason.length}/500</span>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleReopen}
+                disabled={reopenLoading}
+                className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-black bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 disabled:opacity-40 transition-all"
+              >
+                {reopenLoading ? 'Processing...' : 'Reopen Ticket'}
+              </button>
+              <button
+                onClick={() => { setShowReopenModal(false); setReopenReason(''); }}
+                className="px-4 py-2.5 rounded-xl font-semibold text-sm text-white/50 border border-white/10 hover:border-white/30 hover:text-white/80 transition-all bg-transparent"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

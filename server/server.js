@@ -141,6 +141,14 @@ app.use('/api/team-admin/user-activity',  protect, requireRolePrefix, trackActiv
 app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/ticketApproval'));
 app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/roleFeatures'));
 
+// ── Feedback & Export routes ─────────────────────────────────────────────────
+app.use('/api/admin',         protect, requireRolePrefix, require('./routes/admin/feedback'));
+app.use('/api/super-admin',   protect, requireRolePrefix, require('./routes/admin/feedback'));
+app.use('/api/team-admin',    protect, requireRolePrefix, require('./routes/admin/feedback'));
+app.use('/api/admin',         protect, requireRolePrefix, require('./routes/admin/export'));
+app.use('/api/super-admin',   protect, requireRolePrefix, require('./routes/superAdmin/export'));
+app.use('/api/team-admin',    protect, requireRolePrefix, require('./routes/admin/export'));
+
 app.use('/api/user',                      protect, requireRolePrefix, require('./routes/user/myTickets'));
 app.use('/api/user',                      protect, requireRolePrefix, require('./routes/user/createTicket'));
 app.use('/api/user',                      protect, requireRolePrefix, require('./routes/user/ticketStates'));
@@ -170,6 +178,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 const { seedTeams } = require('./seeders/teamSeed');
 const { startTeamAdminTimeoutJob } = require('./jobs/teamAdminTimeout');
+const { startFeedbackPromptJob }   = require('./jobs/feedbackPrompt');
 
 if (process.env.NODE_ENV !== 'test') {
   connectDB().then(async () => {
@@ -206,6 +215,9 @@ if (process.env.NODE_ENV !== 'test') {
 
     // Start Team Admin Timeout Job
     startTeamAdminTimeoutJob();
+
+    // Start Feedback Prompt Job
+    startFeedbackPromptJob();
 
     server.listen(PORT, () =>
       console.log(`Server running with WebSockets → http://localhost:${PORT}`)

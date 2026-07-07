@@ -75,8 +75,8 @@ const Sidebar = ({ isOpen, onClose }) => {
     fetchTeam();
   }, [user]);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
     if (onClose) onClose();
   };

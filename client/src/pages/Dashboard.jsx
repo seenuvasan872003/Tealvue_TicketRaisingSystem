@@ -10,6 +10,7 @@ import {
   Ticket, CircleDot, RotateCcw, CheckCircle2, Plus,
   AlertTriangle, Minus, Activity, Calendar, User, Hash, XCircle
 } from 'lucide-react';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import {
   getAdminStats, getMyStats, getTickets,
@@ -22,6 +23,7 @@ import {
   PieChart, Pie, Cell, Legend, BarChart, Bar
 } from 'recharts';
 import logger from '../utils/logger';
+import FeedbackCard from '../components/FeedbackCard';
 
 const StatCard = ({ label, value, color, Icon }) => {
   // Map color to a modern gradient background
@@ -87,6 +89,7 @@ const Dashboard = () => {
   const membersPerPage = 4;
 
   const [chartsLoaded, setChartsLoaded] = useState(() => !!getCache('dashboard_growth'));
+  const [pendingFeedback, setPendingFeedback] = useState([]);
 
   useEffect(() => {
     const loadCriticalData = async () => {
@@ -188,6 +191,18 @@ const Dashboard = () => {
           setRecent(ticketsRes.data.tickets);
           setCache(cacheKey, statsRes.data, 5);
           setCache('recent_tickets', ticketsRes.data.tickets, 3);
+        }
+
+        // Load pending feedback for regular users
+        if (user?.role === 'user') {
+          try {
+            const BASE_USER = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/user`;
+            const token = localStorage.getItem('token');
+            const fbRes = await axios.get(`${BASE_USER}/tickets/my/feedback/pending`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            setPendingFeedback(fbRes.data.tickets || []);
+          } catch (_) {}
         }
       } catch (e) {
         console.error('[Dashboard] load error:', e);
@@ -302,6 +317,22 @@ const Dashboard = () => {
           <StatCard label="Transferred" value={stats?.transferred} color="red" Icon={XCircle} />
         )}
       </div>
+
+      {/* Pending Feedback Cards */}
+      {pendingFeedback.length > 0 && (
+        <div className="space-y-3 mb-6">
+          <h3 className="text-sm font-semibold text-yellow-400 uppercase tracking-wider flex items-center gap-2">
+            <span>⭐</span> Awaiting Your Feedback
+          </h3>
+          {pendingFeedback.map(ticket => (
+            <FeedbackCard
+              key={ticket._id}
+              ticket={ticket}
+              onDone={() => setPendingFeedback(prev => prev.filter(t => t._id !== ticket._id))}
+            />
+          ))}
+        </div>
+      )}
 
       {(isAdminLevel || user?.role === 'team_admin' || user?.role === 'team_user') && stats && (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-7">

@@ -36,7 +36,10 @@ const notificationSchema = new mongoose.Schema(
         'TICKET_VIEWED_BY_TEAM_USER',
         'TICKET_RESOLVED',
         'TICKET_REALLOCATED_TEAM',
-        'TICKET_REJECTED'
+        'TICKET_REJECTED',
+        'FEEDBACK_PROMPT',
+        'TICKET_REOPENED',
+        'TICKET_DECLINED_AUTO'
       ]
     },
 

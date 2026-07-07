@@ -163,6 +163,20 @@ const ticketSchema = new mongoose.Schema(
       timeToClose:      { type: Number, default: null },
       timeInProgress:   { type: Number, default: null },
     },
+
+    // ── Feedback ─────────────────────────────────────────
+    closedAt:         { type: Date, default: null },
+    feedbackPromptAt: { type: Date, default: null },
+    feedbackStatus:   { type: String, enum: ['pending','sent','submitted','dismissed'], default: null },
+
+    // ── Reopen Tracking ──────────────────────────────────
+    reopenCount:        { type: Number, default: 0 },
+    reopenHistory: [{
+      reopenedAt: { type: Date },
+      reason:     { type: String },
+      userId:     { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    }],
+    isDeclinedByReopen: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

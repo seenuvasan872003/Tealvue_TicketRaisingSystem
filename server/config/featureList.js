@@ -514,6 +514,40 @@ const FEATURES = [
       admin:       '/api/admin/user-activity',
       team_admin:  '/api/team-admin/user-activity'
     }
+  },
+
+  {
+    id:       'feedback_report',
+    label:    'Feedback Report',
+    section:  'MONITORING',
+    icon:     'ti-star',
+    roles:    ['super-admin', 'admin', 'team_admin'],
+    paths: {
+      'super-admin': '/super-admin/performance',
+      admin:       '/admin/performance',
+      team_admin:  '/team-admin/performance'
+    },
+    apiPaths: {
+      'super-admin': '/api/super-admin/feedback',
+      admin:       '/api/admin/feedback',
+      team_admin:  '/api/team-admin/feedback'
+    }
+  },
+
+  {
+    id:       'export_data',
+    label:    'Export Data',
+    section:  'MONITORING',
+    icon:     'ti-download',
+    roles:    ['super-admin', 'admin'],
+    paths: {
+      'super-admin': '/super-admin/export',
+      admin:       '/admin/export'
+    },
+    apiPaths: {
+      'super-admin': '/api/super-admin/export',
+      admin:       '/api/admin/export'
+    }
   }
 ];
 

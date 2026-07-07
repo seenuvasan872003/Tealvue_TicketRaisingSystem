@@ -14,12 +14,14 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import API from '../services/authApi';
 import logger from '../utils/logger';
+import ExportButton from '../components/ExportButton';
 
 import { getCache, setCache } from '../utils/cache';
 
 const AllTickets = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const rolePrefix = user?.role === 'super-admin' ? 'super-admin' : 'admin';
 
   const [tickets,  setTickets]  = useState(() => {
     const cached = getCache('all_tickets');
@@ -195,6 +197,11 @@ const AllTickets = () => {
           <h1 className="page-title">All Tickets</h1>
           <p className="page-subtitle">{total} ticket{total !== 1 ? 's' : ''} in the system</p>
         </div>
+        <ExportButton
+          endpoint={`/api/${rolePrefix}/export/tickets`}
+          filename="tickets"
+          filters={{ status: filters.status, priority: filters.priority }}
+        />
       </div>
 
       {/* Tab Selectors */}

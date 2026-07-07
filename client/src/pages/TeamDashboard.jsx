@@ -32,6 +32,7 @@ const TeamDashboard = () => {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [teamTickets, setTeamTickets] = useState([]);
   const [teamLogs, setTeamLogs] = useState([]);
+  const [teamFeedbacks, setTeamFeedbacks] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [modalLoading, setModalLoading] = useState(false);
 
@@ -74,6 +75,11 @@ const TeamDashboard = () => {
       // 3. Fetch member performance for this team
       const pRes = await API.get(`/teams/${team.teamId}/performance`);
       setTeamMembers(pRes.data.memberPerformance || []);
+
+      // 4. Fetch team feedbacks
+      const rolePrefix = isSuperAdmin ? 'super-admin' : 'admin';
+      const fRes = await API.get(`/${rolePrefix}/feedback/team/${team.teamId}`);
+      setTeamFeedbacks(fRes.data.feedbacks || []);
     } catch (err) {
       toast.error('Failed to load team details');
       console.error(err);
@@ -506,6 +512,34 @@ const TeamDashboard = () => {
                               <span>{new Date(log.createdAt).toLocaleDateString()}</span>
                             </div>
                             <div className="text-[#acacac] mt-0.5">{log.note}</div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Customer Feedback Comments */}
+                <div>
+                  <h4 className="text-sm font-semibold text-white mb-2.5">Recent Customer Feedback</h4>
+                  <div className="flex flex-col gap-2.5 max-h-[220px] overflow-y-auto pr-1">
+                    {teamFeedbacks.length === 0 ? (
+                      <div className="text-center p-4 text-[var(--color-text-muted)] border border-dashed border-[#252525] rounded-lg text-[13px]">No customer feedback comments yet.</div>
+                    ) : (
+                      teamFeedbacks.map(fb => (
+                        <div key={fb._id} className="bg-[#111] border border-[#252525] rounded-md p-3 text-xs flex justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-white">{fb.userId?.name || 'Anonymous'}</span>
+                              <span className="text-[10px] text-yellow-400 font-bold bg-yellow-400/10 px-1.5 py-0.5 rounded">{fb.rating}★</span>
+                            </div>
+                            <div className="text-[#acacac]">{fb.comment || <em className="text-white/20">No comment</em>}</div>
+                            {fb.teamUserId && (
+                              <div className="text-[10px] text-teal-400 font-semibold mt-1.5">Solved by: {fb.teamUserId.name}</div>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-[var(--color-text-muted)] text-right">
+                            {new Date(fb.submittedAt).toLocaleDateString()}
                           </div>
                         </div>
                       ))
