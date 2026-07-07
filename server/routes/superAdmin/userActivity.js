@@ -7,20 +7,20 @@ const {
 } = require('../../controllers/userActivityController');
 
 // Dashboard stats
-router.get('/stats',          ...guardRoute('client_logs'), getDashboardStats);
+router.get('/stats',          ...guardRoute('user_activity_logs'), getDashboardStats);
 
 // All tracked users list
-router.get('/users',          ...guardRoute('client_logs'), getAllTrackedUsers);
+router.get('/users',          ...guardRoute('user_activity_logs'), getAllTrackedUsers);
 
 // All activity logs (paginated, filterable)
-router.get('/',               ...guardRoute('client_logs'), getAllActivity);
+router.get('/',               ...guardRoute('user_activity_logs'), getAllActivity);
 
 // All sessions
-router.get('/sessions',       ...guardRoute('client_logs'), getAllSessions);
+router.get('/sessions',       ...guardRoute('user_activity_logs'), getAllSessions);
 
 // Specific user
-router.get('/:uid',           ...guardRoute('client_logs'), getUserActivity);
-router.get('/:uid/summary',   ...guardRoute('client_logs'), getUserSummary);
-router.get('/:uid/sessions',  ...guardRoute('client_logs'), getUserSessions);
+router.get('/:uid',           ...guardRoute('user_activity_logs'), getUserActivity);
+router.get('/:uid/summary',   ...guardRoute('user_activity_logs'), getUserSummary);
+router.get('/:uid/sessions',  ...guardRoute('user_activity_logs'), getUserSessions);
 
 module.exports = router;

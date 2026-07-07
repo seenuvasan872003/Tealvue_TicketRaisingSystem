@@ -16,7 +16,7 @@ const ROLE_DEFAULTS = {
     'dashboard', 'my_tickets', 'create_ticket', 'ticket_states'
   ],
   'team_admin': [
-    'dashboard', 'team_tickets', 'team_members', 'team_performance'
+    'dashboard', 'team_tickets', 'team_members', 'team_performance', 'user_activity_logs'
   ],
   'team_user': [
     'dashboard', 'assigned_tickets', 'finished_tickets'

@@ -518,14 +518,15 @@ export const FEATURES = [
     label:    'User Activity',
     section:  'MONITORING',
     icon:     'ti-user-check',
-    roles:    ['super-admin', 'admin'],
+    roles:    ['super-admin', 'admin', 'team_admin'],
     paths: {
       'super-admin': '/super-admin/user-activity',
       admin:       '/admin/user-activity'
     },
     apiPaths: {
       'super-admin': '/api/super-admin/user-activity',
-      admin:       '/api/admin/user-activity'
+      admin:       '/api/admin/user-activity',
+      team_admin:  '/api/team-admin/user-activity'
     }
   }
 ];

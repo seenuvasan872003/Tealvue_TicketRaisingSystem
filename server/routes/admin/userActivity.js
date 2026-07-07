@@ -29,11 +29,11 @@ const validateTargetRole = async (req, res, next) => {
   }
 };
 
-router.get('/stats',         ...guardRoute('client_logs'), getDashboardStats);
-router.get('/users',         ...guardRoute('client_logs'), restrictRoles, getAllTrackedUsers);
-router.get('/',              ...guardRoute('client_logs'), restrictRoles, getAllActivity);
-router.get('/:uid',          ...guardRoute('client_logs'), validateTargetRole, getUserActivity);
-router.get('/:uid/summary',  ...guardRoute('client_logs'), validateTargetRole, getUserSummary);
-router.get('/:uid/sessions', ...guardRoute('client_logs'), validateTargetRole, getUserSessions);
+router.get('/stats',         ...guardRoute('user_activity_logs'), getDashboardStats);
+router.get('/users',         ...guardRoute('user_activity_logs'), restrictRoles, getAllTrackedUsers);
+router.get('/',              ...guardRoute('user_activity_logs'), restrictRoles, getAllActivity);
+router.get('/:uid',          ...guardRoute('user_activity_logs'), validateTargetRole, getUserActivity);
+router.get('/:uid/summary',  ...guardRoute('user_activity_logs'), validateTargetRole, getUserSummary);
+router.get('/:uid/sessions', ...guardRoute('user_activity_logs'), validateTargetRole, getUserSessions);
 
 module.exports = router;

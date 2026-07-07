@@ -4,10 +4,10 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
-const SkeletonRow = ({ cols = 4 }) => (
+const SkeletonRow = ({ cols = 5 }) => (
   <div className="animate-pulse flex items-center gap-4 p-4 border-b border-white/5">
     {Array.from({ length: cols }).map((_, i) => (
-      <div key={i} className="h-3 bg-white/10 rounded" style={{ flex: i === 0 ? 2 : 1 }}></div>
+      <div key={i} className="h-3 bg-white/10 rounded" style={{ flex: i === 0 ? 2.5 : 1 }}></div>
     ))}
   </div>
 );
@@ -58,13 +58,6 @@ const Avatar = ({ name, avatar, size = 'md' }) => {
   );
 };
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-const TABS = [
-  { id: 'overview',  label: 'Overview',  icon: 'ti-chart-bar' },
-  { id: 'activity',  label: 'Activity',  icon: 'ti-list' },
-  { id: 'sessions',  label: 'Sessions',  icon: 'ti-login' }
-];
-
 export default function UserActivityDetails() {
   const { uid }  = useParams();
   const { user, token } = useAuth();
@@ -74,44 +67,65 @@ export default function UserActivityDetails() {
   const BASE     = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/${prefix}/user-activity`;
   const headers  = { Authorization: `Bearer ${token}` };
 
-  const [tab,       setTab]       = useState('overview');
+  const [tab,       setTab]       = useState('activity_logs'); // Tabs: activity_logs, error_logs, sessions
   const [profile,   setProfile]   = useState(null);
   const [summary,   setSummary]   = useState(null);
   const [logs,      setLogs]      = useState([]);
   const [sessions,  setSessions]  = useState([]);
   const [logsTotal, setLogsTotal] = useState(0);
   const [logsPage,  setLogsPage]  = useState(1);
-  const [evFilter,  setEvFilter]  = useState('');
   const [loading,   setLoading]   = useState(true);
   const [logsLoading, setLogsLoading] = useState(false);
   const [sessLoading, setSessLoading] = useState(false);
 
-  // Initial load
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const sumRes = await axios.get(`${BASE}/${uid}/summary`, { headers });
-        setSummary(sumRes.data.summary);
-        setProfile(sumRes.data.user);
-      } catch (_) {}
-      setLoading(false);
-    };
-    load();
-  }, [uid]);
+  // Load profile summary
+  const loadSummary = useCallback(async () => {
+    try {
+      const sumRes = await axios.get(`${BASE}/${uid}/summary`, { headers });
+      setSummary(sumRes.data.summary);
+      setProfile(sumRes.data.user);
+    } catch (_) {}
+    setLoading(false);
+  }, [uid, BASE]);
 
+  useEffect(() => {
+    loadSummary();
+  }, [loadSummary]);
+
+  // Fetch logs
   const fetchLogs = useCallback(async (p = 1) => {
     setLogsLoading(true);
     try {
-      const params = { page: p, limit: 20 };
-      if (evFilter) params.eventType = evFilter;
+      const params = { page: p, limit: 100 };
       const res = await axios.get(`${BASE}/${uid}`, { headers, params });
-      setLogs(res.data.logs || []);
-      setLogsTotal(res.data.total || 0);
+      
+      let filteredLogs = res.data.logs || [];
+      
+      if (tab === 'activity_logs') {
+        // Activity Logs -> Show everything except actual error status codes (statusCode >= 400 or failed logins/unauth)
+        // Keep all warning/triggers/logs
+        filteredLogs = filteredLogs.filter(log => 
+          log.eventType !== 'FAILED_LOGIN' && 
+          log.eventType !== 'UNAUTHORIZED_ATTEMPT' && 
+          (!log.details?.statusCode || log.details?.statusCode < 400)
+        );
+      } else if (tab === 'error_logs') {
+        // Error Logs -> Show only errors
+        filteredLogs = filteredLogs.filter(log => 
+          log.eventType === 'FAILED_LOGIN' || 
+          log.eventType === 'UNAUTHORIZED_ATTEMPT' || 
+          (log.details?.statusCode && log.details.statusCode >= 400)
+        );
+      }
+
+      setLogs(filteredLogs);
+      setLogsTotal(filteredLogs.length);
       setLogsPage(p);
     } catch (_) {}
     setLogsLoading(false);
-  }, [uid, evFilter]);
+  }, [uid, tab, BASE]);
 
+  // Fetch sessions
   const fetchSessions = useCallback(async () => {
     setSessLoading(true);
     try {
@@ -119,10 +133,15 @@ export default function UserActivityDetails() {
       setSessions(res.data.sessions || []);
     } catch (_) {}
     setSessLoading(false);
-  }, [uid]);
+  }, [uid, BASE]);
 
-  useEffect(() => { if (tab === 'activity') fetchLogs(1); }, [tab, evFilter]);
-  useEffect(() => { if (tab === 'sessions') fetchSessions(); }, [tab]);
+  useEffect(() => {
+    if (tab === 'sessions') {
+      fetchSessions();
+    } else {
+      fetchLogs(1);
+    }
+  }, [tab, fetchLogs, fetchSessions]);
 
   const formatDuration = (ms) => {
     if (!ms) return '—';
@@ -139,166 +158,158 @@ export default function UserActivityDetails() {
         onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-sm text-white/40 hover:text-teal-300 transition-colors"
       >
-        <i className="ti-arrow-left"></i> Back
+        <i className="ti-arrow-left"></i> Back to list
       </button>
 
       {/* Profile Header */}
       {loading ? <SkeletonProfile /> : (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.2)]">
           <Avatar name={profile?.name} avatar={profile?.avatar} size="lg" />
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-white">{profile?.name}</h2>
+            <h2 className="text-xl font-bold text-white tracking-wide">{profile?.name}</h2>
             <p className="text-sm text-white/40">{profile?.email}</p>
             <div className="flex flex-wrap gap-3 mt-3">
               <span className="text-xs px-2.5 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
                 {profile?.role?.replace('-', ' ').replace('_', ' ')}
               </span>
-              <span className="text-xs text-white/30">
+              <span className="text-xs text-white/30 self-center">
                 Joined {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '—'}
               </span>
             </div>
           </div>
           {/* Mini stats */}
-          <div className="flex gap-6 text-center">
-            {[['Logins',   summary?.totalLogins], ['Logouts',  summary?.totalLogouts], ['Triggers', summary?.totalTriggers]].map(([l, v]) => (
-              <div key={l}>
-                <p className="text-2xl font-bold text-white">{v ?? 0}</p>
-                <p className="text-xs text-white/30">{l}</p>
+          <div className="flex gap-8 text-center bg-white/5 rounded-2xl p-4 border border-white/5">
+            {[
+              ['Logins',   summary?.totalLogins],
+              ['Triggers', summary?.totalTriggers],
+              ['Last Active', summary?.lastActiveAt ? new Date(summary.lastActiveAt).toLocaleTimeString() : '—']
+            ].map(([l, v]) => (
+              <div key={l} className="min-w-[80px]">
+                <p className="text-xl font-bold text-teal-400">{v ?? 0}</p>
+                <p className="text-[10px] text-white/40 uppercase tracking-wider mt-0.5">{l}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-white/5 rounded-xl p-1 w-fit">
-        {TABS.map(t => (
+      {/* Tabs / Log Segments */}
+      <div className="flex flex-wrap gap-1.5 bg-white/5 border border-white/5 rounded-xl p-1 w-fit">
+        {[
+          { id: 'activity_logs', label: 'Activity Logs', icon: 'ti-activity' },
+          { id: 'error_logs',    label: 'Error Logs',    icon: 'ti-alert' },
+          { id: 'sessions',      label: 'Sessions',      icon: 'ti-login' }
+        ].map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${
               tab === t.id
-                ? 'bg-teal-500 text-white shadow-[0_0_12px_rgba(20,184,166,0.3)]'
-                : 'text-white/40 hover:text-white/70'
+                ? 'bg-teal-500 text-white shadow-[0_0_15px_rgba(20,184,166,0.4)]'
+                : 'text-white/40 hover:text-white/70 hover:bg-white/5'
             }`}
           >
-            <i className={`${t.icon} text-xs`}></i>
+            <i className={`${t.icon} text-sm`}></i>
             {t.label}
           </button>
         ))}
       </div>
 
-      {/* ── Overview Tab ───────────────────────────────── */}
-      {tab === 'overview' && (
-        <div className="grid md:grid-cols-2 gap-4">
-          {loading ? Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="animate-pulse bg-white/5 rounded-2xl p-6 h-24 border border-white/10"></div>
-          )) : [
-            ['ti-login',         'Total Logins',    summary?.totalLogins   ?? 0, 'bg-green-500'],
-            ['ti-logout',        'Total Logouts',   summary?.totalLogouts  ?? 0, 'bg-gray-500'],
-            ['ti-bolt',          'Total Triggers',  summary?.totalTriggers ?? 0, 'bg-blue-500'],
-            ['ti-clock',         'Last Active',     summary?.lastActiveAt ? new Date(summary.lastActiveAt).toLocaleString() : '—', 'bg-teal-500'],
-            ['ti-login',         'Last Login',      summary?.lastLoginAt  ? new Date(summary.lastLoginAt).toLocaleString()  : '—', 'bg-purple-500'],
-            ['ti-logout',        'Last Logout',     summary?.lastLogoutAt ? new Date(summary.lastLogoutAt).toLocaleString() : '—', 'bg-orange-500']
-          ].map(([icon, label, value, color]) => (
-            <div key={label} className={`relative overflow-hidden bg-white/5 rounded-2xl p-5 border border-white/10 hover:border-teal-500/30 transition`}>
-              <div className={`absolute top-0 right-0 w-16 h-16 rounded-full blur-2xl opacity-10 ${color}`}></div>
-              <p className="text-xs text-white/30 uppercase tracking-widest">{label}</p>
-              <p className="text-2xl font-bold text-white mt-1">{value}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── Activity Tab ───────────────────────────────── */}
-      {tab === 'activity' && (
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
-          {/* Filter */}
-          <div className="flex items-center gap-3 px-5 py-3 border-b border-white/10">
-            <select
-              value={evFilter}
-              onChange={e => setEvFilter(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-teal-500/50"
-            >
-              <option value="">All Events</option>
-              {['LOGIN','LOGOUT','API_TRIGGER','FAILED_LOGIN','UNAUTHORIZED_ATTEMPT','ROUTE_ACCESS','FEATURE_ACCESS'].map(ev => (
-                <option key={ev} value={ev}>{ev.replace(/_/g, ' ')}</option>
-              ))}
-            </select>
-            <span className="text-xs text-white/30">{logsTotal} events</span>
-          </div>
-
-          {/* Log Header */}
-          <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1.5fr_1fr] gap-4 px-5 py-3 border-b border-white/5 text-xs text-white/30 uppercase tracking-widest">
-            <span>Route</span><span>Method</span><span>Event</span><span>Timestamp</span><span>Status</span>
+      {/* Logs / Sessions table content */}
+      {tab !== 'sessions' ? (
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
+          {/* Table Header */}
+          <div className="hidden md:grid grid-cols-[2.5fr_1fr_1.5fr_1.5fr_1fr] gap-4 px-6 py-4 border-b border-white/10 text-xs font-bold text-white/40 uppercase tracking-wider">
+            <span>Requested Endpoint</span>
+            <span>Method</span>
+            <span>Event Type</span>
+            <span>Timestamp</span>
+            <span>Status</span>
           </div>
 
           {logsLoading ? (
-            Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} cols={5} />)
+            Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} cols={5} />)
           ) : logs.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-white/30">
-              <i className="ti-list-search text-3xl mb-2"></i>
-              <p className="text-sm">No logs found</p>
+            <div className="flex flex-col items-center py-20 text-white/30">
+              <i className="ti-face-sad text-4xl mb-3 text-white/20"></i>
+              <p className="text-sm">No activity logs recorded under this category</p>
             </div>
           ) : (
-            logs.map(log => (
-              <div key={log._id} className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1.5fr_1fr] gap-4 items-center px-5 py-3 border-b border-white/5 hover:bg-white/5 transition">
-                <span className="text-xs font-mono text-white/60 truncate" title={log.details?.route}>{log.details?.route || '—'}</span>
-                <div><MethodBadge method={log.details?.method} /></div>
-                <div><EventBadge type={log.eventType} /></div>
-                <span className="text-xs text-white/40">{new Date(log.timestamp).toLocaleString()}</span>
-                <span className={`text-xs font-mono ${
-                  log.details?.statusCode >= 400 ? 'text-red-400' : 'text-green-400'
-                }`}>{log.details?.statusCode ?? '—'}</span>
-              </div>
-            ))
-          )}
-
-          {/* Pagination */}
-          {logsTotal > 20 && (
-            <div className="flex justify-center gap-2 p-4">
-              {Array.from({ length: Math.ceil(logsTotal / 20) }, (_, i) => i + 1).slice(0, 10).map(p => (
-                <button
-                  key={p}
-                  onClick={() => fetchLogs(p)}
-                  className={`w-8 h-8 rounded-lg text-xs font-medium transition-all ${
-                    p === logsPage
-                      ? 'bg-teal-500 text-white'
-                      : 'bg-white/5 text-white/40 hover:bg-white/10'
-                  }`}
+            logs.map(log => {
+              const isError = log.details?.statusCode >= 400 || log.eventType === 'FAILED_LOGIN' || log.eventType === 'UNAUTHORIZED_ATTEMPT';
+              return (
+                <div
+                  key={log._id}
+                  className="grid grid-cols-1 md:grid-cols-[2.5fr_1fr_1.5fr_1.5fr_1fr] gap-4 items-center px-6 py-4 border-b border-white/5 hover:bg-white/5 transition-all duration-200"
                 >
-                  {p}
-                </button>
-              ))}
-            </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-mono text-white/70 block truncate" title={log.details?.route}>
+                      {log.details?.route || '—'}
+                    </span>
+                    {log.details?.note && (
+                      <span className="text-[10px] text-white/30 block mt-0.5 truncate">{log.details.note}</span>
+                    )}
+                  </div>
+                  <div>
+                    <MethodBadge method={log.details?.method} />
+                  </div>
+                  <div>
+                    <EventBadge type={log.eventType} />
+                  </div>
+                  <div className="text-xs text-white/40">
+                    {new Date(log.timestamp).toLocaleString()}
+                  </div>
+                  <div>
+                    <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
+                      isError ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'
+                    }`}>
+                      {log.details?.statusCode ?? '200'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
-      )}
-
-      {/* ── Sessions Tab ───────────────────────────────── */}
-      {tab === 'sessions' && (
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
-          <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-3 border-b border-white/10 text-xs text-white/30 uppercase tracking-widest">
-            <span>Session ID</span><span>Login</span><span>Logout</span><span>Duration</span><span>Status</span>
+      ) : (
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
+          {/* Table Header */}
+          <div className="hidden md:grid grid-cols-[2.5fr_1.5fr_1.5fr_1.2fr_1fr] gap-4 px-6 py-4 border-b border-white/10 text-xs font-bold text-white/40 uppercase tracking-wider">
+            <span>Session Identifier</span>
+            <span>Login Time</span>
+            <span>Logout Time</span>
+            <span>Duration</span>
+            <span>Session Status</span>
           </div>
 
           {sessLoading ? (
             Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={5} />)
           ) : sessions.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-white/30">
-              <i className="ti-login text-3xl mb-2"></i>
-              <p className="text-sm">No sessions found</p>
+            <div className="flex flex-col items-center py-20 text-white/30">
+              <i className="ti-info-alt text-4xl mb-3 text-white/20"></i>
+              <p className="text-sm">No session logs found for this user</p>
             </div>
           ) : (
             sessions.map(s => (
-              <div key={s._id} className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 items-center px-5 py-3 border-b border-white/5 hover:bg-white/5 transition">
-                <span className="text-xs font-mono text-white/40 truncate" title={s.sessionId}>{s.sessionId?.slice(0, 18)}…</span>
-                <span className="text-xs text-white/60">{s.loginAt ? new Date(s.loginAt).toLocaleString() : '—'}</span>
-                <span className="text-xs text-white/60">{s.logoutAt ? new Date(s.logoutAt).toLocaleString() : '—'}</span>
-                <span className="text-xs text-white/60">{formatDuration(s.duration)}</span>
-                <span className={`text-xs font-medium ${s.isActive ? 'text-green-400' : 'text-white/30'}`}>
-                  {s.isActive ? '● Active' : s.logoutType || 'Ended'}
+              <div
+                key={s._id}
+                className="grid grid-cols-1 md:grid-cols-[2.5fr_1.5fr_1.5fr_1.2fr_1fr] gap-4 items-center px-6 py-4 border-b border-white/5 hover:bg-white/5 transition-all duration-200"
+              >
+                <span className="text-xs font-mono text-white/50 truncate" title={s.sessionId}>
+                  {s.sessionId}
                 </span>
+                <span className="text-xs text-white/70">{s.loginAt ? new Date(s.loginAt).toLocaleString() : '—'}</span>
+                <span className="text-xs text-white/70">{s.logoutAt ? new Date(s.logoutAt).toLocaleString() : '—'}</span>
+                <span className="text-xs text-white/70">{formatDuration(s.duration)}</span>
+                <div>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                    s.isActive 
+                      ? 'bg-green-500/20 text-green-300 border-green-500/30' 
+                      : 'bg-white/10 text-white/40 border-white/20'
+                  }`}>
+                    {s.isActive ? 'Active' : s.logoutType || 'Ended'}
+                  </span>
+                </div>
               </div>
             ))
           )}

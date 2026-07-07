@@ -24,8 +24,8 @@ const validateTeamMember = async (req, res, next) => {
   }
 };
 
-router.get('/:uid',          ...guardRoute('ticket_lifecycle_logs'), validateTeamMember, getUserActivity);
-router.get('/:uid/summary',  ...guardRoute('ticket_lifecycle_logs'), validateTeamMember, getUserSummary);
-router.get('/:uid/sessions', ...guardRoute('ticket_lifecycle_logs'), validateTeamMember, getUserSessions);
+router.get('/:uid',          ...guardRoute('user_activity_logs'), validateTeamMember, getUserActivity);
+router.get('/:uid/summary',  ...guardRoute('user_activity_logs'), validateTeamMember, getUserSummary);
+router.get('/:uid/sessions', ...guardRoute('user_activity_logs'), validateTeamMember, getUserSessions);
 
 module.exports = router;

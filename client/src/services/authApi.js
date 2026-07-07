@@ -55,6 +55,7 @@ API.interceptors.response.use(
 // ── Auth endpoints ─────────────────────────────────────────
 export const registerUser    = (data) => API.post('/auth/register', data);
 export const loginUser       = (data) => API.post('/auth/login', data);
+export const logoutUser      = ()     => API.post('/auth/logout');
 export const fetchProfile    = ()     => API.get('/auth/profile');
 
 // Update own profile — supports multipart/form-data for avatar upload

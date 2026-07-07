@@ -133,9 +133,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   // ── Logout ──────────────────────────────────────────────────
-  const logout = () => {
+  const logout = async () => {
     logger.info('AuthContext', 'logout', `User logged out${user ? ` — was: ${user.email}` : ''}`, { action: 'Logout' });
     
+    try {
+      await API.post('/auth/logout');
+    } catch (_) {}
+
     // Wipe all cached data
     clearCache();
     
