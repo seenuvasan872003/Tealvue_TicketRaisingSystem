@@ -24,21 +24,29 @@ import App from './App.jsx'
 // [LOGGING] Professional logger utility
 import logger from './utils/logger.js'
 
-// [MONITORING] Import production monitoring tools
-import * as Sentry from '@sentry/react';
-import LogRocket from 'logrocket';
-
 // Defer initialization of heavyweight monitoring SDKs to improve Total Blocking Time (TBT)
-const initMonitoring = () => {
-  // Initialize Sentry for production error tracking
-  Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN || "https://placeholder-dsn@sentry.io/placeholder",
-    integrations: [],
-    tracesSampleRate: 1.0,
-  });
+const initMonitoring = async () => {
+  try {
+    const [Sentry, LogRocket] = await Promise.all([
+      import('@sentry/react'),
+      import('logrocket')
+    ]);
 
-  // Initialize LogRocket for session replay
-  LogRocket.init(import.meta.env.VITE_LOGROCKET_PROJECT_ID || 'tealvue/ticket-raising-system');
+    window.Sentry = Sentry;
+    window.LogRocket = LogRocket;
+
+    // Initialize Sentry for production error tracking
+    Sentry.init({
+      dsn: import.meta.env.VITE_SENTRY_DSN || "https://placeholder-dsn@sentry.io/placeholder",
+      integrations: [],
+      tracesSampleRate: 1.0,
+    });
+
+    // Initialize LogRocket for session replay
+    LogRocket.init(import.meta.env.VITE_LOGROCKET_PROJECT_ID || 'tealvue/ticket-raising-system');
+  } catch (err) {
+    console.error('Failed to load monitoring SDKs:', err);
+  }
 };
 
 if (typeof window !== 'undefined') {

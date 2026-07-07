@@ -17,6 +17,7 @@
 // ============================================================
 
 const express = require('express');
+const compression = require('compression');
 const cors    = require('cors');
 const dotenv  = require('dotenv');
 const path    = require('path');
@@ -75,6 +76,7 @@ io.on('connection', (socket) => {
 });
 
 // ─── Middleware ───────────────────────────────────────────
+app.use(compression());
 // [CONFIG] Allow requests from Vite dev server and production Vercel client
 app.use(cors({
   origin: function (origin, callback) {

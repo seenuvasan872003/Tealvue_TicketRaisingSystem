@@ -42,14 +42,14 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', token); // Ensure standard token key matches
         logger.info('AuthContext', 'restore', 'Restoring session from stored token', { action: 'Session Restore' });
         try {
-          const [profileRes] = await Promise.all([
-            fetchProfile()
+          const [profileRes, featuresRes] = await Promise.all([
+            fetchProfile(),
+            API.get('/role-features/me').catch(err => ({ data: { features: ROLE_DEFAULTS[localStorage.getItem('user_role')] || ['dashboard'] } }))
           ]);
           setUser(profileRes.data);
           localStorage.setItem('user_role', profileRes.data.role);
+          setFeatures(featuresRes.data.features || []);
           logger.info('AuthContext', 'restore', `Session restored for user: ${profileRes.data.email} (${profileRes.data.role})`, { action: 'Session Restore Success' });
-          // Fetch features after restoring session
-          await fetchFeatures(profileRes.data.role);
         } catch (err) {
           logger.error('AuthContext', 'restore', 'Session restore failed — token invalid or expired', err, {
             api: '/api/auth/profile', method: 'GET', action: 'Session Restore Failure',

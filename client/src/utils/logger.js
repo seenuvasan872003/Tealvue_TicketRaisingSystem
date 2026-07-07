@@ -41,27 +41,31 @@ const getCurrentRoute = () => window.location.pathname;
 /** Pad label to fixed width for aligned output */
 const pad = (label) => label.padEnd(10, ' ');
 
-// [MONITORING] Import Sentry and LogRocket
-import * as Sentry from '@sentry/react';
-import LogRocket from 'logrocket';
-
 // ── Send log to backend database & monitoring systems ───────────────────────────
 const sendToBackend = async (logEntry) => {
   // 1. Log to Sentry & LogRocket depending on level
   try {
     if (logEntry.level === 'error') {
-      Sentry.captureException(logEntry.stack !== '—' ? new Error(logEntry.message + '\n' + logEntry.stack) : new Error(logEntry.message), {
-        extra: logEntry
-      });
-      LogRocket.captureMessage(`[ERROR] ${logEntry.message}`, {
-        extra: logEntry
-      });
+      if (window.Sentry) {
+        window.Sentry.captureException(logEntry.stack !== '—' ? new Error(logEntry.message + '\n' + logEntry.stack) : new Error(logEntry.message), {
+          extra: logEntry
+        });
+      }
+      if (window.LogRocket) {
+        window.LogRocket.captureMessage(`[ERROR] ${logEntry.message}`, {
+          extra: logEntry
+        });
+      }
     } else if (logEntry.level === 'warn') {
-      LogRocket.captureMessage(`[WARN] ${logEntry.message}`, {
-        extra: logEntry
-      });
+      if (window.LogRocket) {
+        window.LogRocket.captureMessage(`[WARN] ${logEntry.message}`, {
+          extra: logEntry
+        });
+      }
     } else {
-      LogRocket.log(`[INFO] ${logEntry.message}`);
+      if (window.LogRocket) {
+        window.LogRocket.log(`[INFO] ${logEntry.message}`);
+      }
     }
   } catch (err) {
     // Silent
