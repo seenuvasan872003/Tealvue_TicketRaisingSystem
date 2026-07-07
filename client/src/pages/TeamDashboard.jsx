@@ -20,11 +20,13 @@ import logger from '../utils/logger';
 
 import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/skeletons';
 
+import { getCache, setCache } from '../utils/cache';
+
 const TeamDashboard = () => {
   const { isSuperAdmin } = useAuth();
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(() => getCache('agencies_dashboard'));
+  const [loading, setLoading] = useState(() => !getCache('agencies_dashboard'));
   
   // Details Modal State
   const [selectedTeam, setSelectedTeam] = useState(null);
@@ -36,10 +38,14 @@ const TeamDashboard = () => {
   const fetchDashboardData = async () => {
     logger.info('TeamDashboard', 'fetchDashboardData', 'Loading team dashboard statistics', { api: '/api/teams/dashboard', method: 'GET', action: 'Team Dashboard Load Start' });
     try {
-      setLoading(true);
-      const { data } = await getTeamsDashboard();
-      setData(data);
-      logger.info('TeamDashboard', 'fetchDashboardData', `Team dashboard loaded — ${(data.teams || []).length} teams`, { api: '/api/teams/dashboard', method: 'GET', status: 200, action: 'Team Dashboard Load Success' });
+      const cached = getCache('agencies_dashboard');
+      if (!cached) {
+        setLoading(true);
+      }
+      const res = await getTeamsDashboard();
+      setData(res.data);
+      setCache('agencies_dashboard', res.data, 5);
+      logger.info('TeamDashboard', 'fetchDashboardData', `Team dashboard loaded — ${(res.data.teams || []).length} teams`, { api: '/api/teams/dashboard', method: 'GET', status: 200, action: 'Team Dashboard Load Success' });
     } catch (err) {
       logger.error('TeamDashboard', 'fetchDashboardData', 'Failed to load team dashboard stats', err, { api: '/api/teams/dashboard', method: 'GET', action: 'Team Dashboard Load Failure' });
       toast.error('Failed to load team dashboard stats');
@@ -312,7 +318,17 @@ const TeamDashboard = () => {
             </div>
             
             {modalLoading ? (
-              <div className="p-10 text-center flex-1"><div className="spinner" /></div>
+              <div className="p-6 flex flex-col gap-4 flex-1 mt-3.5 overflow-hidden">
+                <SkeletonCard height="80px" />
+                <div className="grid grid-cols-[2fr_1fr] gap-4">
+                  <SkeletonCard height="130px" />
+                  <SkeletonCard height="130px" />
+                </div>
+                <div className="flex flex-col gap-2 mt-2">
+                  <SkeletonText height="20px" width="40%" />
+                  <SkeletonCard height="120px" />
+                </div>
+              </div>
             ) : (
               <div className="overflow-y-auto pr-1.5 flex flex-col gap-5 flex-1 mt-3.5">
                 {/* Team Admin Account Credentials Box */}

@@ -31,6 +31,7 @@ dotenv.config();
 const connectDB = require('./config/db');
 const { protect } = require('./middleware/authMiddleware');
 const { requireRolePrefix } = require('./middleware/requireRolePrefix');
+const { trackActivity } = require('./middleware/trackActivity');
 
 const app = express();
 const server = http.createServer(app);
@@ -131,6 +132,11 @@ app.use('/api/team-user',     protect, requireRolePrefix, require('./routes/team
 app.use('/api/super-admin/activity-logs', protect, requireRolePrefix, require('./routes/superAdmin/activityLogs'));
 app.use('/api/admin/activity-logs',       protect, requireRolePrefix, require('./routes/admin/activityLogs'));
 app.use('/api/team-admin/activity-logs',  protect, requireRolePrefix, require('./routes/teamAdmin/activityLogs'));
+
+// ── User Activity Tracking Routes ────────────────────────────────────────────
+app.use('/api/super-admin/user-activity', protect, requireRolePrefix, trackActivity, require('./routes/superAdmin/userActivity'));
+app.use('/api/admin/user-activity',       protect, requireRolePrefix, trackActivity, require('./routes/admin/userActivity'));
+app.use('/api/team-admin/user-activity',  protect, requireRolePrefix, trackActivity, require('./routes/teamAdmin/userActivity'));
 
 app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/ticketApproval'));
 app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/roleFeatures'));

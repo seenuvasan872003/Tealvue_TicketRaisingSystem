@@ -11,13 +11,14 @@
 const express = require('express');
 const router  = express.Router();
 
-const { register, login, getProfile, updateProfile } = require('../controllers/authController');
+const { register, login, logout, getProfile, updateProfile } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const { upload }  = require('../config/multer');
 const { registerValidator, loginValidator } = require('../middleware/validationMiddleware');
 
 router.post('/register', registerValidator, register);
 router.post('/login',    loginValidator, login);
+router.post('/logout',   logout);
 router.get('/profile',   protect, getProfile);
 
 // Avatar is a single optional file under field name 'avatar'

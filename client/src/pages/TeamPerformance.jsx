@@ -14,17 +14,25 @@ import {
 import logger from '../utils/logger';
 import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/skeletons';
 
+import { getCache, setCache } from '../utils/cache';
+
 const TeamPerformance = () => {
   const { user } = useAuth();
-  const [teams, setTeams] = useState([]);
-  const [team, setTeam] = useState(null);
-  const [performance, setPerformance] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [teams, setTeams] = useState(() => {
+    const cached = getCache('teams_list');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [team, setTeam] = useState(() => getCache('my_team'));
+  const [performance, setPerformance] = useState(() => getCache('team_performance'));
+  const [loading, setLoading] = useState(() => !getCache('team_performance'));
 
   const loadPerformanceData = async (selectedTeamId = null) => {
     logger.info('TeamPerformance', 'loadPerformanceData', 'Loading team performance data', { action: 'Team Performance Load Start' });
     try {
-      setLoading(true);
+      const cached = getCache('team_performance');
+      if (!cached) {
+        setLoading(true);
+      }
       let activeTeamId = selectedTeamId;
       let activeTeam = team;
 
@@ -32,6 +40,7 @@ const TeamPerformance = () => {
         const teamsRes = await getTeams();
         const allTeams = teamsRes.data || [];
         setTeams(allTeams);
+        setCache('teams_list', allTeams, 15);
 
         if (allTeams.length > 0) {
           if (!activeTeamId) {
@@ -51,11 +60,13 @@ const TeamPerformance = () => {
         activeTeam = teamRes.data;
         activeTeamId = teamRes.data._id;
         setTeam(activeTeam);
+        setCache('my_team', activeTeam, 15);
       }
 
       if (activeTeamId) {
         const perfRes = await getTeamPerformance(activeTeamId);
         setPerformance(perfRes.data);
+        setCache('team_performance', perfRes.data, 10);
         logger.info('TeamPerformance', 'loadPerformanceData', `Performance data loaded for team: ${activeTeam.name}`, {
           api: `/api/teams/${activeTeamId}/performance`, method: 'GET', action: 'Team Performance Load Success',
         });

@@ -5,10 +5,15 @@ import { Plus, Trash2, X, Users, User, ShieldAlert, Mail } from 'lucide-react';
 import logger from '../utils/logger';
 import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/skeletons';
 
+import { getCache, setCache } from '../utils/cache';
+
 const TeamMembers = () => {
-  const [team, setTeam] = useState(null);
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [team, setTeam] = useState(() => getCache('my_team'));
+  const [members, setMembers] = useState(() => {
+    const cached = getCache('team_members');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [loading, setLoading] = useState(() => !getCache('my_team'));
   const [showModal, setShowModal] = useState(false);
 
   // Form State for new member
@@ -20,13 +25,19 @@ const TeamMembers = () => {
   const loadTeamAndMembers = async () => {
     logger.info('TeamMembers', 'loadTeamAndMembers', 'Loading team and members data', { action: 'Team Members Load Start' });
     try {
-      setLoading(true);
+      const cachedTeam = getCache('my_team');
+      if (!cachedTeam) {
+        setLoading(true);
+      }
       const teamRes = await getMyTeam();
       setTeam(teamRes.data);
+      setCache('my_team', teamRes.data, 15);
 
       const membersRes = await getTeamMembers(teamRes.data._id);
-      setMembers(membersRes.data || []);
-      logger.info('TeamMembers', 'loadTeamAndMembers', `Team members loaded — team: ${teamRes.data.name} | ${(membersRes.data || []).length} member(s)`, {
+      const list = membersRes.data || [];
+      setMembers(list);
+      setCache('team_members', list, 15);
+      logger.info('TeamMembers', 'loadTeamAndMembers', `Team members loaded — team: ${teamRes.data.name} | ${list.length} member(s)`, {
         api: `/api/teams/${teamRes.data._id}/members`, method: 'GET', action: 'Team Members Load Success',
       });
     } catch (err) {

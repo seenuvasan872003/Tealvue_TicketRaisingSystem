@@ -24,6 +24,8 @@ const Profile      = lazy(() => import('./pages/Profile'));
 const TicketDetails = lazy(() => import('./pages/TicketDetails'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const PerformanceDetails = lazy(() => import('./pages/PerformanceDetails'));
+const UserActivity = lazy(() => import('./pages/UserActivity'));
+const UserActivityDetails = lazy(() => import('./pages/UserActivityDetails'));
 
 // ── App Shell — wraps all authenticated pages ──────────────
 const AppShell = () => {
@@ -127,6 +129,12 @@ const App = () => {
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/tickets/:id" element={<TicketDetails />} />
                 <Route path="/teams/:id/performance" element={<PerformanceDetails />} />
+                <Route path="/admin/users/:id/activity" element={<UserActivity />} />
+                <Route path="/super-admin/users/:id/activity" element={<UserActivity />} />
+                {/* User Activity Tracking — detail pages */}
+                <Route path="/super-admin/user-activity/:uid" element={<UserActivityDetails />} />
+                <Route path="/admin/user-activity/:uid"       element={<UserActivityDetails />} />
+                <Route path="/team-admin/user-activity/:uid"  element={<UserActivityDetails />} />
                 {dynamicRoutes}
               </Route>
   

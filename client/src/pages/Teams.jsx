@@ -22,9 +22,17 @@ import { toast } from 'react-toastify';
 import logger from '../utils/logger';
 import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/skeletons';
 
+import { getCache, setCache } from '../utils/cache';
+
 const Teams = () => {
-  const [teams, setTeams] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [teams, setTeams] = useState(() => {
+    const cached = getCache('teams_list');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [loading, setLoading] = useState(() => {
+    const cached = getCache('teams_list');
+    return !Array.isArray(cached);
+  });
   const [showModal, setShowModal] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
 
@@ -47,12 +55,17 @@ const Teams = () => {
   const [showAdminPassword, setShowAdminPassword] = useState(false);
 
   const fetchTeamsData = async () => {
-    logger.info('Teams', 'fetchTeamsData', 'Loading teams dashboard data', { api: '/api/teams/dashboard', method: 'GET', action: 'Teams Load Start' });
+    logger.info('Teams', 'fetchTeamsData', 'Loading teams data', { api: '/api/teams/dashboard', method: 'GET', action: 'Teams Load Start' });
     try {
-      setLoading(true);
+      const cached = getCache('teams_list');
+      if (!Array.isArray(cached) || cached.length === 0) {
+        setLoading(true);
+      }
       const { data } = await getTeamsDashboard();
-      setTeams(data.teams || data);
-      logger.info('Teams', 'fetchTeamsData', `Teams loaded — ${(data.teams || data || []).length} teams`, { api: '/api/teams/dashboard', method: 'GET', status: 200, action: 'Teams Load Success' });
+      const list = data.teams || data || [];
+      setTeams(list);
+      setCache('teams_list', list, 15);
+      logger.info('Teams', 'fetchTeamsData', `Teams loaded — ${list.length} teams`, { api: '/api/teams/dashboard', method: 'GET', status: 200, action: 'Teams Load Success' });
     } catch (err) {
       logger.error('Teams', 'fetchTeamsData', 'Failed to load teams', err, { api: '/api/teams/dashboard', method: 'GET', action: 'Teams Load Failure' });
       console.error(err);

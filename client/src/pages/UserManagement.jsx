@@ -344,7 +344,7 @@ const UserManagement = () => {
                           {isSelf && <span className="text-[11px] text-[var(--color-text-muted)] italic">It's you</span>}
                           {!canEdit && !isSelf && <span className="text-[11px] text-[var(--color-text-muted)]">No access</span>}
                           <Link 
-                            to={`/admin/users/${u._id}/activity`} 
+                            to={isSuperAdmin ? `/super-admin/users/${u._id}/activity` : `/admin/users/${u._id}/activity`} 
                             className="btn btn-secondary flex items-center gap-1 px-3 py-1 text-[11px] h-7 bg-[rgba(20,160,125,0.1)] text-[var(--color-teal)] border border-[rgba(20,160,125,0.25)]"
                           >
                             <Eye size={12} /> Activity

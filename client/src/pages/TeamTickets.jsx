@@ -7,12 +7,20 @@ import { User, ClipboardList, Send, Calendar } from 'lucide-react';
 import logger from '../utils/logger';
 import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/skeletons';
 
+import { getCache, setCache } from '../utils/cache';
+
 const TeamTickets = () => {
   const navigate = useNavigate();
-  const [tickets, setTickets] = useState([]);
-  const [members, setMembers] = useState([]);
-  const [team, setTeam] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [tickets, setTickets] = useState(() => {
+    const cached = getCache('all_tickets');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [members, setMembers] = useState(() => {
+    const cached = getCache('team_members');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [team, setTeam] = useState(() => getCache('my_team'));
+  const [loading, setLoading] = useState(() => !getCache('my_team'));
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
@@ -22,14 +30,19 @@ const TeamTickets = () => {
   const loadTeamData = async () => {
     logger.info('TeamTickets', 'loadTeamData', 'Loading team data and tickets', { action: 'Team Tickets Load Start' });
     try {
-      setLoading(true);
+      const cachedTeam = getCache('my_team');
+      if (!cachedTeam) {
+        setLoading(true);
+      }
       // 1. Get own team details
       const teamRes = await getMyTeam();
       setTeam(teamRes.data);
+      setCache('my_team', teamRes.data, 15);
 
       // 2. Get members for this team
       const membersRes = await getTeamMembers(teamRes.data._id);
       setMembers(membersRes.data || []);
+      setCache('team_members', membersRes.data || [], 15);
 
       // 3. Get tickets
       await loadTickets(teamRes.data._id, page, search, statusFilter);
@@ -58,8 +71,12 @@ const TeamTickets = () => {
       if (status) params.status = status;
       
       const { data } = await getTickets(params);
-      setTickets(data.tickets || []);
+      const ticketList = data.tickets || [];
+      setTickets(ticketList);
       setTotalPages(data.pages || 1);
+      if (pageNum === 1 && !searchTerm && !status) {
+        setCache('all_tickets', ticketList, 3);
+      }
       logger.info('TeamTickets', 'loadTickets', `Tickets fetched — ${(data.tickets || []).length} tickets on page ${pageNum}`, {
         api: '/api/tickets', method: 'GET', status: 200, action: 'Team Tickets Fetch Success',
       });

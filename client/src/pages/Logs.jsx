@@ -20,20 +20,34 @@ import { toast } from 'react-toastify';
 import logger from '../utils/logger';
 import { SkeletonCard, SkeletonChart, SkeletonText } from '../components/skeletons';
 
+import { getCache, setCache } from '../utils/cache';
+
 const Logs = () => {
   const [range, setRange] = useState('daily'); // 'daily', 'weekly', 'monthly'
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState(() => {
+    const cached = getCache('activity_logs');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [loading, setLoading] = useState(() => {
+    const cached = getCache('activity_logs');
+    return !Array.isArray(cached);
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const logsPerPage = 12; // 12 logs per page (between 10 and 15)
 
   const fetchLogs = async (currentRange) => {
     logger.info('Logs', 'fetchLogs', `Fetching activity logs — range: ${currentRange}`, { api: `/api/logs?range=${currentRange}`, method: 'GET', action: 'Activity Logs Fetch Start' });
     try {
-      setLoading(true);
+      const cached = getCache('activity_logs');
+      if (!Array.isArray(cached) || cached.length === 0 || currentRange !== 'daily') {
+        setLoading(true);
+      }
       const { data } = await API.get(`/logs?range=${currentRange}`);
       setLogs(data);
       setCurrentPage(1);
+      if (currentRange === 'daily') {
+        setCache('activity_logs', data, 5);
+      }
       logger.info('Logs', 'fetchLogs', `Activity logs loaded — ${data.length || 0} entries`, { api: `/api/logs?range=${currentRange}`, method: 'GET', status: 200, action: 'Activity Logs Fetch Success' });
     } catch (err) {
       logger.error('Logs', 'fetchLogs', 'Failed to fetch activity logs', err, { api: `/api/logs?range=${currentRange}`, method: 'GET', action: 'Activity Logs Fetch Failure' });

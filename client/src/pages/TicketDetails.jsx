@@ -41,6 +41,7 @@ import { toast } from 'react-toastify';
 import TicketTimeline from '../components/TicketTimeline';
 import { io } from 'socket.io-client';
 import logger from '../utils/logger';
+import { SkeletonCard, SkeletonText } from '../components/skeletons';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 const PRIORITIES  = ['low', 'medium', 'high', 'urgent'];
@@ -462,8 +463,22 @@ const TicketDetails = () => {
 
   // ── Render guards ─────────────────────────────────────────
   if (loading) return (
-    <div className="flex items-center justify-center min-h-[300px]">
-      <div className="spinner w-8 h-8" />
+    <div className="page-body fade-in">
+      <div className="page-header flex justify-between items-center mb-6">
+        <div className="flex flex-col gap-2 w-1/3">
+          <SkeletonText height="24px" width="60%" />
+          <SkeletonText height="14px" width="100%" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+        <div className="flex flex-col gap-4">
+          <SkeletonCard height="240px" />
+          <SkeletonCard height="150px" />
+        </div>
+        <div className="flex flex-col gap-4">
+          <SkeletonCard height="280px" />
+        </div>
+      </div>
     </div>
   );
   if (error) return (

@@ -251,23 +251,36 @@ const RoleSection = ({ role, users, currentUserId, onSaved }) => {
   );
 };
 
+import { getCache, setCache } from '../utils/cache';
+
 // ── Main Page ──────────────────────────────────────────────
 const RolesFeatures = () => {
   const { user: currentUser } = useAuth();
-  const [allUsers, setAllUsers]     = useState([]);
-  const [loading, setLoading]       = useState(true);
+  const [allUsers, setAllUsers]     = useState(() => {
+    const cached = getCache('role_features_all');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [loading, setLoading]       = useState(() => {
+    const cached = getCache('role_features_all');
+    return !Array.isArray(cached);
+  });
   const [search,  setSearch]        = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [refetchKey, setRefetchKey] = useState(0);
 
   useEffect(() => {
     const fetchAll = async () => {
-      setLoading(true);
+      const cached = getCache('role_features_all');
+      if (!Array.isArray(cached) || cached.length === 0) {
+        setLoading(true);
+      }
       try {
         const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
         const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
         const res = await API.get(relativePath);
-        setAllUsers(res.data || []);
+        const fetched = res.data || [];
+        setAllUsers(fetched);
+        setCache('role_features_all', fetched, 30);
       } catch (err) {
         toast.error('Failed to load user features');
       } finally {

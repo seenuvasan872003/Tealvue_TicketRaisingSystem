@@ -75,29 +75,40 @@ const ROLE_BADGES = {
   system: 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20',
 };
 
+import { getCache, setCache } from '../utils/cache';
+
 const TicketLogs = () => {
   // Navigation States: 'users' -> 'tickets' -> 'log'
   const [viewState, setViewState] = useState('users'); 
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState(() => {
+    const cached = getCache('all_users');
+    return Array.isArray(cached) ? cached.filter(u => u.role === 'user') : [];
+  });
   const [selectedUser, setSelectedUser] = useState(null);
   const [tickets, setTickets] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [ticketLogs, setTicketLogs] = useState([]);
   const [timeSummary, setTimeSummary] = useState(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    const cached = getCache('all_users');
+    return !Array.isArray(cached);
+  });
   const [search, setSearch] = useState('');
 
   // 1. Fetch Users on mount
   const loadUsers = async () => {
     logger.info('TicketLogs', 'loadUsers', 'Loading user directory for ticket log audit', { api: '/api/users', method: 'GET', action: 'Ticket Logs Users Load Start' });
     try {
-      setLoading(true);
+      const cached = getCache('all_users');
+      if (!Array.isArray(cached) || cached.length === 0) {
+        setLoading(true);
+      }
       const { data } = await getAllUsers({ role: 'user', limit: 100 });
       const rawUsers = Array.isArray(data) ? data : (data.users || []);
-      // Client-side filter to guarantee only 'user' role is displayed
-      setUsers(rawUsers.filter(u => u.role === 'user'));
-      logger.info('TicketLogs', 'loadUsers', `Users loaded for audit — ${rawUsers.filter(u => u.role === 'user').length} users`, { api: '/api/users', method: 'GET', status: 200, action: 'Ticket Logs Users Load Success' });
+      const usersList = rawUsers.filter(u => u.role === 'user');
+      setUsers(usersList);
+      logger.info('TicketLogs', 'loadUsers', `Users loaded for audit — ${usersList.length} users`, { api: '/api/users', method: 'GET', status: 200, action: 'Ticket Logs Users Load Success' });
     } catch (err) {
       logger.error('TicketLogs', 'loadUsers', 'Failed to load user directory', err, { api: '/api/users', method: 'GET', action: 'Ticket Logs Users Load Failure' });
       toast.error('Failed to load user directory.');

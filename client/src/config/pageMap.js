@@ -160,6 +160,10 @@ const PAGE_MAP = {
   },
   manage_categories: {
     'super-admin': lazy(() => import('../pages/Categories'))
+  },
+  user_activity_logs: {
+    'super-admin': lazy(() => import('../pages/UserActivityDashboard')),
+    admin:         lazy(() => import('../pages/UserActivityDashboard'))
   }
 };
 

@@ -19,15 +19,19 @@
 // ============================================================
 
 const jwt          = require('jsonwebtoken');
+const crypto       = require('crypto');
 const path         = require('path');
 const User         = require('../models/User');
 const Notification = require('../models/Notification');
+const UserSession  = require('../models/UserSession');
+const UserTriggerSummary = require('../models/UserTriggerSummary');
+const { logActivity } = require('../utils/logActivity');
 const { isWhitelisted } = require('../utils/whitelist');
 
-// ── Helpers ───────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────
 
-const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, {
+const generateToken = (id, sessionId) =>
+  jwt.sign({ id, sessionId }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE || '7d',
   });
 
@@ -119,7 +123,7 @@ const register = async (req, res) => {
   }
 };
 
-// ── Login ─────────────────────────────────────────────────
+// ── Login ─────────────────────────────────────────────
 // @desc  Login user
 // @route POST /api/auth/login
 // @access Public
@@ -133,6 +137,14 @@ const login = async (req, res) => {
 
     const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
     if (!user) {
+      // Log failed login attempt for email
+      try {
+        await logActivity({
+          userId: null, userName: email, userEmail: email, userRole: null,
+          eventType: 'FAILED_LOGIN',
+          details: { route: '/api/auth/login', method: 'POST', note: 'User not found', ipAddress: req.ip || req.headers['x-forwarded-for'], userAgent: req.headers['user-agent'] }
+        });
+      } catch (_) {}
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
@@ -146,11 +158,49 @@ const login = async (req, res) => {
 
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
+      try {
+        await logActivity({
+          userId: user._id, userName: user.name, userEmail: user.email, userRole: user.role,
+          eventType: 'FAILED_LOGIN',
+          details: { route: '/api/auth/login', method: 'POST', note: 'Wrong credentials', ipAddress: req.ip || req.headers['x-forwarded-for'], userAgent: req.headers['user-agent'] }
+        });
+      } catch (_) {}
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    const token = generateToken(user._id);
+    // Generate unique sessionId and embed in JWT
+    const sessionId = crypto.randomUUID();
+    const token = generateToken(user._id, sessionId);
+    const ipAddress = req.ip || req.headers['x-forwarded-for'];
+    const userAgent = req.headers['user-agent'];
 
+    // Create session record
+    try {
+      await UserSession.create({
+        userId: user._id, userName: user.name, userEmail: user.email, userRole: user.role,
+        sessionId, loginAt: new Date(), ipAddress, userAgent, isActive: true
+      });
+    } catch (_) {}
+
+    // Write LOGIN activity log
+    try {
+      await logActivity({
+        userId: user._id, userName: user.name, userEmail: user.email, userRole: user.role,
+        eventType: 'LOGIN',
+        details: { route: '/api/auth/login', method: 'POST', sessionId, ipAddress, userAgent, note: 'Login successful' }
+      });
+    } catch (_) {}
+
+    // Update trigger summary for login stats
+    try {
+      await UserTriggerSummary.findOneAndUpdate(
+        { userId: user._id },
+        { $set: { userName: user.name, userRole: user.role, lastLoginAt: new Date(), lastActiveAt: new Date() }, $inc: { totalLogins: 1 } },
+        { upsert: true }
+      );
+    } catch (_) {}
+
+    // Legacy activity log (keep existing)
     const ActivityLog = require('../models/ActivityLog');
     await ActivityLog.create({
       action: 'USER_LOGIN',
@@ -159,6 +209,52 @@ const login = async (req, res) => {
     });
 
     res.json({ token, user: userResponse(user) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Logout ─────────────────────────────────────────────
+// @desc  Logout user — close session, write log
+// @route POST /api/auth/logout
+// @access Private
+const logout = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const { sessionId, id: userId } = decoded;
+
+        if (sessionId) {
+          const session = await UserSession.findOne({ sessionId, isActive: true });
+          if (session) {
+            const logoutAt = new Date();
+            const duration = logoutAt - session.loginAt;
+            session.logoutAt  = logoutAt;
+            session.duration  = duration;
+            session.isActive  = false;
+            session.logoutType = 'manual';
+            await session.save();
+
+            const user = req.user || { _id: userId, name: session.userName, email: session.userEmail, role: session.userRole };
+            await logActivity({
+              userId: user._id, userName: user.name, userEmail: user.email, userRole: user.role,
+              eventType: 'LOGOUT',
+              details: { sessionId, note: `Session duration: ${Math.round(duration / 1000)}s` }
+            });
+
+            await UserTriggerSummary.findOneAndUpdate(
+              { userId: user._id },
+              { $set: { lastLogoutAt: logoutAt, lastActiveAt: logoutAt }, $inc: { totalLogouts: 1 } },
+              { upsert: true }
+            );
+          }
+        }
+      } catch (_) {}
+    }
+    res.json({ message: 'Logged out successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -226,4 +322,4 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getProfile, updateProfile };
+module.exports = { register, login, logout, getProfile, updateProfile };

@@ -11,9 +11,17 @@ import { toast } from 'react-toastify';
 import logger from '../utils/logger';
 import { SkeletonCard } from '../components/skeletons';
 
+import { getCache, setCache } from '../utils/cache';
+
 const ClientLogs = () => {
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState(() => {
+    const cached = getCache('client_logs');
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [loading, setLoading] = useState(() => {
+    const cached = getCache('client_logs');
+    return !Array.isArray(cached);
+  });
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const logsPerPage = 12;
@@ -24,9 +32,14 @@ const ClientLogs = () => {
   const fetchClientLogs = async () => {
     logger.initialize('ClientLogs Module');
     try {
-      setLoading(true);
+      const cached = getCache('client_logs');
+      if (!Array.isArray(cached) || cached.length === 0) {
+        setLoading(true);
+      }
       const { data } = await API.get('/logs/client');
-      setLogs(data || []);
+      const list = data || [];
+      setLogs(list);
+      setCache('client_logs', list, 5);
       logger.success('ClientLogs', 'fetchClientLogs', 'Client database logs fetched successfully');
     } catch (err) {
       logger.error('ClientLogs', 'fetchClientLogs', 'Failed to fetch client logs', err);

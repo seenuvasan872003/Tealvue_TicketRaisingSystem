@@ -6,11 +6,11 @@ const ROLE_DEFAULTS = {
   'super-admin': [
     'dashboard', 'ticket_approval', 'all_users', 'create_user',
     'create_admin', 'teams_management', 'roles_features',
-    'team_dashboard', 'ticket_lifecycle_logs', 'activity_logs', 'client_logs'
+    'team_dashboard', 'ticket_lifecycle_logs', 'activity_logs', 'client_logs', 'user_activity_logs'
   ],
   'admin': [
     'dashboard', 'all_tickets', 'all_users',
-    'team_dashboard', 'ticket_lifecycle_logs', 'activity_logs',
+    'team_dashboard', 'ticket_lifecycle_logs', 'activity_logs', 'user_activity_logs',
   ],
   'user': [
     'dashboard', 'my_tickets', 'create_ticket', 'ticket_states'
