@@ -80,6 +80,20 @@ const userSchema = new mongoose.Schema(
 
     // ── Reopen Flag ───────────────────────────────────────
     reopenFlagCount: { type: Number, default: 0 },
+
+    // ── Email Verification ────────────────────────────────
+    isEmailVerified: {
+      type:    Boolean,
+      default: false,
+    },
+    verifiedAt: {
+      type:    Date,
+      default: null,
+    },
+    otpEnabled: {
+      type:    Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );

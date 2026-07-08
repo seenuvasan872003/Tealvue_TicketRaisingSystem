@@ -21,12 +21,17 @@
 const jwt          = require('jsonwebtoken');
 const crypto       = require('crypto');
 const path         = require('path');
+const bcrypt       = require('bcryptjs');
 const User         = require('../models/User');
 const Notification = require('../models/Notification');
 const UserSession  = require('../models/UserSession');
 const UserTriggerSummary = require('../models/UserTriggerSummary');
+const EmailOTP     = require('../models/EmailOTP');
+const OTPBlock     = require('../models/OTPBlock');
 const { logActivity } = require('../utils/logActivity');
 const { isWhitelisted } = require('../utils/whitelist');
+const { generateOTP } = require('../utils/generateOTP');
+const { sendOTPEmail } = require('../utils/mailer');
 
 // ── Helpers ─────────────────────────────────────────────
 
@@ -72,54 +77,112 @@ const userResponse = (user) => ({
 // @access Public
 const register = async (req, res) => {
   try {
-    let { name, email, password } = req.body;
+    let { name, email, password, confirmPassword } = req.body;
 
-    // Sanitize
-    name  = sanitizeText(name);
-    email = (email || '').toLowerCase().trim();
+    const emailLower = (email || '').toLowerCase().trim();
+    name = sanitizeText(name);
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Please fill all required fields' });
+    // 1. Check block
+    const block = await OTPBlock.findOne({ email: emailLower });
+    if (block) {
+      const remaining = Math.ceil((block.blockExpiresAt - new Date()) / 60000);
+      return res.status(429).json({
+        success: false,
+        code: 'OTP_BLOCKED',
+        message: `Account blocked. Try again in ${remaining} minutes.`
+      });
+    }
+
+    // 2. Validate fields
+    if (!name || !email || !password || !confirmPassword) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
     }
 
     // Password strength
     const pwError = validatePassword(password);
     if (pwError) return res.status(400).json({ message: pwError });
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ message: 'Email already registered' });
+    // 3. Check whitelist
+    if (!isWhitelisted(emailLower)) {
+      return res.status(403).json({ message: 'This email is not authorised to register.' });
     }
 
-    if (!isWhitelisted(email)) {
-      return res.status(403).json({ message: 'Not authorised to register' });
+    // 4. Check duplicate
+    const existing = await User.findOne({ email: emailLower });
+    if (existing && existing.isEmailVerified) {
+      return res.status(400).json({ message: 'Email already registered.' });
     }
 
-    // Public registration is ALWAYS 'user' role,
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role:       'user',
-      isApproved: true,
-      isActive:   true,
+    // 5. Create or reuse unverified user
+    let user = existing;
+    if (!user) {
+      user = await User.create({
+        name: name.trim(),
+        email: emailLower,
+        password: password, // Mongoose pre-save hashes this password automatically
+        role: 'user',
+        isEmailVerified: false,
+        isApproved: true,
+        isActive: true
+      });
+    }
+
+    // 6. Check resend limit
+    const existingOTP = await EmailOTP.findOne({
+      email: emailLower,
+      type: 'register',
+      isUsed: false
+    });
+    if (existingOTP) {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+      if (
+        existingOTP.resendCount >= 3 &&
+        existingOTP.lastResendAt > fifteenMinutesAgo
+      ) {
+        return res.status(429).json({
+          message: 'Too many OTP requests. Wait 15 minutes before trying again.'
+        });
+      }
+    }
+
+    // 7. Delete old unused OTPs for this email + type
+    await EmailOTP.deleteMany({ email: emailLower, type: 'register', isUsed: false });
+
+    // 8. Generate and send OTP
+    const otp = generateOTP();
+    const hashedOTP = await bcrypt.hash(otp, 10);
+
+    const otpDoc = await EmailOTP.create({
+      email:    emailLower,
+      hashedOTP,
+      type:     'register',
+      userId:   user._id,
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000) // 30 minutes
     });
 
-    const token = generateToken(user._id);
-
-    // Auto-create feature assignment with user role defaults
     try {
-      const RoleFeature   = require('../models/RoleFeature');
-      const ROLE_DEFAULTS = require('../config/roleDefaults');
-      const defaults = ROLE_DEFAULTS['user'] || ['dashboard'];
-      await RoleFeature.create({ userId: user._id, role: 'user', features: defaults });
-    } catch (rfErr) {
-      console.error('[RoleFeature] Failed to auto-create on register:', rfErr.message);
+      await sendOTPEmail({ to: emailLower, otp, type: 'register' });
+    } catch (emailErr) {
+      // Rollback OTP doc if email fails so user can retry cleanly
+      await EmailOTP.deleteOne({ _id: otpDoc._id });
+      console.error('[REGISTER] Email send failed, rolled back OTP:', emailErr.message);
+      return res.status(500).json({
+        message: 'Could not send verification email. Please check your email address and try again.',
+        error: emailErr.message
+      });
     }
 
-    res.status(201).json({ token, user: userResponse(user) });
+    return res.status(200).json({
+      success: true,
+      message: 'OTP sent to your email. Verify to complete registration.',
+      email: emailLower
+    });
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
@@ -130,22 +193,53 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const emailLower = (email || '').toLowerCase().trim();
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Please provide email and password' });
+    // 1. Check block
+    const block = await OTPBlock.findOne({ email: emailLower });
+    if (block) {
+      const remaining = Math.ceil((block.blockExpiresAt - new Date()) / 60000);
+      return res.status(429).json({
+        success: false,
+        code: 'OTP_BLOCKED',
+        message: `Account blocked. Try again in ${remaining} minutes.`
+      });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
+    // 2. Find user
+    const user = await User.findOne({ email: emailLower }).select('+password');
     if (!user) {
-      // Log failed login attempt for email
       try {
         await logActivity({
-          userId: null, userName: email, userEmail: email, userRole: null,
+          userId: null, userName: emailLower, userEmail: emailLower, userRole: null,
           eventType: 'FAILED_LOGIN',
           details: { route: '/api/auth/login', method: 'POST', note: 'User not found', ipAddress: req.ip || req.headers['x-forwarded-for'], userAgent: req.headers['user-agent'] }
         });
       } catch (_) {}
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ message: 'Invalid email or password.' });
+    }
+
+    // 3. Check verified
+    if (!user.isEmailVerified) {
+      return res.status(403).json({
+        success: false,
+        code: 'EMAIL_NOT_VERIFIED',
+        message: 'Please verify your email before logging in.',
+        email: emailLower
+      });
+    }
+
+    // 4. Check password
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      try {
+        await logActivity({
+          userId: user._id, userName: user.name, userEmail: user.email, userRole: user.role,
+          eventType: 'FAILED_LOGIN',
+          details: { route: '/api/auth/login', method: 'POST', note: 'Wrong credentials', ipAddress: req.ip || req.headers['x-forwarded-for'], userAgent: req.headers['user-agent'] }
+        });
+      } catch (_) {}
+      return res.status(401).json({ message: 'Invalid email or password.' });
     }
 
     // Check account status before password match to give clear messages
@@ -156,42 +250,287 @@ const login = async (req, res) => {
       return res.status(403).json({ message: 'Account pending approval — please wait for Super Admin approval' });
     }
 
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
+    // Direct Login Bypass for Old Users
+    if (user.otpEnabled === false) {
+      let sessionId;
+      const ipAddress = req.ip || req.headers['x-forwarded-for'];
+      const userAgent = req.headers['user-agent'];
+
+      const todayStart = new Date();
+      todayStart.setHours(0,0,0,0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23,59,59,999);
+
       try {
-        await logActivity({
-          userId: user._id, userName: user.name, userEmail: user.email, userRole: user.role,
-          eventType: 'FAILED_LOGIN',
-          details: { route: '/api/auth/login', method: 'POST', note: 'Wrong credentials', ipAddress: req.ip || req.headers['x-forwarded-for'], userAgent: req.headers['user-agent'] }
+        const existingSession = await UserSession.findOne({
+          userId: user._id,
+          loginAt: { $gte: todayStart, $lte: todayEnd }
+        });
+
+        if (existingSession) {
+          sessionId = existingSession.sessionId;
+          existingSession.isActive = true;
+          existingSession.logoutAt = null;
+          existingSession.duration = null;
+          existingSession.ipAddress = ipAddress;
+          existingSession.userAgent = userAgent;
+          await existingSession.save();
+        } else {
+          sessionId = crypto.randomUUID();
+          await UserSession.create({
+            userId: user._id,
+            userName: user.name,
+            userEmail: user.email,
+            userRole: user.role,
+            sessionId,
+            loginAt: new Date(),
+            ipAddress,
+            userAgent,
+            isActive: true
+          });
+        }
+      } catch (_) {
+        sessionId = crypto.randomUUID();
+      }
+
+      const token = generateToken(user._id, sessionId);
+
+      await logActivity({
+        userId:    user._id,
+        userName:  user.name,
+        userEmail: user.email,
+        userRole:  user.role,
+        eventType: 'LOGIN',
+        details: { sessionId, ipAddress, userAgent, note: 'Login successful (Direct)' }
+      });
+
+      try {
+        await UserTriggerSummary.findOneAndUpdate(
+          { userId: user._id },
+          { $set: { userName: user.name, userRole: user.role, lastLoginAt: new Date(), lastActiveAt: new Date() }, $inc: { totalLogins: 1 } },
+          { upsert: true }
+        );
+      } catch (_) {}
+
+      // Legacy activity log
+      const ActivityLog = require('../models/ActivityLog');
+      try {
+        await ActivityLog.create({
+          action: 'USER_LOGIN',
+          userId: user._id,
+          note: `Logged in (Direct): ${user.name} (${user.email}) - Role: ${user.role}`
         });
       } catch (_) {}
-      return res.status(401).json({ message: 'Invalid email or password' });
+
+      return res.status(200).json({
+        success: true,
+        direct: true,
+        token,
+        user: userResponse(user)
+      });
     }
 
-    // Generate unique sessionId and embed in JWT
-    const sessionId = crypto.randomUUID();
-    const token = generateToken(user._id, sessionId);
+    // 5. Check resend limit
+    const existingOTP = await EmailOTP.findOne({
+      email: emailLower,
+      type: 'login',
+      isUsed: false
+    });
+    if (existingOTP) {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+      if (
+        existingOTP.resendCount >= 3 &&
+        existingOTP.lastResendAt > fifteenMinutesAgo
+      ) {
+        return res.status(429).json({
+          message: 'Too many OTP requests. Wait 15 minutes.'
+        });
+      }
+    }
+
+    // 6. Delete old unused login OTPs
+    await EmailOTP.deleteMany({ email: emailLower, type: 'login', isUsed: false });
+
+    // 7. Generate and send OTP
+    const otp = generateOTP();
+    const hashedOTP = await bcrypt.hash(otp, 10);
+
+    const otpDoc = await EmailOTP.create({
+      email:     emailLower,
+      hashedOTP,
+      type:      'login',
+      userId:    user._id,
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000) // 30 minutes
+    });
+
+    try {
+      await sendOTPEmail({ to: emailLower, otp, type: 'login' });
+    } catch (emailErr) {
+      await EmailOTP.deleteOne({ _id: otpDoc._id });
+      console.error('[LOGIN] Email send failed, rolled back OTP:', emailErr.message);
+      return res.status(500).json({
+        message: 'Could not send verification email. Please try again.',
+        error: emailErr.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'OTP sent to your email.',
+      email:   emailLower
+    });
+
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+const verifyRegister = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const emailLower = (email || '').toLowerCase().trim();
+
+    // 1. Check block
+    const block = await OTPBlock.findOne({ email: emailLower });
+    if (block) {
+      const remaining = Math.ceil((block.blockExpiresAt - new Date()) / 60000);
+      return res.status(429).json({
+        success: false,
+        code: 'OTP_BLOCKED',
+        message: `Account blocked for ${remaining} more minutes.`,
+        blockedMinutes: remaining
+      });
+    }
+
+    // 2. Find OTP document
+    const otpDoc = await EmailOTP.findOne({
+      email: emailLower,
+      type: 'register',
+      isUsed: false
+    });
+
+    if (!otpDoc) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP not found or already used. Please request a new one.'
+      });
+    }
+
+    // 3. Check expiry
+    if (otpDoc.expiresAt < new Date()) {
+      await EmailOTP.deleteOne({ _id: otpDoc._id });
+      return res.status(400).json({
+        success: false,
+        code: 'OTP_EXPIRED',
+        message: 'OTP has expired. Please request a new one.'
+      });
+    }
+
+    // 4. Check wrong attempts
+    if (otpDoc.wrongAttempts >= 5) {
+      return res.status(429).json({
+        success: false,
+        code: 'OTP_BLOCKED',
+        message: 'Too many wrong attempts. Request a new OTP.'
+      });
+    }
+
+    // 5. Compare OTP
+    const isMatch = await bcrypt.compare(otp, otpDoc.hashedOTP);
+
+    if (!isMatch) {
+      otpDoc.wrongAttempts += 1;
+      const remaining = 5 - otpDoc.wrongAttempts;
+
+      if (otpDoc.wrongAttempts >= 5) {
+        otpDoc.isBlocked = true;
+        otpDoc.blockedAt = new Date();
+        otpDoc.blockExpiresAt = new Date(Date.now() + 20 * 60 * 1000);
+        await otpDoc.save();
+
+        // Create block record
+        await OTPBlock.findOneAndUpdate(
+          { email: emailLower },
+          {
+            email:          emailLower,
+            blockedAt:      new Date(),
+            blockExpiresAt: new Date(Date.now() + 20 * 60 * 1000),
+            reason:         'Too many wrong OTP attempts on registration',
+            attemptCount:   5
+          },
+          { upsert: true, new: true }
+        );
+
+        // Send block notification email
+        await sendOTPEmail({ to: emailLower, type: 'blocked', blockedMinutes: 20 });
+
+        return res.status(429).json({
+          success: false,
+          code: 'OTP_BLOCKED',
+          message: 'Too many wrong attempts. Account blocked for 20 minutes.',
+          blockedMinutes: 20
+        });
+      }
+
+      await otpDoc.save();
+      return res.status(400).json({
+        success: false,
+        code: 'OTP_WRONG',
+        message: `Incorrect OTP. ${remaining} attempt${remaining > 1 ? 's' : ''} remaining.`,
+        remainingAttempts: remaining
+      });
+    }
+
+    // 6. OTP correct — activate account
+    otpDoc.isUsed = true;
+    await otpDoc.save();
+
+    const user = await User.findByIdAndUpdate(
+      otpDoc.userId,
+      { isEmailVerified: true, verifiedAt: new Date() },
+      { new: true }
+    );
+
+    // 7. Create default RoleFeature
+    try {
+      const defaults = ROLE_DEFAULTS['user'] || ['dashboard'];
+      await RoleFeature.findOneAndUpdate(
+        { userId: otpDoc.userId },
+        { userId: otpDoc.userId, role: 'user', features: defaults },
+        { upsert: true }
+      );
+    } catch (_) {}
+
+    // 8. Create session and return token so frontend can auto-login
     const ipAddress = req.ip || req.headers['x-forwarded-for'];
     const userAgent = req.headers['user-agent'];
-
-    // Create session record
+    let sessionId;
     try {
-      await UserSession.create({
-        userId: user._id, userName: user.name, userEmail: user.email, userRole: user.role,
-        sessionId, loginAt: new Date(), ipAddress, userAgent, isActive: true
-      });
-    } catch (_) {}
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+      const todayEnd   = new Date(); todayEnd.setHours(23,59,59,999);
+      const existing   = await UserSession.findOne({ userId: user._id, loginAt: { $gte: todayStart, $lte: todayEnd } });
+      if (existing) {
+        sessionId = existing.sessionId;
+        existing.isActive = true; existing.logoutAt = null; existing.duration = null;
+        existing.ipAddress = ipAddress; existing.userAgent = userAgent;
+        await existing.save();
+      } else {
+        sessionId = crypto.randomUUID();
+        await UserSession.create({
+          userId: user._id, userName: user.name, userEmail: user.email, userRole: user.role,
+          sessionId, loginAt: new Date(), ipAddress, userAgent, isActive: true
+        });
+      }
+    } catch (_) { sessionId = crypto.randomUUID(); }
 
-    // Write LOGIN activity log
-    try {
-      await logActivity({
-        userId: user._id, userName: user.name, userEmail: user.email, userRole: user.role,
-        eventType: 'LOGIN',
-        details: { route: '/api/auth/login', method: 'POST', sessionId, ipAddress, userAgent, note: 'Login successful' }
-      });
-    } catch (_) {}
+    const token = generateToken(user._id, sessionId);
 
-    // Update trigger summary for login stats
+    await logActivity({
+      userId: user._id, userName: user.name, userEmail: user.email, userRole: user.role,
+      eventType: 'LOGIN',
+      details: { sessionId, ipAddress, userAgent, note: 'Registered and verified via OTP' }
+    });
+
     try {
       await UserTriggerSummary.findOneAndUpdate(
         { userId: user._id },
@@ -200,17 +539,295 @@ const login = async (req, res) => {
       );
     } catch (_) {}
 
-    // Legacy activity log (keep existing)
-    const ActivityLog = require('../models/ActivityLog');
-    await ActivityLog.create({
-      action: 'USER_LOGIN',
-      userId: user._id,
-      note: `Logged in: ${user.name} (${user.email}) - Role: ${user.role}`
+    return res.status(200).json({
+      success: true,
+      message: 'Email verified. Welcome to Tealvue!',
+      token,
+      user: userResponse(user)
     });
 
-    res.json({ token, user: userResponse(user) });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+const verifyLogin = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const emailLower = (email || '').toLowerCase().trim();
+
+    // 1. Check block
+    const block = await OTPBlock.findOne({ email: emailLower });
+    if (block) {
+      const remaining = Math.ceil((block.blockExpiresAt - new Date()) / 60000);
+      return res.status(429).json({
+        success: false,
+        code: 'OTP_BLOCKED',
+        message: `Account blocked for ${remaining} more minutes.`,
+        blockedMinutes: remaining
+      });
+    }
+
+    // 2. Find OTP document
+    const otpDoc = await EmailOTP.findOne({
+      email: emailLower,
+      type: 'login',
+      isUsed: false
+    });
+
+    if (!otpDoc) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP not found or already used. Please login again.'
+      });
+    }
+
+    // 3. Check expiry
+    if (otpDoc.expiresAt < new Date()) {
+      await EmailOTP.deleteOne({ _id: otpDoc._id });
+      return res.status(400).json({
+        success: false,
+        code: 'OTP_EXPIRED',
+        message: 'OTP has expired. Please login again to get a new code.'
+      });
+    }
+
+    // 4. Check wrong attempts
+    if (otpDoc.wrongAttempts >= 5) {
+      return res.status(429).json({
+        success: false,
+        code: 'OTP_BLOCKED',
+        message: 'Too many wrong attempts. Please login again.'
+      });
+    }
+
+    // 5. Compare OTP
+    const isMatch = await bcrypt.compare(otp, otpDoc.hashedOTP);
+
+    if (!isMatch) {
+      otpDoc.wrongAttempts += 1;
+      const remaining = 5 - otpDoc.wrongAttempts;
+
+      if (otpDoc.wrongAttempts >= 5) {
+        otpDoc.isBlocked = true;
+        otpDoc.blockedAt = new Date();
+        otpDoc.blockExpiresAt = new Date(Date.now() + 20 * 60 * 1000);
+        await otpDoc.save();
+
+        await OTPBlock.findOneAndUpdate(
+          { email: emailLower },
+          {
+            email:          emailLower,
+            blockedAt:      new Date(),
+            blockExpiresAt: new Date(Date.now() + 20 * 60 * 1000),
+            reason:         'Too many wrong OTP attempts on login',
+            attemptCount:   5
+          },
+          { upsert: true, new: true }
+        );
+
+        await sendOTPEmail({ to: emailLower, type: 'blocked', blockedMinutes: 20 });
+
+        return res.status(429).json({
+          success: false,
+          code: 'OTP_BLOCKED',
+          message: 'Too many wrong attempts. Account blocked for 20 minutes.',
+          blockedMinutes: 20
+        });
+      }
+
+      await otpDoc.save();
+      return res.status(400).json({
+        success: false,
+        code: 'OTP_WRONG',
+        message: `Incorrect OTP. ${remaining} attempt${remaining > 1 ? 's' : ''} remaining.`,
+        remainingAttempts: remaining
+      });
+    }
+
+    // 6. OTP correct — issue JWT
+    otpDoc.isUsed = true;
+    await otpDoc.save();
+
+    const user = await User.findById(otpDoc.userId);
+
+    // Reuse/create daily session
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    let sessionId;
+    const ipAddress = req.ip || req.headers['x-forwarded-for'];
+    const userAgent = req.headers['user-agent'];
+
+    try {
+      const existingSession = await UserSession.findOne({
+        userId: user._id,
+        loginAt: { $gte: todayStart, $lte: todayEnd }
+      });
+
+      if (existingSession) {
+        sessionId = existingSession.sessionId;
+        existingSession.isActive = true;
+        existingSession.logoutAt = null;
+        existingSession.duration = null;
+        existingSession.ipAddress = ipAddress;
+        existingSession.userAgent = userAgent;
+        await existingSession.save();
+      } else {
+        sessionId = crypto.randomUUID();
+        await UserSession.create({
+          userId: user._id,
+          userName: user.name,
+          userEmail: user.email,
+          userRole: user.role,
+          sessionId,
+          loginAt: new Date(),
+          ipAddress,
+          userAgent,
+          isActive: true
+        });
+      }
+    } catch (_) {
+      sessionId = crypto.randomUUID();
+    }
+
+    const token = generateToken(user._id, sessionId);
+
+    await logActivity({
+      userId:    user._id,
+      userName:  user.name,
+      userEmail: user.email,
+      userRole:  user.role,
+      eventType: 'LOGIN',
+      details: { sessionId, ipAddress, userAgent, note: 'Login successful' }
+    });
+
+    try {
+      await UserTriggerSummary.findOneAndUpdate(
+        { userId: user._id },
+        { $set: { userName: user.name, userRole: user.role, lastLoginAt: new Date(), lastActiveAt: new Date() }, $inc: { totalLogins: 1 } },
+        { upsert: true }
+      );
+    } catch (_) {}
+
+    // Legacy activity log
+    const ActivityLog = require('../models/ActivityLog');
+    try {
+      await ActivityLog.create({
+        action: 'USER_LOGIN',
+        userId: user._id,
+        note: `Logged in: ${user.name} (${user.email}) - Role: ${user.role}`
+      });
+    } catch (_) {}
+
+    return res.status(200).json({
+      success: true,
+      token,
+      user: userResponse(user)
+    });
+
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+const resendOTP = async (req, res) => {
+  try {
+    const { email, type } = req.body;
+    const emailLower = (email || '').toLowerCase().trim();
+
+    if (!['register', 'login'].includes(type)) {
+      return res.status(400).json({ message: 'Invalid type.' });
+    }
+
+    // 1. Check block
+    const block = await OTPBlock.findOne({ email: emailLower });
+    if (block) {
+      const remaining = Math.ceil((block.blockExpiresAt - new Date()) / 60000);
+      return res.status(429).json({
+        success: false,
+        code: 'OTP_BLOCKED',
+        message: `Account blocked. Try again in ${remaining} minutes.`,
+        blockedMinutes: remaining
+      });
+    }
+
+    // 2. Find existing OTP doc
+    const existingOTP = await EmailOTP.findOne({
+      email: emailLower,
+      type,
+      isUsed: false
+    });
+
+    // 3. Check resend rate limit
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    if (
+      existingOTP &&
+      existingOTP.resendCount >= 3 &&
+      existingOTP.lastResendAt > fifteenMinutesAgo
+    ) {
+      return res.status(429).json({
+        success: false,
+        code: 'RESEND_LIMIT',
+        message: 'Too many OTP requests. Please wait 15 minutes before trying again.'
+      });
+    }
+
+    // 4. For login type — verify user exists and is verified
+    if (type === 'login') {
+      const user = await User.findOne({ email: emailLower });
+      if (!user || !user.isEmailVerified) {
+        return res.status(400).json({ message: 'User not found or not verified.' });
+      }
+    }
+
+    // 5. For register type — verify user exists and is not verified
+    if (type === 'register') {
+      const user = await User.findOne({ email: emailLower });
+      if (!user) {
+        return res.status(400).json({ message: 'User not found. Please register first.' });
+      }
+      if (user.isEmailVerified) {
+        return res.status(400).json({ message: 'Email already verified. Please login.' });
+      }
+    }
+
+    // 6. Count this as a resend — update existing doc or track it
+    const resendCount   = (existingOTP?.resendCount || 0) + 1;
+    const lastResendAt  = new Date();
+
+    // 7. Delete old OTP
+    await EmailOTP.deleteMany({ email: emailLower, type, isUsed: false });
+
+    // 8. Generate new OTP
+    const otp = generateOTP();
+    const hashedOTP = await bcrypt.hash(otp, 10);
+
+    const user = await User.findOne({ email: emailLower });
+
+    await EmailOTP.create({
+      email:       emailLower,
+      hashedOTP,
+      type,
+      userId:      user._id,
+      expiresAt:   new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+      resendCount,
+      lastResendAt
+    });
+
+    await sendOTPEmail({ to: emailLower, otp, type });
+
+    return res.status(200).json({
+      success: true,
+      message: 'New OTP sent to your email.',
+      resendCount,
+      resendRemaining: 3 - resendCount
+    });
+
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
@@ -322,4 +939,4 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout, getProfile, updateProfile };
+module.exports = { register, login, logout, getProfile, updateProfile, verifyRegister, verifyLogin, resendOTP };

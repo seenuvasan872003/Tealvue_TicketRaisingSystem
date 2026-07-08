@@ -5,7 +5,7 @@ import StatCard from './StatCard';
 import StatusBadge, { PriorityBadge } from '../StatusBadge';
 import { PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 
-export default function TeamUserDashboard({ user, stats, recent, navigate, greeting, pieData, priorityChartData }) {
+export default function TeamUserDashboard({ user, stats, recent, navigate, greeting, pieData, priorityChartData, feedbacks = [] }) {
   const [showChart, setShowChart] = useState(false);
 
   useEffect(() => {
@@ -131,6 +131,37 @@ export default function TeamUserDashboard({ user, stats, recent, navigate, greet
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Recent Feedback Reviews */}
+      <div className="flex justify-between items-center mb-4 mt-8">
+        <h2 className="text-[15px] font-semibold text-white">Recent Feedback & Reviews</h2>
+      </div>
+
+      {(!feedbacks || feedbacks.length === 0) ? (
+        <div className="card empty-state p-8 text-center border border-dashed border-white/10 rounded-xl text-white/40">
+          No feedback reviews submitted yet.
+        </div>
+      ) : (
+        <div className="card p-6 bg-white/5 border border-white/10 rounded-xl divide-y divide-white/5">
+          {feedbacks.map(fb => (
+            <div key={fb._id} className="py-4 flex items-start justify-between gap-4 first:pt-0 last:pb-0">
+              <div className="space-y-1.5">
+                <div className="text-sm font-semibold text-white/90">{fb.userId?.name || 'Anonymous'}</div>
+                <div className="text-xs text-white/60 leading-relaxed">
+                  {fb.comment || <span className="text-white/20 italic">No comment left</span>}
+                </div>
+                <div className="text-[11px] text-teal-400 font-medium">
+                  Ticket: {fb.ticketId?.title || '—'}
+                </div>
+              </div>
+              <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded-full">{fb.rating}★</span>
+                <span className="text-[10px] text-white/30">{new Date(fb.submittedAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

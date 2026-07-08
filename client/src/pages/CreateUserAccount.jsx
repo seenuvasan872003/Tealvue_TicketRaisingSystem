@@ -127,6 +127,13 @@ const CreateUserAccount = () => {
 
       toast.success('User account created successfully');
       logger.info('CreateUserAccount', 'handleSubmit', `User account created for: ${formData.email}`, { api: '/api/users/create-user', method: 'POST', status: 201, action: 'User Account Create Success' });
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+      });
+      setErrors({});
       const redirectPaths = {
         'super-admin': '/super-admin/users',
         'admin': '/admin/users',
@@ -196,6 +203,7 @@ const CreateUserAccount = () => {
                 placeholder="john.doe@company.com"
                 value={formData.email}
                 onChange={(e) => handleEmailChange(e.target.value)}
+                autoComplete="new-email"
                 required
               />
               {errors.email && <span className="error-text">{errors.email}</span>}
@@ -211,6 +219,7 @@ const CreateUserAccount = () => {
                   placeholder="••••••"
                   value={formData.password}
                   onChange={(e) => handlePasswordChange(e.target.value)}
+                  autoComplete="new-password"
                   required
                 />
                 <button
@@ -251,6 +260,7 @@ const CreateUserAccount = () => {
                   placeholder="••••••"
                   value={formData.confirmPassword}
                   onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                  autoComplete="new-password"
                   required
                 />
                 <button

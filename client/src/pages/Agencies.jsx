@@ -14,8 +14,10 @@ import {
 } from '../services/ticketApi';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
+import { useConfirm } from '../context/ConfirmContext';
 
 const Agencies = () => {
+  const confirm = useConfirm();
   const [agencies, setAgencies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -180,7 +182,8 @@ const Agencies = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this agency?')) return;
+    const ok = await confirm('Are you sure you want to delete this agency?', 'Confirm Deletion');
+    if (!ok) return;
     try {
       await deleteAgency(id);
       toast.success('Agency deleted successfully');

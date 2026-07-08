@@ -48,12 +48,12 @@ const Register = () => {
     logger.info('Register', 'handleSubmit', `Registration attempt for: ${form.email}`, { action: 'Register Form Submit' });
     try {
       // [API] POST /api/auth/register
-      await register(form.name, form.email, form.password, form.role);
-      toast.success('Account created! Welcome to Tealue.');
-      logger.info('Register', 'handleSubmit', `Registration SUCCESS → navigating to /dashboard`, {
-        api: '/api/auth/register', method: 'POST', status: 200, action: 'Register Success + Navigate',
+      await register(form.name, form.email, form.password, form.password);
+      toast.info('OTP code sent to your email. Please verify.');
+      logger.info('Register', 'handleSubmit', `Registration OTP Sent → navigating to /verify-register`, {
+        api: '/api/auth/register', method: 'POST', status: 200, action: 'Register OTP Sent + Navigate',
       });
-      navigate('/dashboard');
+      navigate('/verify-register', { state: { email: form.email } });
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed';
       setError(msg);

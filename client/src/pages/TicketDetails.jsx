@@ -41,6 +41,7 @@ import { toast } from 'react-toastify';
 import TicketTimeline from '../components/TicketTimeline';
 import { io } from 'socket.io-client';
 import logger from '../utils/logger';
+import { useConfirm } from '../context/ConfirmContext';
 import { SkeletonCard, SkeletonText } from '../components/skeletons';
 import FeedbackCard from '../components/FeedbackCard';
 import axios from 'axios';
@@ -49,6 +50,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 const PRIORITIES  = ['low', 'medium', 'high', 'urgent'];
 
 const TicketDetails = () => {
+  const confirm = useConfirm();
   const { id } = useParams();
   const { user, isSuperAdmin, isAdminLevel } = useAuth();
   const navigate = useNavigate();
@@ -467,7 +469,8 @@ const TicketDetails = () => {
   };
 
   const handleCloseTicket = async () => {
-    if (!window.confirm('Are you sure you want to mark this ticket as Closed?')) return;
+    const ok = await confirm('Are you sure you want to mark this ticket as Closed?', 'Close Ticket');
+    if (!ok) return;
     setUpdating(true);
     try {
       await closeTicket(id);

@@ -20,11 +20,13 @@ import {
 } from '../services/ticketApi';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
+import { useConfirm } from '../context/ConfirmContext';
 import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/skeletons';
 
 import { getCache, setCache } from '../utils/cache';
 
 const Teams = () => {
+  const confirm = useConfirm();
   const [teams, setTeams] = useState(() => {
     const cached = getCache('teams_list');
     return Array.isArray(cached) ? cached : [];
@@ -232,7 +234,8 @@ const Teams = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this team? All unresolved tickets must be completed first.')) return;
+    const ok = await confirm('Are you sure you want to delete this team? All unresolved tickets must be completed first.', 'Delete Team');
+    if (!ok) return;
     logger.info('Teams', 'handleDelete', `Deleting team: ${id}`, { api: `/api/teams/${id}`, method: 'DELETE', action: 'Team Delete Attempt' });
     try {
       await deleteTeam(id);
@@ -502,7 +505,8 @@ const Teams = () => {
                                 type="button"
                                 onClick={async (e) => {
                                   e.stopPropagation();
-                                  if (window.confirm(`Delete category "${cat}"?`)) {
+                                  const ok = await confirm(`Delete category "${cat}"?`, 'Delete Category');
+                                  if (ok) {
                                     try {
                                       // Call API to delete category if endpoint exists or filter local options
                                       setCategoryOptions(prev => prev.filter(c => c !== cat));
@@ -584,6 +588,7 @@ const Teams = () => {
                           value={adminEmail}
                           onChange={(e) => handleFieldChange('adminEmail', e.target.value)}
                           placeholder="e.g. techadmin@tealvue.com"
+                          autoComplete="new-email"
                           required
                         />
                         {errors.adminEmail && <span className="text-[11px] text-[#f87171] mt-1">{errors.adminEmail}</span>}
@@ -598,6 +603,7 @@ const Teams = () => {
                             value={adminPassword}
                             onChange={(e) => handleFieldChange('adminPassword', e.target.value)}
                             placeholder="At least 6 characters"
+                            autoComplete="new-password"
                             required
                           />
                           <button

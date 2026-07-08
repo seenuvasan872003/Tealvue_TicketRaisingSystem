@@ -124,6 +124,8 @@ const CreateTicket = () => {
       
       toast.success('Ticket created successfully!');
       logger.info('CreateTicket', 'handleSubmit', `Ticket created successfully \u2014 ID: ${data._id}`, { api: '/api/tickets', method: 'POST', status: 201, action: 'Ticket Create Success' });
+      setForm({ title: '', description: '', category: 'No Category' });
+      setFiles([]);
       navigate(`/tickets/${data._id}`);
     } catch (err) {
       const errMsg = err.response?.data?.errors?.map(e => e.message).join(', ') || err.response?.data?.message || 'Failed to create ticket';

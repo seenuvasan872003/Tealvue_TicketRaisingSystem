@@ -68,16 +68,7 @@ export const AuthProvider = ({ children }) => {
     logger.api('AuthContext', 'login', 'POST', '/api/auth/login', 'START');
     try {
       const { data } = await loginUser({ email, password });
-      // Set the standard token first so getUserFromToken can decode it
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('tealue_token', data.token);
-      setToken(data.token);
-      setUser(data.user);
-      localStorage.setItem('user_role', data.user.role);
-      // Fetch features after login
-      await fetchFeatures(data.user.role);
-      logger.login(data.user.name, data.user._id, `User ${data.user.name} logged in successfully.`);
-      return data.user;
+      return data;
     } catch (err) {
       logger.error('AuthContext', 'login', 'Login FAILED', err, {
         api: '/api/auth/login', method: 'POST',
@@ -88,20 +79,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ── Login With Token (OTP successful) ─────────────────────
+  const loginWithToken = async (tokenValue, userObj) => {
+    localStorage.setItem('token', tokenValue);
+    localStorage.setItem('tealue_token', tokenValue);
+    setToken(tokenValue);
+    setUser(userObj);
+    localStorage.setItem('user_role', userObj.role);
+    await fetchFeatures(userObj.role);
+    logger.login(userObj.name, userObj._id, `User ${userObj.name} logged in successfully via OTP.`);
+  };
+
   // ── Register (public — always 'user' role) ─────────────────
-  const register = async (name, email, password) => {
+  const register = async (name, email, password, confirmPassword) => {
     logger.api('AuthContext', 'register', 'POST', '/api/auth/register', 'START');
     try {
-      const { data } = await registerUser({ name, email, password });
-      localStorage.setItem('tealue_token', data.token);
-      setToken(data.token);
-      setUser(data.user);
-      localStorage.setItem('user_role', data.user.role);
-      await fetchFeatures(data.user.role);
-      logger.info('AuthContext', 'register', `Registration SUCCESS — user: ${data.user.email}`, {
-        api: '/api/auth/register', method: 'POST', status: 200, action: 'Register Success',
-      });
-      return data.user;
+      const { data } = await registerUser({ name, email, password, confirmPassword });
+      return data;
     } catch (err) {
       logger.error('AuthContext', 'register', 'Registration FAILED', err, {
         api: '/api/auth/register', method: 'POST',
@@ -174,7 +168,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{
       user, token, loading, features,
-      login, register, logout, updateProfile, refreshUser,
+      login, loginWithToken, register, logout, updateProfile, refreshUser,
       isSuperAdmin, isAdminLevel, isUser,
       hasFeature,
     }}>

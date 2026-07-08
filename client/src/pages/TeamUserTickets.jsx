@@ -6,10 +6,12 @@ import { toast } from 'react-toastify';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import { CheckCircle, Clock, Calendar, ClipboardList, Send } from 'lucide-react';
 import logger from '../utils/logger';
+import { useConfirm } from '../context/ConfirmContext';
 
 import { getCache, setCache } from '../utils/cache';
 
 const TeamUserTickets = () => {
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -93,7 +95,8 @@ const TeamUserTickets = () => {
   }, [page, statusFilter]);
 
   const handleCloseTicket = async (ticketId) => {
-    if (!window.confirm('Are you sure you want to mark this ticket as Closed and notify the owner?')) return;
+    const ok = await confirm('Are you sure you want to mark this ticket as Closed and notify the owner?', 'Close Ticket');
+    if (!ok) return;
     try {
       await closeTicket(ticketId);
       

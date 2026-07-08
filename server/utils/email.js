@@ -6,15 +6,32 @@ const nodemailer = require('nodemailer');
 
 const sendEmail = async ({ to, subject, text }) => {
   try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.EMAIL_PORT) || 587,
-      secure: false, // true for 465, false for other ports
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    const host = process.env.EMAIL_HOST || '';
+    const user = process.env.EMAIL_USER || '';
+    const isGmail = host.includes('gmail') || user.includes('gmail');
+
+    const transporter = nodemailer.createTransport(
+      isGmail
+        ? {
+            service: 'gmail',
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS,
+            },
+          }
+        : {
+            host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+            port: parseInt(process.env.EMAIL_PORT) || 587,
+            secure: parseInt(process.env.EMAIL_PORT) === 465,
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS,
+            },
+            tls: {
+              rejectUnauthorized: false,
+            },
+          }
+    );
 
     const mailOptions = {
       from: process.env.EMAIL_FROM || `"Tealvue Support" <${process.env.EMAIL_USER}>`,

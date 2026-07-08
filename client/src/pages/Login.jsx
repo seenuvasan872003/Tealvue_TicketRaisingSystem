@@ -18,7 +18,7 @@ import LoginLoader from '../components/LoginLoader';
 import { preloadByRole } from '../services/preloadService';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, loginWithToken } = useAuth();
   const navigate  = useNavigate();
 
   const [form,      setForm]    = useState({ email: '', password: '' });
@@ -38,72 +38,94 @@ const Login = () => {
     logger.info('Login', 'handleSubmit', `Login attempt for: ${form.email}`, { action: 'Login Form Submit' });
     try {
       // [API] POST /api/auth/login
-      const user = await login(form.email, form.password);
+      const data = await login(form.email, form.password);
       
-      // Start Preloading UI
-      setShowPreloader(true);
-      setPreloadProgress(10);
-      setPreloadStatus('Initializing secure session...');
-
-      let hasNavigated = false;
-      const navigateToDashboard = () => {
-        if (hasNavigated) return;
-        hasNavigated = true;
+      if (data.direct) {
+        // Complete direct login (OTP bypassed for old users)
+        await loginWithToken(data.token, data.user);
         
-        toast.success(`Welcome back, ${user.name}!`);
-        logger.info('Login', 'handleSubmit', `Login SUCCESS → navigating for role: ${user.role}`, {
-          api: '/api/auth/login', method: 'POST', status: 200, action: 'Login Success + Navigate',
-        });
+        // Start Preloading UI
+        setShowPreloader(true);
+        setPreloadProgress(10);
+        setPreloadStatus('Initializing secure session...');
 
-        switch (user.role) {
-          case 'super-admin':
-            navigate('/super-admin/dashboard');
-            break;
-          case 'admin':
-            navigate('/admin/dashboard');
-            break;
-          case 'team_admin':
-            navigate('/team-admin/dashboard');
-            break;
-          case 'team_user':
-            navigate('/team-user/dashboard');
-            break;
-          case 'user':
-          default:
-            navigate('/dashboard');
-        }
-      };
+        let hasNavigated = false;
+        const navigateToDashboard = () => {
+          if (hasNavigated) return;
+          hasNavigated = true;
+          
+          toast.success(`Welcome back, ${data.user.name}!`);
+          logger.info('Login', 'handleSubmit', `Login SUCCESS → navigating for role: ${data.user.role}`, {
+            api: '/api/auth/login', method: 'POST', status: 200, action: 'Login Success + Navigate',
+          });
 
-      // Safety timeout guard (5 seconds)
-      const safetyTimeout = setTimeout(() => {
-        navigateToDashboard();
-      }, 5000);
-
-      try {
-        let currentProgress = 10;
-        await preloadByRole(user, async (targetProgress, statusText) => {
-          // Smoothly step the progress state forward to slow it down slightly
-          while (currentProgress < targetProgress) {
-            currentProgress += 5;
-            if (currentProgress > targetProgress) {
-              currentProgress = targetProgress;
-            }
-            setPreloadProgress(currentProgress);
-            setPreloadStatus(statusText);
-            // Introduce a short transition pause per step
-            await new Promise(resolve => setTimeout(resolve, 80));
+          switch (data.user.role) {
+            case 'super-admin':
+              navigate('/super-admin/dashboard');
+              break;
+            case 'admin':
+              navigate('/admin/dashboard');
+              break;
+            case 'team_admin':
+              navigate('/team-admin/dashboard');
+              break;
+            case 'team_user':
+              navigate('/team-user/dashboard');
+              break;
+            case 'user':
+            default:
+              navigate('/dashboard');
           }
-        });
-      } catch (preloadErr) {
-        console.warn('Preloading failed, proceeding to dashboard directly:', preloadErr);
-      } finally {
-        clearTimeout(safetyTimeout);
-        setTimeout(() => {
+        };
+
+        // Safety timeout guard (5 seconds)
+        const safetyTimeout = setTimeout(() => {
           navigateToDashboard();
-        }, 500);
+        }, 5000);
+
+        try {
+          let currentProgress = 10;
+          await preloadByRole(data.user, async (targetProgress, statusText) => {
+            while (currentProgress < targetProgress) {
+              currentProgress += 5;
+              if (currentProgress > targetProgress) {
+                currentProgress = targetProgress;
+              }
+              setPreloadProgress(currentProgress);
+              setPreloadStatus(statusText);
+              await new Promise(resolve => setTimeout(resolve, 80));
+            }
+          });
+        } catch (preloadErr) {
+          console.warn('Preloading failed, proceeding to dashboard directly:', preloadErr);
+        } finally {
+          clearTimeout(safetyTimeout);
+          setTimeout(() => {
+            navigateToDashboard();
+          }, 500);
+        }
+      } else {
+        toast.info('OTP code sent to your email. Please verify.');
+        logger.info('Login', 'handleSubmit', `Login credentials verified → navigating to /verify-login`, {
+          api: '/api/auth/login', method: 'POST', status: 200, action: 'Login Credentials Verified + Navigate',
+        });
+        navigate('/verify-login', { state: { email: form.email } });
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Login failed';
+      const resData = err.response?.data;
+      if (resData?.code === 'EMAIL_NOT_VERIFIED') {
+        toast.warning(resData.message || 'Please verify your email address.');
+        navigate('/verify-register', { state: { email: form.email } });
+        return;
+      }
+      
+      let msg = 'Login failed';
+      if (resData?.errors && Array.isArray(resData.errors) && resData.errors.length > 0) {
+        msg = resData.errors.map(e => e.message).join(', ');
+      } else if (resData?.message) {
+        msg = resData.message;
+      }
+      
       setError(msg);
       toast.error(msg);
       logger.error('Login', 'handleSubmit', `Login FAILED — ${msg}`, err, {

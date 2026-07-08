@@ -190,4 +190,25 @@ const getTeamFeedback = async (req, res) => {
   }
 };
 
-module.exports = { submitFeedback, getPendingFeedback, dismissFeedback, getAllFeedback, getTeamFeedback };
+// ── Get feedback for the logged-in agent ──
+const getAgentFeedback = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const filter = { teamUserId: req.user._id, isSubmitted: true };
+    const skip   = (Number(page) - 1) * Number(limit);
+    const total  = await Feedback.countDocuments(filter);
+    const feedbacks = await Feedback.find(filter)
+      .populate('ticketId', 'title')
+      .populate('userId',   'name email')
+      .sort({ submittedAt: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+
+    res.json({ feedbacks, total, page: Number(page) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { submitFeedback, getPendingFeedback, dismissFeedback, getAllFeedback, getTeamFeedback, getAgentFeedback };

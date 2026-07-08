@@ -16,12 +16,13 @@ import API from '../services/authApi';
 import { useAuth } from '../context/AuthContext';
 import { getFeatureApiPath } from '../config/featureHelpers';
 
-// Group ALL features by category
+// Group ALL features by section
 const ALL_GROUPED = (() => {
   const map = {};
   FEATURES.forEach(f => {
-    if (!map[f.category]) map[f.category] = [];
-    map[f.category].push(f);
+    const sec = f.section || 'OTHER';
+    if (!map[sec]) map[sec] = [];
+    map[sec].push(f);
   });
   return map;
 })();
@@ -106,7 +107,7 @@ const FeatureChecklist = ({ userId, role, features: savedFeatures, onSaved, onCl
     setLocal([...(savedFeatures || [])]);
   };
 
-  const enabledCount = local.length;
+  const enabledCount = local.filter(fId => FEATURES.some(f => f.id === fId)).length;
 
   return (
     <div className="bg-[rgba(10,15,25,0.6)] border border-[var(--color-border)] rounded-[14px] px-4 sm:px-[22px] py-4 sm:py-5 mt-2.5">

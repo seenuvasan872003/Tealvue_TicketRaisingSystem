@@ -191,6 +191,7 @@ const CreateAdminAccount = () => {
               placeholder="admin@tealvue.com" 
               value={formData.email} 
               onChange={e => handleEmailChange(e.target.value)} 
+              autoComplete="new-email"
             />
             {errors.email && <span className="error-msg block text-[11px] text-[var(--color-high)] mt-1">{errors.email}</span>}
             {formData.email && !errors.email && <span className="success-msg block text-[11px] text-[var(--color-teal)] mt-1">✓ Email is valid</span>}
@@ -205,6 +206,7 @@ const CreateAdminAccount = () => {
                 placeholder="Enter the password" 
                 value={formData.password} 
                 onChange={e => handlePasswordChange(e.target.value)} 
+                autoComplete="new-password"
               />
               <button
                 type="button"
@@ -243,6 +245,7 @@ const CreateAdminAccount = () => {
                 placeholder="Confirm password" 
                 value={formData.confirmPassword} 
                 onChange={e => handleConfirmPasswordChange(e.target.value)} 
+                autoComplete="new-password"
               />
               <button
                 type="button"

@@ -77,6 +77,7 @@ export default function UserActivityDetails() {
   const [loading,   setLoading]   = useState(true);
   const [logsLoading, setLogsLoading] = useState(false);
   const [sessLoading, setSessLoading] = useState(false);
+  const [expandedSessionId, setExpandedSessionId] = useState(null);
 
   // Load profile summary
   const loadSummary = useCallback(async () => {
@@ -133,10 +134,9 @@ export default function UserActivityDetails() {
   }, [uid, BASE]);
 
   useEffect(() => {
+    fetchLogs(1);
     if (tab === 'sessions') {
       fetchSessions();
-    } else {
-      fetchLogs(1);
     }
   }, [tab, fetchLogs, fetchSessions]);
 
@@ -299,33 +299,99 @@ export default function UserActivityDetails() {
               <p className="text-sm">No session logs found for this user</p>
             </div>
           ) : (
-            sessions.map(s => (
-              <div
-                key={s._id}
-                className="grid grid-cols-1 md:grid-cols-[1.5fr_1.2fr_1fr_1.5fr_1.5fr_0.8fr_2.5fr_1fr] gap-4 items-center px-6 py-4 border-b border-white/5 hover:bg-white/5 transition-all duration-200"
-              >
-                <span className="text-xs font-mono text-white/50 truncate" title={s.sessionId}>
-                  {s.sessionId?.slice(0, 8)}...
-                </span>
-                <span className="text-xs text-white/70 truncate">{s.userName || profile?.name}</span>
-                <span className="text-xs text-white/50">{s.userRole?.replace('_', ' ').replace('-', ' ')}</span>
-                <span className="text-xs text-white/70">{s.loginAt ? new Date(s.loginAt).toLocaleString() : '—'}</span>
-                <span className="text-xs text-white/70">{s.logoutAt ? new Date(s.logoutAt).toLocaleString() : '—'}</span>
-                <span className="text-xs text-white/80 font-bold text-center md:text-left">{s.pageLogCount ?? 0}</span>
-                <span className="text-xs text-teal-400 font-medium truncate" title={formatDurationText(s)}>
-                  {formatDurationText(s)}
-                </span>
-                <div>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                    s.isActive 
-                      ? 'bg-green-500/20 text-green-300 border-green-500/30' 
-                      : 'bg-white/10 text-white/40 border-white/20'
-                  }`}>
-                    {s.isActive ? 'Active' : s.logoutType || 'Ended'}
-                  </span>
-                </div>
-              </div>
-            ))
+            sessions.map(s => {
+              const isExpanded = expandedSessionId === s.sessionId;
+              const sessionLogs = logs.filter(log => log.details?.sessionId === s.sessionId);
+
+              return (
+                <React.Fragment key={s._id}>
+                  {/* Session Row */}
+                  <div
+                    onClick={() => setExpandedSessionId(isExpanded ? null : s.sessionId)}
+                    className={`grid grid-cols-1 md:grid-cols-[1.5fr_1.2fr_1fr_1.5fr_1.5fr_0.8fr_2.5fr_1fr] gap-4 items-center px-6 py-4 border-b border-white/5 hover:bg-white/5 transition-all duration-200 cursor-pointer ${isExpanded ? 'bg-teal-500/5' : ''}`}
+                  >
+                    <span className="text-xs font-mono text-white/50 truncate flex items-center gap-1.5" title={s.sessionId}>
+                      <span className="text-[10px] text-teal-400/60 shrink-0">
+                        {isExpanded ? '▼' : '▶'}
+                      </span>
+                      {s.sessionId?.slice(0, 8)}...
+                    </span>
+                    <span className="text-xs text-white/70 truncate">{s.userName || profile?.name}</span>
+                    <span className="text-xs text-white/50">{s.userRole?.replace('_', ' ').replace('-', ' ')}</span>
+                    <span className="text-xs text-white/70">{s.loginAt ? new Date(s.loginAt).toLocaleString() : '—'}</span>
+                    <span className="text-xs text-white/70">{s.logoutAt ? new Date(s.logoutAt).toLocaleString() : '—'}</span>
+                    <span className="text-xs text-white/80 font-bold text-center md:text-left">{s.pageLogCount ?? 0}</span>
+                    <span className="text-xs text-teal-400 font-medium truncate" title={formatDurationText(s)}>
+                      {formatDurationText(s)}
+                    </span>
+                    <div>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        s.isActive 
+                          ? 'bg-green-500/20 text-green-300 border-green-500/30' 
+                          : 'bg-white/10 text-white/40 border-white/20'
+                      }`}>
+                        {s.isActive ? 'Active' : s.logoutType || 'Ended'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Expanded Sub-Logs Panel */}
+                  {isExpanded && (
+                    <div className="bg-black/30 border-b border-white/10 px-8 py-4 space-y-2">
+                      <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-teal-400">
+                          Session Triggers & Activity Logs ({sessionLogs.length})
+                        </span>
+                        <span className="text-[10px] text-white/40">
+                          Session ID: {s.sessionId}
+                        </span>
+                      </div>
+
+                      {sessionLogs.length === 0 ? (
+                        <div className="text-xs text-white/30 py-4 text-center">
+                          No activity triggers logged in this session
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                          {sessionLogs.map(log => {
+                            const isError = log.details?.statusCode >= 400 || log.eventType === 'FAILED_LOGIN' || log.eventType === 'UNAUTHORIZED_ATTEMPT';
+                            return (
+                              <div
+                                key={log._id}
+                                className="flex flex-col md:flex-row md:items-center justify-between gap-2 p-2.5 rounded-lg bg-white/2 border border-white/5 text-xs"
+                              >
+                                <div className="flex flex-wrap items-center gap-3">
+                                  <span className="text-[10px] text-white/30">
+                                    {new Date(log.timestamp).toLocaleTimeString()}
+                                  </span>
+                                  <EventBadge type={log.eventType} />
+                                  {log.details?.method && (
+                                    <MethodBadge method={log.details.method} />
+                                  )}
+                                  <span className="font-mono text-white/70 truncate max-w-[300px]" title={log.details?.route}>
+                                    {log.details?.route || '—'}
+                                  </span>
+                                  {log.details?.note && (
+                                    <span className="text-[10px] text-white/40 italic">({log.details.note})</span>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                                    isError ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'
+                                  }`}>
+                                    {log.details?.statusCode ?? '200'}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })
           )}
         </div>
       )}

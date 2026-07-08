@@ -11,15 +11,19 @@
 const express = require('express');
 const router  = express.Router();
 
-const { register, login, logout, getProfile, updateProfile } = require('../controllers/authController');
+const { register, login, logout, getProfile, updateProfile, verifyRegister, verifyLogin, resendOTP } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const { upload }  = require('../config/multer');
 const { registerValidator, loginValidator } = require('../middleware/validationMiddleware');
+const { checkOTPBlock } = require('../middleware/checkOTPBlock');
 
-router.post('/register', registerValidator, register);
-router.post('/login',    loginValidator, login);
-router.post('/logout',   logout);
-router.get('/profile',   protect, getProfile);
+router.post('/register',        checkOTPBlock, registerValidator, register);
+router.post('/verify-register', checkOTPBlock, verifyRegister);
+router.post('/login',           checkOTPBlock, loginValidator, login);
+router.post('/verify-login',    checkOTPBlock, verifyLogin);
+router.post('/resend-otp',      checkOTPBlock, resendOTP);
+router.post('/logout',          protect, logout);
+router.get('/profile',          protect, getProfile);
 
 // Avatar is a single optional file under field name 'avatar'
 router.put('/profile',   protect, upload.single('avatar'), updateProfile);

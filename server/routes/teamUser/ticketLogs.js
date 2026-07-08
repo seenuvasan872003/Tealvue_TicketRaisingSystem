@@ -5,6 +5,9 @@ const Ticket = require('../../models/Ticket');
 const TicketLog = require('../../models/TicketLog');
 const { protect } = require('../../middleware/authMiddleware');
 const { requireFeature } = require('../../middleware/roleMiddleware');
+const { getAgentFeedback } = require('../../controllers/feedbackController');
+
+router.get('/feedback', getAgentFeedback);
 
 router.get('/ticket-logs', ...guardRoute('ticket_lifecycle_logs'), async (req, res) => {
   try {

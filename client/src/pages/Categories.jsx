@@ -4,8 +4,10 @@ import { getCategories } from '../services/ticketApi';
 import API from '../services/authApi';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
+import { useConfirm } from '../context/ConfirmContext';
 
 const Categories = () => {
+  const confirm = useConfirm();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newCategory, setNewCategory] = useState('');
@@ -57,7 +59,8 @@ const Categories = () => {
       toast.error('Cannot delete default system categories');
       return;
     }
-    if (!window.confirm(`Are you sure you want to delete category "${cat}"?`)) return;
+    const ok = await confirm(`Are you sure you want to delete category "${cat}"?`, 'Confirm Deletion');
+    if (!ok) return;
 
     try {
       await API.delete(`/teams/categories/${cat}`);

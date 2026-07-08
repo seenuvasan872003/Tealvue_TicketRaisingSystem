@@ -3,11 +3,13 @@ import { getMyTeam, getTeamMembers, addTeamMember, deleteTeamMember } from '../s
 import { toast } from 'react-toastify';
 import { Plus, Trash2, X, Users, User, ShieldAlert, Mail } from 'lucide-react';
 import logger from '../utils/logger';
+import { useConfirm } from '../context/ConfirmContext';
 import { SkeletonCard, SkeletonTable, SkeletonText } from '../components/skeletons';
 
 import { getCache, setCache } from '../utils/cache';
 
 const TeamMembers = () => {
+  const confirm = useConfirm();
   const [team, setTeam] = useState(() => getCache('my_team'));
   const [members, setMembers] = useState(() => {
     const cached = getCache('team_members');
@@ -99,7 +101,8 @@ const TeamMembers = () => {
   };
 
   const handleDeleteMember = async (memberId) => {
-    if (!window.confirm('Are you sure you want to remove this member from the team?')) return;
+    const ok = await confirm('Are you sure you want to remove this member from the team?', 'Remove Member');
+    if (!ok) return;
     logger.info('TeamMembers', 'handleDeleteMember', `Removing member: ${memberId}`, { action: 'Team Member Delete Attempt' });
     try {
       await deleteTeamMember(team._id, memberId);

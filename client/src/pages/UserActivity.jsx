@@ -120,8 +120,7 @@ const InlineTicketTimeline = ({ ticketId }) => {
 };
 
 const UserActivity = () => {
-  const { uid } = useParams();
-  const id = uid;
+  const { id } = useParams();
   const navigate = useNavigate();
   
   const [activityData, setActivityData] = useState(null);

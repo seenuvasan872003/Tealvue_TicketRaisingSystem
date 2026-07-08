@@ -190,6 +190,13 @@ if (process.env.NODE_ENV !== 'test') {
     // Migrate existing tickets categories, priorities, and approval status
     try {
       const db = mongoose.connection.db;
+      const usersCollection = db.collection('users');
+      // For all existing users, mark as verified and skip OTP logins (otpEnabled: false)
+      await usersCollection.updateMany(
+        { otpEnabled: { $exists: false } },
+        { $set: { isEmailVerified: true, verifiedAt: new Date(), otpEnabled: false } }
+      );
+      console.log('[MIGRATION] Marked existing users as verified and OTP-bypassed.');
       const ticketsCollection = db.collection('tickets');
       
       // Force lowercase categories to exact capitalization enums

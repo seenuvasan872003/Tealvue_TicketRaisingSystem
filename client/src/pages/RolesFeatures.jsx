@@ -20,6 +20,7 @@ import { SkeletonCard } from '../components/skeletons';
 import { FEATURES } from '../config/featureList';
 import { ROLE_DEFAULTS } from '../config/roleDefaults';
 import { getFeatureApiPath } from '../config/featureHelpers';
+import { useConfirm } from '../context/ConfirmContext';
 
 const TOTAL_FEATURES = FEATURES.length;
 
@@ -59,13 +60,14 @@ const UserAvatar = ({ user }) => {
 
 // ── User Card ──────────────────────────────────────────────
 const UserCard = ({ userRecord, currentUserId, onSaved }) => {
+  const confirm = useConfirm();
   const [expanded, setExpanded] = useState(false);
   const [localFeatures, setLocalFeatures] = useState(userRecord.features || []);
   const [unblocking, setUnblocking] = useState(false);
   const [flags, setFlags] = useState(userRecord.securityFlags || 0);
 
   const meta         = ROLE_META[userRecord.role] || ROLE_META['user'];
-  const enabledCount = localFeatures.length;          // out of ALL 20 features
+  const enabledCount = localFeatures.filter(fId => FEATURES.some(f => f.id === fId)).length;
   const pct          = Math.round((enabledCount / TOTAL_FEATURES) * 100);
 
   const barColorCls = pct > 80 ? 'bg-[#10b981]' : pct > 40 ? 'bg-[#f59e0b]' : 'bg-[#ef4444]';
@@ -76,7 +78,8 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
   };
 
   const handleUnblock = async () => {
-    if (!window.confirm(`Clear security flags for ${userRecord.name}?`)) return;
+    const ok = await confirm(`Clear security flags for ${userRecord.name}?`, 'Clear Flags');
+    if (!ok) return;
     setUnblocking(true);
     try {
       const activeRole = localStorage.getItem('user_role') || 'super-admin';
@@ -191,12 +194,14 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
 
 // ── Bulk Role Reset Section ────────────────────────────────
 const RoleSection = ({ role, users, currentUserId, onSaved }) => {
+  const confirm = useConfirm();
   const meta = ROLE_META[role] || ROLE_META['user'];
   const { Icon } = meta;
   const [bulkLoading, setBulkLoading] = useState(false);
 
   const handleBulkReset = async () => {
-    if (!window.confirm(`Reset all ${meta.label} accounts to default features? This cannot be undone.`)) return;
+    const ok = await confirm(`Reset all ${meta.label} accounts to default features? This cannot be undone.`, 'Bulk Reset');
+    if (!ok) return;
     setBulkLoading(true);
     try {
       const defaults = ROLE_DEFAULTS[role] || ['dashboard'];

@@ -35,7 +35,8 @@ API.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
+    const isLoginRequest = error.config?.url?.includes('/auth/login');
+    if (error.response && error.response.status === 401 && !isLoginRequest) {
       logger.warn('authApi', 'response.interceptor', '[401 UNAUTHORIZED] Token expired or invalid — redirecting to login', {
         api: error.config?.url, method: error.config?.method?.toUpperCase(), status: 401, action: 'Auto Logout on 401',
       });

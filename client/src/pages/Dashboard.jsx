@@ -76,16 +76,28 @@ export default function Dashboard() {
   const membersPerPage = 4;
 
   const [pendingFeedback, setPendingFeedback] = useState([]);
+  const [agentFeedbacks, setAgentFeedbacks] = useState([]);
 
   useEffect(() => {
     const loadCriticalData = async () => {
       logger.info('Dashboard', 'loadCriticalData', `Loading critical dashboard data for role: ${user?.role}`, { action: 'Dashboard Critical Load Start' });
       try {
         if (user?.role === 'team_admin' || user?.role === 'team_user') {
-          const [ticketsRes, teamRes] = await Promise.all([
+          const fetchFeedbackPromise = user?.role === 'team_user'
+            ? axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/team-user/feedback`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+              }).catch(() => ({ data: { feedbacks: [] } }))
+            : Promise.resolve({ data: { feedbacks: [] } });
+
+          const [ticketsRes, teamRes, feedbackRes] = await Promise.all([
             getTickets({ page: 1, limit: 1000 }),
-            getMyTeam().catch(() => ({ data: null }))
+            getMyTeam().catch(() => ({ data: null })),
+            fetchFeedbackPromise
           ]);
+          
+          if (user?.role === 'team_user') {
+            setAgentFeedbacks(feedbackRes.data.feedbacks || []);
+          }
           const ticketsList = ticketsRes.data.tickets || [];
           const myTeam = teamRes?.data;
           const myTeamId = myTeam?._id;
@@ -269,6 +281,7 @@ export default function Dashboard() {
           <TeamUserDashboard
             user={user} stats={stats} recent={recent} navigate={navigate}
             greeting={greeting} pieData={pieData} priorityChartData={priorityChartData}
+            feedbacks={agentFeedbacks}
           />
         )}
         {user?.role === 'user' && (

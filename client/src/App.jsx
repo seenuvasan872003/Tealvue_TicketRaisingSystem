@@ -6,10 +6,22 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { ToastContainer }   from 'react-toastify';
 import { useState, Suspense, lazy } from 'react';
 import { Menu }             from 'lucide-react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'react-toastify/dist/ReactToastify.css';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
+import { ConfirmProvider } from './context/ConfirmContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Sidebar from './components/Sidebar';
 
@@ -20,6 +32,7 @@ import tealvueLogo from './assets/tealvue1.png';
 const Login        = lazy(() => import('./pages/Login'));
 const Register     = lazy(() => import('./pages/Register'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
+const VerifyOTP    = lazy(() => import('./pages/VerifyOTP'));
 const Profile      = lazy(() => import('./pages/Profile'));
 const TicketDetails = lazy(() => import('./pages/TicketDetails'));
 const Notifications = lazy(() => import('./pages/Notifications'));
@@ -112,51 +125,57 @@ const App = () => {
   const dynamicRoutes = generateDynamicRoutes();
 
   return (
-    <AuthProvider>
-      <DataProvider>
-        <BrowserRouter>
-          <Suspense fallback={<div className="spinner-container flex items-center justify-center h-screen w-screen bg-[var(--color-bg)]"><div className="spinner" /></div>}>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login"    element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/access-denied" element={<AccessDenied />} />
-  
-              {/* Protected shell — ONE ProtectedRoute wraps the entire shell */}
-              <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
-                <Route index element={<DashboardRouter />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/tickets/:id" element={<TicketDetails />} />
-                <Route path="/teams/:id/performance" element={<PerformanceDetails />} />
-                <Route path="/admin/users/:id/activity" element={<UserActivity />} />
-                <Route path="/super-admin/users/:id/activity" element={<UserActivity />} />
-                {/* User Activity Tracking — detail pages */}
-                <Route path="/super-admin/user-activity/:uid" element={<UserActivityDetails />} />
-                <Route path="/admin/user-activity/:uid"       element={<UserActivityDetails />} />
-                <Route path="/team-admin/user-activity/:uid"  element={<UserActivityDetails />} />
-                {dynamicRoutes}
-              </Route>
-  
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </DataProvider>
-  
-      <ToastContainer
-        position="bottom-right"
-        autoClose={3500}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        pauseOnFocusLoss={false}
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <ConfirmProvider>
+        <AuthProvider>
+          <DataProvider>
+            <BrowserRouter>
+              <Suspense fallback={<div className="spinner-container flex items-center justify-center h-screen w-screen bg-[var(--color-bg)]"><div className="spinner" /></div>}>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/login"    element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/verify-register" element={<VerifyOTP type="register" />} />
+                  <Route path="/verify-login"    element={<VerifyOTP type="login" />} />
+                  <Route path="/access-denied" element={<AccessDenied />} />
+      
+                  {/* Protected shell — ONE ProtectedRoute wraps the entire shell */}
+                  <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
+                    <Route index element={<DashboardRouter />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/notifications" element={<Notifications />} />
+                    <Route path="/tickets/:id" element={<TicketDetails />} />
+                    <Route path="/teams/:id/performance" element={<PerformanceDetails />} />
+                    <Route path="/admin/users/:id/activity" element={<UserActivity />} />
+                    <Route path="/super-admin/users/:id/activity" element={<UserActivity />} />
+                    {/* User Activity Tracking — detail pages */}
+                    <Route path="/super-admin/user-activity/:uid" element={<UserActivityDetails />} />
+                    <Route path="/admin/user-activity/:uid"       element={<UserActivityDetails />} />
+                    <Route path="/team-admin/user-activity/:uid"  element={<UserActivityDetails />} />
+                    {dynamicRoutes}
+                  </Route>
+      
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </DataProvider>
+      
+          <ToastContainer
+            position="bottom-right"
+            autoClose={3500}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            pauseOnFocusLoss={false}
+            draggable
+            pauseOnHover
+            theme="dark"
+          />
+        </AuthProvider>
+      </ConfirmProvider>
+    </QueryClientProvider>
   );
 };
 

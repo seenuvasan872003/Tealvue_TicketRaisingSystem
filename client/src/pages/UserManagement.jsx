@@ -14,10 +14,12 @@ import { ShieldCheck, User, Search, RefreshCw, XCircle, CheckCircle, Crown, Eye,
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
 import ExportButton from '../components/ExportButton';
+import { useConfirm } from '../context/ConfirmContext';
 
 import { getCache, setCache, invalidateCache } from '../utils/cache';
 
 const UserManagement = () => {
+  const confirm = useConfirm();
   const { user: currentUser, isSuperAdmin } = useAuth();
   const rolePrefix = currentUser?.role === 'super-admin' ? 'super-admin' : 'admin';
   const [users, setUsers]       = useState(() => {
@@ -313,7 +315,8 @@ const UserManagement = () => {
                                     <button
                                       className="btn btn-secondary px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1 bg-[rgba(245,158,11,0.1)] text-[#f59e0b] border border-[rgba(245,158,11,0.25)]"
                                       onClick={async () => {
-                                        if (window.confirm(`Are you sure you want to unblock user "${u.name}"?`)) {
+                                        const ok = await confirm(`Are you sure you want to unblock user "${u.name}"?`, 'Unblock User');
+                                        if (ok) {
                                           try {
                                             const { unblockUser } = await import('../services/userApi');
                                             await unblockUser(u._id);
@@ -331,7 +334,8 @@ const UserManagement = () => {
                                     <button
                                       className="btn btn-danger px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1 bg-[#ef4444] text-white border-none"
                                     onClick={async () => {
-                                      if (window.confirm(`Are you sure you want to permanently delete user "${u.name}"?`)) {
+                                      const ok = await confirm(`Are you sure you want to permanently delete user "${u.name}"?`, 'Delete User');
+                                      if (ok) {
                                         try {
                                           const { deleteUser } = await import('../services/userApi');
                                           await deleteUser(u._id);
