@@ -2,6 +2,11 @@ const FEATURES = require('../config/featureList');
 
 const requirePathOwnership = (featureId) => {
   return (req, res, next) => {
+    // Super Admin has full unrestricted access — bypass all path ownership checks
+    if (req.user && req.user.role === 'super-admin') {
+      return next();
+    }
+
     const role        = req.user?.role;
     const feature     = FEATURES.find(f => f.id === featureId);
     const requestPath = req.originalUrl.split('?')[0];

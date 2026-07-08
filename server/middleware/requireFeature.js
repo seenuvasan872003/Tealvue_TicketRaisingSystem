@@ -7,6 +7,11 @@ const requireFeature = (featureId) => {
   // this function is used to check if the user has the required feature
   return async (req, res, next) => {
     try {
+      // Super Admin has full unrestricted access — bypass all feature checks and flag warnings
+      if (req.user && req.user.role === 'super-admin') {
+        return next();
+      }
+
       const roleFeature = await RoleFeature.findOne({
         userId: req.user._id
       });
