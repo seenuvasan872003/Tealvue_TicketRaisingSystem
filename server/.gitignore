@@ -4,3 +4,9 @@ node_modules/
 *.log
 
 tests
+
+scratch
+migrate_tickets.js
+print_tickets.js
+raw_migrate.js
+search_code.js
