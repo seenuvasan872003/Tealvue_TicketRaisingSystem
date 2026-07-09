@@ -138,7 +138,6 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
             <div className="mt-2 sm:mt-0 sm:mr-2 flex shrink-0">
               <button
                 type="button"
-                className="btn btn-secondary"
                 className="btn btn-secondary px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1 bg-[rgba(245,158,11,0.1)] text-[#f59e0b] border border-[rgba(245,158,11,0.25)] cursor-pointer z-10"
                 onClick={(e) => { e.stopPropagation(); handleUnblock(); }}
                 disabled={unblocking}
@@ -199,19 +198,23 @@ const RoleSection = ({ role, users, currentUserId, onSaved }) => {
   const { Icon } = meta;
   const [bulkLoading, setBulkLoading] = useState(false);
 
+  const [visibleCount, setVisibleCount] = useState(10);
+
   const handleBulkReset = async () => {
-    const ok = await confirm(`Reset all ${meta.label} accounts to default features? This cannot be undone.`, 'Bulk Reset');
+    const ok = await confirm(
+      `Reset all [${meta.label}] users to default features?\nThis will replace all custom feature assignments for ${meta.label} role.`,
+      'Reset to Defaults'
+    );
     if (!ok) return;
     setBulkLoading(true);
     try {
-      const defaults = ROLE_DEFAULTS[role] || ['dashboard'];
       const activeRole = localStorage.getItem('user_role') || 'super-admin';
       const apiPath = getFeatureApiPath('roles_features', activeRole);
       const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
-      await API.put(`${relativePath}/role/${role}`, { features: defaults });
+      await API.put(`${relativePath}/reset-role`, { role });
       toast.success(`All ${meta.label} accounts reset to defaults!`);
       // Notify parent to refetch
-      onSaved && onSaved(role, defaults);
+      onSaved && onSaved(role);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Bulk reset failed');
     } finally {
@@ -243,7 +246,7 @@ const RoleSection = ({ role, users, currentUserId, onSaved }) => {
 
       {/* User Cards */}
       <div className="flex flex-col gap-[10px]">
-        {users.map(user => (
+        {users.slice(0, visibleCount).map(user => (
           <UserCard
             key={user.userId}
             userRecord={user}
@@ -251,6 +254,14 @@ const RoleSection = ({ role, users, currentUserId, onSaved }) => {
             onSaved={onSaved}
           />
         ))}
+        {users.length > visibleCount && (
+          <button
+            onClick={() => setVisibleCount(v => v + 20)}
+            className="w-full mt-2 py-2.5 rounded-xl border border-white/[0.08] text-[12px] font-semibold text-[var(--color-text-muted)] hover:bg-white/[0.02] hover:text-white transition-colors cursor-pointer"
+          >
+            Load More Users ({users.length - visibleCount} remaining)
+          </button>
+        )}
       </div>
     </div>
   );
@@ -272,6 +283,114 @@ const RolesFeatures = () => {
   const [search,  setSearch]        = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [refetchKey, setRefetchKey] = useState(0);
+
+  // Bulk Feature Assignment State
+  const [selectedFeatures, setSelectedFeatures] = useState([]);
+  const [selectedRoles, setSelectedRoles]       = useState([]);
+  const [applying, setApplying]                 = useState(false);
+  const [previewCount, setPreviewCount]         = useState(0);
+
+  const toggleRole = (role) => {
+    setSelectedRoles(prev =>
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+    );
+  };
+
+  const removeFeature = (featId) => {
+    setSelectedFeatures(prev => {
+      const next = prev.filter(id => id !== featId);
+      if (next.length === 0) setSelectedRoles([]);
+      return next;
+    });
+  };
+
+  const fetchPreviewCount = async (featureIds, rolesArray) => {
+    if (featureIds.length === 0 || rolesArray.length === 0) {
+      setPreviewCount(0);
+      return;
+    }
+    try {
+      const featuresParam = featureIds.join(',');
+      const rolesParam = rolesArray.join(',');
+      const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+      const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+      const { data } = await API.get(`${relativePath}/preview-count?featureIds=${featuresParam}&roles=${rolesParam}`);
+      setPreviewCount(data.count || 0);
+    } catch (err) {
+      console.error('Failed to fetch preview count:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedFeatures.length > 0 && selectedRoles.length > 0) {
+      fetchPreviewCount(selectedFeatures, selectedRoles);
+    } else {
+      setPreviewCount(0);
+    }
+  }, [selectedFeatures, selectedRoles]);
+
+  const handleAssignToRoles = async () => {
+    if (selectedFeatures.length === 0 || selectedRoles.length === 0) return;
+    setApplying(true);
+    try {
+      const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+      const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+      const { data } = await API.put(`${relativePath}/assign-to-roles`, {
+        featureIds: selectedFeatures,
+        roles: selectedRoles,
+      });
+      toast.success(data.message || `Features successfully assigned to ${data.count} users`);
+      setSelectedFeatures([]);
+      setSelectedRoles([]);
+      setRefetchKey(k => k + 1);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to assign features to roles');
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleRemoveFromRoles = async () => {
+    if (selectedFeatures.length === 0 || selectedRoles.length === 0) return;
+    const ok = window.confirm(`Are you sure you want to bulk remove ${selectedFeatures.length} feature(s) from all users of selected roles?`);
+    if (!ok) return;
+    setApplying(true);
+    try {
+      const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+      const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+      const { data } = await API.put(`${relativePath}/remove-from-roles`, {
+        featureIds: selectedFeatures,
+        roles: selectedRoles,
+      });
+      if (data.warning) {
+        toast.warning(data.warning);
+      }
+      toast.success(data.message || 'Features successfully removed from roles');
+      setSelectedFeatures([]);
+      setSelectedRoles([]);
+      setRefetchKey(k => k + 1);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to remove features from roles');
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleResetRole = async (role) => {
+    const ok = window.confirm(
+      `Reset all [${ROLE_META[role]?.label || role}] users to default features?\nThis will replace all custom feature assignments for ${ROLE_META[role]?.label || role} role.`
+    );
+    if (!ok) return;
+    try {
+      const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+      const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
+      await API.put(`${relativePath}/reset-role`, { role });
+      toast.success(`Features reset to defaults for role: ${role}`);
+      setRefetchKey(k => k + 1);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reset role features');
+    }
+  };
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -335,6 +454,24 @@ const RolesFeatures = () => {
   const totalUsers   = allUsers.length;
   const uniqueRoles  = [...new Set(allUsers.map(u => u.role))].length;
 
+  const groupedFeatures = useMemo(() => {
+    return FEATURES.reduce((acc, f) => {
+      if (!acc[f.section]) acc[f.section] = [];
+      acc[f.section].push(f);
+      return acc;
+    }, {});
+  }, []);
+
+  const eligibleRoles = useMemo(() => {
+    if (selectedFeatures.length === 0) return [];
+    let commonRoles = FEATURES.find(f => f.id === selectedFeatures[0])?.roles || [];
+    for (let i = 1; i < selectedFeatures.length; i++) {
+      const featureRoles = FEATURES.find(f => f.id === selectedFeatures[i])?.roles || [];
+      commonRoles = commonRoles.filter(r => featureRoles.includes(r));
+    }
+    return commonRoles;
+  }, [selectedFeatures]);
+
   return (
     <div className="w-full max-w-[1100px] mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 overflow-hidden">
 
@@ -373,6 +510,309 @@ const RolesFeatures = () => {
         ))}
       </div>
 
+      {/* ── Section 1 — Role-Based Feature Assignment ── */}
+      <div className="mb-8 relative overflow-hidden rounded-2xl border border-white/[0.06] shadow-[0_24px_64px_rgba(0,0,0,0.55)]"
+        style={{ background: 'linear-gradient(145deg, #0f1117 0%, #13161f 60%, #0d1016 100%)' }}
+      >
+        {/* Decorative glow blobs */}
+        <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full opacity-[0.06] pointer-events-none"
+          style={{ background: 'radial-gradient(circle, #d3a73c 0%, transparent 70%)' }} />
+        <div className="absolute -bottom-20 -right-20 w-72 h-72 rounded-full opacity-[0.04] pointer-events-none"
+          style={{ background: 'radial-gradient(circle, #14b8a6 0%, transparent 70%)' }} />
+
+        <div className="relative z-10 p-6 sm:p-8">
+
+          {/* ── Header ── */}
+          <div className="flex items-start justify-between gap-4 mb-7">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg"
+                style={{ background: 'linear-gradient(135deg, #d3a73c22 0%, #d3a73c44 100%)', border: '1px solid #d3a73c33' }}>
+                <ShieldCheck className="text-[#d3a73c]" size={24} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h3 className="m-0 text-[15px] font-bold text-white tracking-tight">Assign Feature to Role</h3>
+                <p className="m-0 text-[12px] text-[var(--color-text-muted)] mt-0.5">Bulk-assign or remove a feature across all users of selected roles</p>
+              </div>
+            </div>
+            {/* Live badge */}
+            {selectedFeatures.length > 0 && selectedRoles.length > 0 && (
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold flex-shrink-0"
+                style={{ background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.25)', color: '#14b8a6' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#14b8a6] animate-pulse" />
+                {previewCount > 0 ? `${previewCount} users affected` : 'Ready to apply'}
+              </div>
+            )}
+          </div>
+
+          {/* ── Step Layout ── */}
+          <div className="flex flex-col gap-6">
+
+            {/* STEP 1 — Feature */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg, #d3a73c, #a87f1c)', color: '#000' }}>1</span>
+                  <span className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Select Features</span>
+                </div>
+                {selectedFeatures.length > 0 && (
+                  <button onClick={() => { setSelectedFeatures([]); setSelectedRoles([]); }} className="text-[11px] font-semibold text-[#ef4444] hover:text-red-400 transition-colors cursor-pointer bg-transparent border-none">
+                    Clear All
+                  </button>
+                )}
+              </div>
+
+              {/* Custom styled select */}
+              <div className="relative">
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val && !selectedFeatures.includes(val)) {
+                      setSelectedFeatures(prev => [...prev, val]);
+                      setSelectedRoles([]); // Reset role selections to force re-evaluation
+                    }
+                  }}
+                  className="w-full appearance-none pl-4 pr-10 py-3 rounded-xl text-[13px] font-medium outline-none cursor-pointer transition-all duration-200"
+                  style={{
+                    background: selectedFeatures.length > 0 ? 'rgba(211,167,60,0.08)' : 'rgba(255,255,255,0.04)',
+                    border: selectedFeatures.length > 0 ? '1px solid rgba(211,167,60,0.35)' : '1px solid rgba(255,255,255,0.1)',
+                    color: selectedFeatures.length > 0 ? '#fff' : '#666',
+                  }}
+                >
+                  <option value="" style={{ background: '#13161f', color: '#888' }}>— Add a feature —</option>
+                  {Object.keys(groupedFeatures).map(sec => (
+                    <optgroup key={sec} label={`── ${sec} ──`} style={{ background: '#13161f', color: '#555', fontWeight: 700 }}>
+                      {groupedFeatures[sec].map(f => {
+                        const isSelected = selectedFeatures.includes(f.id);
+                        return (
+                          <option key={f.id} value={f.id} disabled={isSelected} style={{ background: '#13161f', color: isSelected ? '#555' : '#e2e8f0', fontWeight: 400 }}>
+                            {f.label} {isSelected ? '(Selected)' : ''}
+                          </option>
+                        );
+                      })}
+                    </optgroup>
+                  ))}
+                </select>
+                <i className="ti ti-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[#555] text-sm pointer-events-none" />
+              </div>
+
+              {/* Selected feature pills */}
+              {selectedFeatures.length > 0 && (
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {selectedFeatures.map(featId => {
+                    const feat = FEATURES.find(f => f.id === featId);
+                    if (!feat) return null;
+                    return (
+                      <div key={featId} className="flex items-center gap-3 pl-3 pr-8 py-2 rounded-lg relative group transition-all"
+                        style={{ background: 'rgba(211,167,60,0.08)', border: '1px solid rgba(211,167,60,0.2)' }}>
+                        <div className="flex items-center gap-2">
+                          <i className={`ti ${feat.icon} text-[#d3a73c] text-[15px]`} />
+                          <div>
+                            <div className="text-[13px] font-bold text-[#d3a73c] leading-tight">{feat.label}</div>
+                            <div className="text-[10px] text-[#666] uppercase tracking-wider">{feat.section} · {feat.id}</div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeFeature(featId)}
+                          title="Remove feature"
+                          style={{
+                            position: 'absolute',
+                            top: '50%',
+                            right: '8px',
+                            transform: 'translateY(-50%)',
+                            width: '20px',
+                            height: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'rgba(239,68,68,0.15)',
+                            border: '1px solid rgba(239,68,68,0.4)',
+                            borderRadius: '4px',
+                            color: '#ef4444',
+                            cursor: 'pointer',
+                            padding: 0,
+                            fontSize: '14px',
+                            fontWeight: '900',
+                            lineHeight: 1,
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.35)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="w-full h-px bg-white/[0.06]" />
+
+            {/* STEP 2 — Roles */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center flex-shrink-0"
+                  style={{ background: selectedFeatures.length > 0 ? 'linear-gradient(135deg, #d3a73c, #a87f1c)' : '#222', color: selectedFeatures.length > 0 ? '#000' : '#555' }}>2</span>
+                <span className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Select Roles</span>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: 'super-admin', label: 'Super Admin', color: '#f59e0b', icon: 'ti-crown' },
+                  { id: 'admin',       label: 'Admin',       color: '#14b8a6', icon: 'ti-shield-check' },
+                  { id: 'team_admin',  label: 'Team Admin',  color: '#818cf8', icon: 'ti-shield-half' },
+                  { id: 'team_user',   label: 'Team Agent',  color: '#60a5fa', icon: 'ti-headset' },
+                  { id: 'user',        label: 'User',        color: '#94a3b8', icon: 'ti-user' },
+                ].map(roleItem => {
+                  // A role is eligible if:
+                  // 1. It is allowed statically by FEATURES config
+                  // 2. AND there's at least one user in that role who doesn't have ALL the selected features yet
+                  const isAllowedByConfig = selectedFeatures.length === 0 || eligibleRoles.includes(roleItem.id);
+                  const roleUsers = allUsers.filter(u => u.role === roleItem.id);
+                  const hasEligibleUser = selectedFeatures.length === 0 || (roleUsers.length > 0 && roleUsers.some(u => {
+                    const uFeats = u.features || [];
+                    return selectedFeatures.some(fId => !uFeats.includes(fId));
+                  }));
+
+                  const isEligible = isAllowedByConfig && hasEligibleUser;
+                  const isChecked = selectedRoles.includes(roleItem.id);
+                  return (
+                    <button
+                      key={roleItem.id}
+                      type="button"
+                      disabled={!isEligible || selectedFeatures.length === 0}
+                      onClick={() => isEligible && selectedFeatures.length > 0 && toggleRole(roleItem.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all duration-200 select-none"
+                      style={{
+                        background: isChecked
+                          ? `${roleItem.color}22`
+                          : isEligible && selectedFeatures.length > 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)',
+                        border: isChecked
+                          ? `1px solid ${roleItem.color}55`
+                          : isEligible && selectedFeatures.length > 0 ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.03)',
+                        color: isChecked ? roleItem.color : (isEligible && selectedFeatures.length > 0) ? '#888' : '#333',
+                        cursor: (isEligible && selectedFeatures.length > 0) ? 'pointer' : 'not-allowed',
+                        opacity: (isEligible && selectedFeatures.length > 0) ? 1 : 0.35,
+                        boxShadow: isChecked ? `0 0 12px ${roleItem.color}22` : 'none',
+                        transform: isChecked ? 'scale(1.03)' : 'scale(1)',
+                      }}
+                      title={isChecked ? "Remove role" : (isEligible ? "Select role" : "Role already has these features or is not eligible")}
+                    >
+                      <i className={`ti ${roleItem.icon} text-[13px]`} />
+                      {roleItem.label}
+                      {isChecked && <i className="ti ti-x text-[12px] ml-0.5" style={{ color: '#ef4444' }} />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedRoles.length > 0 && (
+                <div className="text-[11px] text-[#555] mt-1">
+                  {selectedRoles.length} role{selectedRoles.length > 1 ? 's' : ''} selected
+                </div>
+              )}
+
+              {selectedFeatures.length > 0 && selectedRoles.length === 0 && (
+                <div className="text-[11px] text-[#555] flex items-center gap-1.5 mt-1">
+                  <i className="ti ti-info-circle text-[13px]" /> Click roles above to select
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="w-full h-px bg-white/[0.06]" />
+
+            {/* STEP 3 — Action */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center flex-shrink-0"
+                  style={{ background: (selectedFeatures.length > 0 && selectedRoles.length > 0) ? 'linear-gradient(135deg, #d3a73c, #a87f1c)' : '#222', color: (selectedFeatures.length > 0 && selectedRoles.length > 0) ? '#000' : '#555' }}>3</span>
+                <span className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Apply</span>
+              </div>
+
+              {/* Preview Banner */}
+              {selectedFeatures.length > 0 && selectedRoles.length > 0 ? (
+                <div className="rounded-xl p-3 mb-1"
+                  style={{ background: 'rgba(20,184,166,0.07)', border: '1px solid rgba(20,184,166,0.18)' }}>
+                  <div className="text-[11px] text-[#94a3b8] leading-relaxed">
+                    <span className="font-semibold text-white">{selectedFeatures.length} feature(s)</span>{' '}
+                    will be applied to{' '}
+                    <span className="text-[#14b8a6] font-semibold">
+                      {selectedRoles.map(r => ROLE_META[r]?.label || r).join(', ')}
+                    </span>
+                  </div>
+                  {previewCount > 0 && (
+                    <div className="text-[11px] text-[#14b8a6] font-bold mt-1.5 flex items-center gap-1">
+                      <i className="ti ti-users text-[12px]" />
+                      {previewCount} users will receive {selectedFeatures.length === 1 ? 'this feature' : 'features'}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-xl p-3 mb-1" style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.07)' }}>
+                  <div className="text-[11px] text-[#444] text-center">
+                    Select features and roles<br />to see the preview
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={handleAssignToRoles}
+                  disabled={applying || selectedFeatures.length === 0 || selectedRoles.length === 0}
+                  className="w-full flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-[13px] font-bold transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    background: (applying || selectedFeatures.length === 0 || selectedRoles.length === 0)
+                      ? 'rgba(211,167,60,0.15)'
+                      : 'linear-gradient(135deg, #d3a73c 0%, #c49528 50%, #a87f1c 100%)',
+                    color: '#000',
+                    boxShadow: (!applying && selectedFeatures.length > 0 && selectedRoles.length > 0)
+                      ? '0 4px 20px rgba(211,167,60,0.35)' : 'none',
+                    cursor: (applying || selectedFeatures.length === 0 || selectedRoles.length === 0) ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {applying ? (
+                    <><i className="ti ti-loader-2 animate-spin text-[14px]" /> Applying...</>
+                  ) : (
+                    <><i className="ti ti-circle-plus text-[14px]" /> Apply to Selected Roles</>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleRemoveFromRoles}
+                  disabled={applying || selectedFeatures.length === 0 || selectedRoles.length === 0}
+                  className="w-full flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-[13px] font-semibold transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid rgba(239,68,68,0.25)',
+                    color: (!applying && selectedFeatures.length > 0 && selectedRoles.length > 0) ? '#ef4444' : '#555',
+                    cursor: (applying || selectedFeatures.length === 0 || selectedRoles.length === 0) ? 'not-allowed' : 'pointer',
+                  }}
+                  onMouseEnter={e => {
+                    if (!applying && selectedFeatures.length > 0 && selectedRoles.length > 0) {
+                      e.currentTarget.style.background = 'rgba(239,68,68,0.08)';
+                    }
+                  }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  {applying ? (
+                    <><i className="ti ti-loader-2 animate-spin text-[14px]" /> Removing...</>
+                  ) : (
+                    <><i className="ti ti-circle-minus text-[14px]" /> Remove from Roles</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── Sticky Filters & Controls Panel ── */}
       <div className="relative sm:sticky sm:top-4 z-40 sm:z-[100] bg-[#171c29f2] border border-[var(--color-border)] backdrop-blur-md rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8 shadow-[0_12px_40px_rgba(0,0,0,0.4)] flex flex-col gap-4">
         <div className="flex gap-3 flex-wrap items-center">
@@ -389,35 +829,32 @@ const RolesFeatures = () => {
 
           {/* Refresh Button */}
           <button
-            onClick={() => setRefetchKey(k => k + 1)}
+            onClick={() => {
+              invalidateCache('role_features_all');
+              invalidateCache('role_features');
+              setRefetchKey(k => k + 1);
+            }}
             className="text-[12.5px] h-[42px] px-[18px] rounded-xl border border-[var(--color-border)] flex items-center justify-center cursor-pointer transition-colors duration-200 hover:border-[var(--color-teal)] hover:text-[var(--color-teal)]"
           >
             <RefreshCw size={13} className="mr-1.5" /> Refresh List
           </button>
         </div>
 
-        {/* ── Modern Segmented Role Tab Switcher ── */}
-        <div className="flex gap-1.5 bg-white/5 border border-[var(--color-border)] rounded-xl p-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
-          {[
-            { id: 'all', label: 'All Roles', count: allUsers.length },
-            { id: 'super-admin', label: 'Super Admin', count: allUsers.filter(u => u.role === 'super-admin').length },
-            { id: 'admin', label: 'Admin', count: allUsers.filter(u => u.role === 'admin').length },
-            { id: 'team_admin', label: 'Team Admin', count: allUsers.filter(u => u.role === 'team_admin').length },
-            { id: 'team_user', label: 'Team Agent', count: allUsers.filter(u => u.role === 'team_user').length },
-            { id: 'user', label: 'User', count: allUsers.filter(u => u.role === 'user').length },
-          ].map(tab => {
-            const isTabActive = roleFilter === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setRoleFilter(tab.id)}
-                className={`border-none rounded-lg py-2 px-4 text-[13px] cursor-pointer inline-flex items-center gap-2 transition-all duration-200 outline-none ${isTabActive ? "bg-[rgba(20,184,166,0.12)] font-bold text-[var(--color-teal)]" : "bg-transparent font-medium text-[var(--color-text-muted)]"}`}
-              >
-                {tab.label}
-                <span className={`text-[10px] rounded-[20px] px-2 py-[1px] font-bold ${isTabActive ? "bg-[rgba(20,184,166,0.2)] text-[var(--color-teal)]" : "bg-white/10 text-[var(--color-text-muted)]"}`}>{tab.count}</span>
-              </button>
-            );
-          })}
+        {/* ── Modern Role Select Dropdown Filter ── */}
+        <div className="flex gap-2 items-center bg-[var(--color-surface)] border border-[var(--color-border)] px-3 rounded-xl h-[42px] text-[13px]">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#888] whitespace-nowrap">Role Filter:</span>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="bg-transparent border-none text-white outline-none font-semibold text-xs cursor-pointer h-full pr-2"
+          >
+            <option value="all" className="bg-[#111] text-white">All Roles ({allUsers.length})</option>
+            <option value="super-admin" className="bg-[#111] text-white">Super Admin ({allUsers.filter(u => u.role === 'super-admin').length})</option>
+            <option value="admin" className="bg-[#111] text-white">Admin ({allUsers.filter(u => u.role === 'admin').length})</option>
+            <option value="team_admin" className="bg-[#111] text-white">Team Admin ({allUsers.filter(u => u.role === 'team_admin').length})</option>
+            <option value="team_user" className="bg-[#111] text-white">Team Agent ({allUsers.filter(u => u.role === 'team_user').length})</option>
+            <option value="user" className="bg-[#111] text-white">User ({allUsers.filter(u => u.role === 'user').length})</option>
+          </select>
         </div>
       </div>
 

@@ -197,6 +197,10 @@ const logViolation = async (req, res) => {
   try {
     const { featureId, route } = req.body;
     
+    if (req.user && req.user.role === 'super-admin') {
+      return res.json({ flags: 0, isBlocked: false });
+    }
+
     const User = require('../models/User');
     const ClientLog = require('../models/ClientLog');
     
@@ -251,6 +255,163 @@ const logViolation = async (req, res) => {
   }
 };
 
+// ── Get bulk preview count ───────────────────────────────────
+const getPreviewCount = async (req, res) => {
+  try {
+    const { featureIds, roles } = req.query;
+    if (!featureIds || !roles) {
+      return res.status(400).json({ message: 'featureIds and roles are required' });
+    }
+    const fArray = featureIds.split(',');
+    const rolesArray = roles.split(',');
+
+    const users = await User.find({ role: { $in: rolesArray }, isActive: true }).select('_id');
+    const userIds = users.map(u => u._id);
+
+    // Count users who don't have ALL of the selected features (meaning they will get at least one new)
+    const count = await RoleFeature.countDocuments({
+      userId: { $in: userIds },
+      features: { $not: { $all: fArray } }
+    });
+
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Bulk assign feature to roles ─────────────────────────────
+const assignFeatureToRoles = async (req, res) => {
+  try {
+    const { featureIds, roles } = req.body;
+    if (!Array.isArray(featureIds) || featureIds.length === 0 || !Array.isArray(roles) || roles.length === 0) {
+      return res.status(400).json({ message: 'featureIds array and roles array are required' });
+    }
+
+    const FEATURES = require('../config/featureList');
+    const allExist = featureIds.every(fid => FEATURES.some(f => f.id === fid));
+    if (!allExist) {
+      return res.status(400).json({ message: `One or more features not found in FEATURES config` });
+    }
+
+    const users = await User.find({ role: { $in: roles } }).select('_id role');
+    const userIds = users.map(u => u._id);
+
+    // Ensure RoleFeature docs exist for all users
+    await Promise.all(users.map(async (u) => {
+      const exists = await RoleFeature.findOne({ userId: u._id });
+      if (!exists) {
+        const defaults = ROLE_DEFAULTS[u.role] || ['dashboard'];
+        await RoleFeature.create({
+          userId: u._id,
+          role: u.role,
+          features: defaults
+        });
+      }
+    }));
+
+    await RoleFeature.updateMany(
+      { userId: { $in: userIds } },
+      { $addToSet: { features: { $each: featureIds } } }
+    );
+
+    // Log to ActivityLog
+    await ActivityLog.create({
+      action: 'FEATURE_ASSIGNED_TO_ROLES',
+      adminId: req.user._id,
+      note: `Features [${featureIds.join(', ')}] assigned to roles: ${roles.join(', ')} — ${userIds.length} users updated`,
+    });
+
+    res.json({ success: true, message: `Features added to ${userIds.length} users`, count: userIds.length });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Bulk remove feature from roles ───────────────────────────
+const removeFeatureFromRoles = async (req, res) => {
+  try {
+    const { featureIds, roles } = req.body;
+    if (!Array.isArray(featureIds) || featureIds.length === 0 || !Array.isArray(roles) || roles.length === 0) {
+      return res.status(400).json({ message: 'featureIds array and roles array are required' });
+    }
+
+    const FEATURES = require('../config/featureList');
+    const allExist = featureIds.every(fid => FEATURES.some(f => f.id === fid));
+    if (!allExist) {
+      return res.status(400).json({ message: `One or more features not found in FEATURES config` });
+    }
+
+    const users = await User.find({ role: { $in: roles } }).select('_id');
+    const userIds = users.map(u => u._id);
+
+    let warning = null;
+    let updateIds = userIds;
+    if (featureIds.includes('roles_features') && roles.includes('super-admin')) {
+      updateIds = userIds.filter(uid => uid.toString() !== req.user._id.toString());
+      warning = "The 'roles_features' feature was not removed from your own account for safety.";
+    }
+
+    await RoleFeature.updateMany(
+      { userId: { $in: updateIds } },
+      { $pullAll: { features: featureIds } }
+    );
+
+    // Log to ActivityLog
+    await ActivityLog.create({
+      action: 'FEATURE_REMOVED_FROM_ROLES',
+      adminId: req.user._id,
+      note: `Features [${featureIds.join(', ')}] removed from roles: ${roles.join(', ')}`,
+    });
+
+    res.json({ success: true, message: `Features removed from ${updateIds.length} users`, warning });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Reset all users of a role to defaults ────────────────────
+const resetRoleFeatures = async (req, res) => {
+  try {
+    const { role } = req.body;
+    const validRoles = ['super-admin', 'admin', 'user', 'team_admin', 'team_user'];
+    if (!role || !validRoles.includes(role)) {
+      return res.status(400).json({ message: 'Valid role is required' });
+    }
+
+    const defaultFeatures = ROLE_DEFAULTS[role] || ['dashboard'];
+    const users = await User.find({ role }).select('_id');
+    const userIds = users.map(u => u._id);
+
+    await Promise.all(users.map(async (u) => {
+      const exists = await RoleFeature.findOne({ userId: u._id });
+      if (!exists) {
+        await RoleFeature.create({
+          userId: u._id,
+          role: u.role,
+          features: defaultFeatures
+        });
+      }
+    }));
+
+    await RoleFeature.updateMany(
+      { userId: { $in: userIds } },
+      { $set: { features: defaultFeatures } }
+    );
+
+    // Log to ActivityLog
+    await ActivityLog.create({
+      action: 'ROLE_FEATURES_RESET',
+      adminId: req.user._id,
+      note: `Features reset to default configuration for role: ${role}`,
+    });
+
+    res.json({ success: true, message: `Role ${role} features reset to defaults for ${userIds.length} users` });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   getMyFeatures,
   getAllUserFeatures,
@@ -259,4 +420,8 @@ module.exports = {
   updateRoleFeatures,
   unblockUser,
   logViolation,
+  getPreviewCount,
+  assignFeatureToRoles,
+  removeFeatureFromRoles,
+  resetRoleFeatures,
 };

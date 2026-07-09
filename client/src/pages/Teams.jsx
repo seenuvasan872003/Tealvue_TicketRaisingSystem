@@ -9,7 +9,8 @@ import {
   Shield,
   Briefcase,
   Eye,
-  EyeOff
+  EyeOff,
+  Search
 } from 'lucide-react';
 import {
   createTeam,
@@ -35,6 +36,8 @@ const Teams = () => {
     const cached = getCache('teams_list');
     return !Array.isArray(cached);
   });
+  const [teamSearchQuery, setTeamSearchQuery] = useState('');
+  const [teamStatusFilter, setTeamStatusFilter] = useState('all'); // all | active | inactive
   const [showModal, setShowModal] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
 
@@ -265,6 +268,22 @@ const Teams = () => {
   const activeTeams = teams.filter((t) => t.isActive).length;
   const totalHandled = teams.reduce((acc, curr) => acc + (curr.total || 0), 0);
 
+  const filteredTeams = teams.filter(t => {
+    const matchesSearch = 
+      t.name?.toLowerCase().includes(teamSearchQuery.toLowerCase()) ||
+      t.description?.toLowerCase().includes(teamSearchQuery.toLowerCase()) ||
+      t.teamAdmin?.name?.toLowerCase().includes(teamSearchQuery.toLowerCase()) ||
+      t.teamAdmin?.email?.toLowerCase().includes(teamSearchQuery.toLowerCase()) ||
+      t.categories?.some(cat => cat.toLowerCase().includes(teamSearchQuery.toLowerCase()));
+
+    const matchesStatus = 
+      teamStatusFilter === 'all' ||
+      (teamStatusFilter === 'active' && t.isActive) ||
+      (teamStatusFilter === 'inactive' && !t.isActive);
+
+    return matchesSearch && matchesStatus;
+  });
+
   if (loading && teams.length === 0) {
     return (
       <div className="page-body fade-in">
@@ -292,7 +311,10 @@ const Teams = () => {
           <h1 className="page-title">Team Management</h1>
           <p className="page-subtitle">Configure specialized teams, auto-allocation categories, and Team Admins.</p>
         </div>
-        <button className="btn btn-primary" onClick={openAddModal}>
+        <button 
+          className="bg-gradient-to-r from-[#14a07d] to-[#0f766e] hover:from-[#0f766e] hover:to-[#14a07d] text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 transition-all duration-300 text-sm cursor-pointer shadow-md"
+          onClick={openAddModal}
+        >
           <Plus size={15} /> Add Team
         </button>
       </div>
@@ -313,6 +335,31 @@ const Teams = () => {
         </div>
       </div>
 
+      {/* Search & Filters */}
+      <div className="card px-5 py-4 mb-5 flex gap-4 items-center flex-wrap bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl">
+        <div className="search-box flex-1 min-w-[240px] relative">
+          <input
+            className="form-input pl-3.5 pr-[38px] bg-[var(--color-surface)] border border-[var(--color-border)] text-white rounded-lg h-[38px] w-full outline-none text-[13px]"
+            placeholder="Search teams, admins, or categories..."
+            value={teamSearchQuery}
+            onChange={(e) => setTeamSearchQuery(e.target.value)}
+          />
+          <Search size={16} className="absolute right-3 top-2.5 text-[var(--color-text-muted)] pointer-events-none" />
+        </div>
+        <div className="flex gap-2 items-center bg-[var(--color-surface)] border border-[var(--color-border)] px-3 rounded-lg h-[38px] text-[13px]">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#888] whitespace-nowrap">Status:</span>
+          <select
+            value={teamStatusFilter}
+            onChange={(e) => setTeamStatusFilter(e.target.value)}
+            className="bg-transparent border-none text-white outline-none font-semibold text-xs cursor-pointer h-full pr-2"
+          >
+            <option value="all" className="bg-[#111] text-white">All Teams</option>
+            <option value="active" className="bg-[#111] text-white">Active Teams</option>
+            <option value="inactive" className="bg-[#111] text-white">Inactive Teams</option>
+          </select>
+        </div>
+      </div>
+
       <div className="card p-0 overflow-hidden">
         <div className="table-wrap">
           <table>
@@ -328,14 +375,14 @@ const Teams = () => {
               </tr>
             </thead>
             <tbody>
-              {teams.length === 0 ? (
+              {filteredTeams.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="text-center p-6 text-[var(--color-text-muted)]">
                     No teams found.
                   </td>
                 </tr>
               ) : (
-                teams.map((team) => (
+                filteredTeams.map((team) => (
                   <tr key={team.teamId}>
                     <td>
                       <div className="font-semibold text-white">{team.name}</div>
@@ -636,15 +683,17 @@ const Teams = () => {
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 mt-1">
-                    <input
-                      type="checkbox"
+                  <div className="form-group">
+                    <label>Team Status</label>
+                    <select
                       id="isActive"
-                      checked={isActive}
-                      onChange={(e) => setIsActive(e.target.checked)}
-                      className="!w-auto h-4"
-                    />
-                    <label htmlFor="isActive" className="cursor-pointer">Active and accepting ticket allocations</label>
+                      value={isActive ? 'active' : 'inactive'}
+                      onChange={(e) => setIsActive(e.target.value === 'active')}
+                      className="form-control cursor-pointer"
+                    >
+                      <option value="active" className="bg-[#111] text-white">Active (Accepting Allocations)</option>
+                      <option value="inactive" className="bg-[#111] text-white">InActive (Paused)</option>
+                    </select>
                   </div>
                 </div>
               </div>

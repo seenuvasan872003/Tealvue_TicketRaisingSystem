@@ -142,7 +142,7 @@ const ClientLogs = () => {
           <button
             key={tab.value}
             onClick={() => { setFilterType(tab.value); setCurrentPage(1); }}
-            className={`px-[14px] py-[6px] rounded-md border-none text-white cursor-pointer text-xs font-semibold transition-all duration-200 ${filterType === tab.value ? 'bg-[var(--color-teal)]' : 'bg-transparent'}`}
+            className={`px-[14px] py-[6px] rounded-md border-none text-white cursor-pointer text-xs font-semibold transition-all duration-300 ${filterType === tab.value ? 'bg-gradient-to-r from-[#14a07d] to-[#0f766e] hover:from-[#0f766e] hover:to-[#14a07d] shadow-md' : 'bg-transparent'}`}
           >
             {tab.label}
           </button>

@@ -7,7 +7,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Ticket, UserCheck, ShieldCheck } from 'lucide-react';
+import { Search, X, Ticket, UserCheck, ShieldCheck, Eye, RefreshCw, Trash2 } from 'lucide-react';
 import { getTickets, updateTicket, getTeams, assignTicketTeam, deleteTicket, restoreTicket, getCategories } from '../services/ticketApi';
 import StatusBadge, { PriorityBadge } from '../components/StatusBadge';
 import { useAuth } from '../context/AuthContext';
@@ -511,13 +511,14 @@ const AllTickets = () => {
                       <td className="py-3.5 px-4 text-xs text-[#acacac] whitespace-nowrap">{formatDate(t.createdAt)}</td>
                       <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex gap-2 items-center">
-                          <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/tickets/${t._id}`)}>
-                            View
+                          <button className="btn btn-ghost btn-sm p-1.5 h-10 w-10 flex items-center justify-center rounded-md" title="View Ticket" onClick={() => navigate(`/tickets/${t._id}`)}>
+                            <Eye size={25} />
                           </button>
                           {t.approvalStatus === 'rejected' ? (
                             <>
                               <button
-                                className="btn btn-sm bg-[var(--color-teal)] border-none text-black py-1 px-2 rounded cursor-pointer text-[11px] font-semibold"
+                                className="p-1.5 h-7 w-7 flex items-center justify-center rounded-md bg-[var(--color-teal)]/10 text-[var(--color-teal)] border border-[var(--color-teal)]/20 hover:bg-[var(--color-teal)]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Reactivate Ticket"
                                 onClick={async () => {
                                   if (!window.confirm('Are you sure you want to reactivate this ticket?')) return;
                                   setUpdating(t._id);
@@ -533,10 +534,11 @@ const AllTickets = () => {
                                 }}
                                 disabled={updating === t._id}
                               >
-                                Reactivate
+                                {updating === t._id ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={15} />}
                               </button>
                               <button
-                                className="btn btn-sm bg-[#e53e3e] border-none text-white py-1 px-2 rounded cursor-pointer text-[11px] font-semibold"
+                                className="p-1.5 h-7 w-7 flex items-center justify-center rounded-md bg-[#e53e3e]/10 text-[#fc8181] border border-[#e53e3e]/20 hover:bg-[#e53e3e]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Permanently Delete Ticket"
                                 onClick={async () => {
                                   if (!window.confirm('Are you sure you want to permanently delete this ticket?')) return;
                                   setUpdating(t._id);
@@ -552,7 +554,7 @@ const AllTickets = () => {
                                 }}
                                 disabled={updating === t._id}
                               >
-                                Delete
+                                {updating === t._id ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={15} />}
                               </button>
                             </>
                           ) : (

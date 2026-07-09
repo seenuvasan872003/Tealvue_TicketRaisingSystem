@@ -8,7 +8,6 @@
 //    4. User account is active (not suspended)
 //    5. User account is approved (not pending Super Admin approval)
 // ============================================================
-
 const jwt  = require('jsonwebtoken');
 const User = require('../models/User');
 

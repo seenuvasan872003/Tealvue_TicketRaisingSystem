@@ -120,7 +120,7 @@ const TeamDashboard = () => {
         <div className="flex gap-3 items-center">
           {isSuperAdmin && (
             <button 
-              className="btn btn-primary flex items-center gap-1.5"
+              className="bg-gradient-to-r from-[#14a07d] to-[#0f766e] hover:from-[#0f766e] hover:to-[#14a07d] text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 transition-all duration-300 text-xs cursor-pointer shadow-md border-none"
               onClick={() => navigate('/super-admin/categories')}
             >
               Manage Categories

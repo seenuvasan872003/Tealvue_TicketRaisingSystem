@@ -143,13 +143,6 @@ app.use('/api/team-admin/user-activity',  protect, requireRolePrefix, trackActiv
 app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/ticketApproval'));
 app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/roleFeatures'));
 
-// ── Feedback & Export routes ─────────────────────────────────────────────────
-app.use('/api/admin',         protect, requireRolePrefix, require('./routes/admin/feedback'));
-app.use('/api/super-admin',   protect, requireRolePrefix, require('./routes/admin/feedback'));
-app.use('/api/team-admin',    protect, requireRolePrefix, require('./routes/admin/feedback'));
-app.use('/api/admin',         protect, requireRolePrefix, require('./routes/admin/export'));
-app.use('/api/super-admin',   protect, requireRolePrefix, require('./routes/superAdmin/export'));
-app.use('/api/team-admin',    protect, requireRolePrefix, require('./routes/admin/export'));
 
 app.use('/api/user',                      protect, requireRolePrefix, require('./routes/user/myTickets'));
 app.use('/api/user',                      protect, requireRolePrefix, require('./routes/user/createTicket'));

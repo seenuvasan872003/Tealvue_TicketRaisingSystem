@@ -198,7 +198,6 @@ const CreateTicket = () => {
           <div className="field-group">
             <label>Description *</label>
             <textarea 
-              className={errors.description ? 'input-error' : form.description ? 'input-success' : ''} 
               placeholder="Describe the issue in detail (20-2000 chars)..." 
               value={form.description} 
               onChange={(e) => handleDescChange(e.target.value)} 

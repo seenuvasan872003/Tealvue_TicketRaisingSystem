@@ -10,13 +10,14 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllUsers, updateUserStatus, getUserStats } from '../services/userApi';
 import { useAuth } from '../context/AuthContext';
-import { ShieldCheck, User, Search, RefreshCw, XCircle, CheckCircle, Crown, Eye, Users, ShieldAlert, Check, Unlock } from 'lucide-react';
+import { ShieldCheck, User, UserPlus, Search, RefreshCw, XCircle, CheckCircle, Crown, Eye, Users, ShieldAlert, Check, Unlock, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import logger from '../utils/logger';
 import ExportButton from '../components/ExportButton';
 import { useConfirm } from '../context/ConfirmContext';
 
 import { getCache, setCache, invalidateCache } from '../utils/cache';
+import CreateUserModal from '../components/modals/CreateUserModal';
 
 const UserManagement = () => {
   const confirm = useConfirm();
@@ -33,6 +34,22 @@ const UserManagement = () => {
   const [search, setSearch]     = useState('');
   const [filter, setFilter]     = useState('all'); // all, admin, user, teams, pending, suspended
   const [statusModal, setStatusModal] = useState(null);
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+
+  // User Creation Modal State
+  const [modalType, setModalType]   = useState(null);
+  const [modalOpen, setModalOpen]   = useState(false);
+
+  const openModal  = (type) => { setModalType(type); setModalOpen(true); };
+  const closeModal = ()     => { setModalType(null); setModalOpen(false); };
+
+  const handleCreateSuccess = () => {
+    closeModal();
+    invalidateCache('all_users');
+    loadUsers();
+    loadStats();
+    toast.success(modalType === 'admin' ? 'Admin created successfully' : 'User created successfully');
+  };
 
   // Server-side Pagination & Stats State
   const [page, setPage]         = useState(1);
@@ -79,6 +96,7 @@ const UserManagement = () => {
       setUsers(data.users || []);
       setTotal(data.total || 0);
       setPages(data.pages || 1);
+      setSelectedUserIds([]);
 
       // Cache page 1 all users
       if (page === 1 && filter === 'all' && !search.trim()) {
@@ -152,13 +170,40 @@ const UserManagement = () => {
           <h1 className="page-title">User Management</h1>
           <p className="page-subtitle">Manage accounts, roles, and access controls</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* User Creation Buttons */}
+          {isSuperAdmin && (
+            <button 
+              onClick={() => openModal('admin')}
+              className="bg-gradient-to-r from-[#14a07d] to-[#0f766e] hover:from-[#0f766e] hover:to-[#14a07d] text-white font-semibold px-[18px] py-2 rounded-lg flex items-center gap-1.5 transition-all duration-300 text-xs cursor-pointer shadow-md"
+            >
+              <ShieldCheck size={14} />
+              Create Admin
+            </button>
+          )}
+          <button 
+            onClick={() => openModal('user')}
+            className="bg-gradient-to-r from-[#14a07d] to-[#0f766e] hover:from-[#0f766e] hover:to-[#14a07d] text-white font-semibold px-[18px] py-2 rounded-lg flex items-center gap-1.5 transition-all duration-300 text-xs cursor-pointer shadow-md"
+          >
+            <UserPlus size={14} />
+            Create User
+          </button>
+
           <ExportButton
             endpoint={`/api/${rolePrefix}/export/users`}
             filename="users"
             filters={{ role: filter !== 'all' ? filter : undefined }}
           />
-          <button className="btn btn-secondary flex items-center gap-1.5" onClick={() => { loadUsers(); loadStats(); }}>
+          <button 
+            className="btn btn-secondary flex items-center gap-1.5 cursor-pointer" 
+            onClick={() => { 
+              invalidateCache('all_users'); 
+              invalidateCache('user_stats');
+              setLoading(true);
+              loadUsers(); 
+              loadStats(); 
+            }}
+          >
             <RefreshCw size={14} className={loading ? 'spin' : ''} />
             Refresh
           </button>
@@ -208,26 +253,81 @@ const UserManagement = () => {
       {/* Filters & Search */}
       <div className="card px-5 py-4 mb-5 flex gap-4 items-center flex-wrap bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl">
         <div className="search-box flex-1 min-w-[240px] relative">
-          <Search size={16} className="absolute left-3 top-2.5 text-[var(--color-text-muted)]" />
           <input
-            className="form-input pl-[38px] bg-[var(--color-surface)] border border-[var(--color-border)] text-white rounded-lg h-[38px] w-full outline-none"
+            className="form-input pl-3.5 pr-[38px] bg-[var(--color-surface)] border border-[var(--color-border)] text-white rounded-lg h-[38px] w-full outline-none"
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          <Search size={16} className="absolute right-3 top-2.5 text-[var(--color-text-muted)] pointer-events-none" />
         </div>
-        <div className="filter-tabs flex gap-1 bg-[rgba(255,255,255,0.02)] p-1 rounded-lg border border-[var(--color-border)]">
-          {['all', 'admin', 'user', 'teams', 'team_user', 'pending', 'suspended'].map(f => (
-            <button
-              key={f}
-              className={`filter-tab px-3.5 py-1.5 border-none rounded-md font-semibold text-xs cursor-pointer transition-all duration-200 ${filter === f ? 'active bg-[var(--color-teal)] text-black' : 'bg-transparent text-[#acacac]'}`}
-              onClick={() => setFilter(f)}
-            >
-              {f === 'team_user' ? 'Team Users' : f === 'teams' ? 'Team Admins' : f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
+        <div className="flex gap-2 items-center bg-[var(--color-surface)] border border-[var(--color-border)] px-3 rounded-lg h-[38px] text-[13px]">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#888] whitespace-nowrap">Filter By:</span>
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="bg-transparent border-none text-white outline-none font-semibold text-xs cursor-pointer h-full pr-2"
+          >
+            <option value="all" className="bg-[#111] text-white">All Accounts</option>
+            <option value="admin" className="bg-[#111] text-white">Admins</option>
+            <option value="user" className="bg-[#111] text-white">Users</option>
+            <option value="teams" className="bg-[#111] text-white">Team Admins</option>
+            <option value="team_user" className="bg-[#111] text-white">Team Users</option>
+            <option value="pending" className="bg-[#111] text-white">Pending Approval</option>
+            <option value="suspended" className="bg-[#111] text-white">Suspended</option>
+          </select>
         </div>
       </div>
+
+      {/* Bulk Action Controls */}
+      {selectedUserIds.length > 0 && (
+        <div className="flex items-center justify-between bg-[rgba(20,20,20,0.8)] border border-[var(--color-border)] px-4 py-3 rounded-lg mb-4 animate-[fadeIn_0.2s]">
+          <span className="text-[13px] text-[var(--color-teal)] font-semibold">
+            {selectedUserIds.length} users selected for bulk actions
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                const ok = window.confirm(`Are you sure you want to suspend these ${selectedUserIds.length} selected users?`);
+                if (ok) {
+                  try {
+                    const { toggleUserStatus } = await import('../services/userApi');
+                    await Promise.all(selectedUserIds.map(id => toggleUserStatus(id, { isActive: false })));
+                    toast.success('Selected users suspended successfully');
+                    setSelectedUserIds([]);
+                    loadUsers();
+                  } catch (err) {
+                    toast.error('Failed to suspend some selected users');
+                  }
+                }
+              }}
+              className="px-3 py-1.5 bg-[#fb923c] text-black border-none rounded cursor-pointer text-xs font-semibold hover:opacity-90 transition-all"
+            >
+              Bulk Suspend
+            </button>
+            <button
+              onClick={async () => {
+                const ok = window.confirm(`Are you sure you want to permanently delete these ${selectedUserIds.length} selected users?`);
+                if (ok) {
+                  try {
+                    const { deleteUser } = await import('../services/userApi');
+                    await Promise.all(selectedUserIds.map(id => deleteUser(id)));
+                    toast.success('Selected users deleted successfully');
+                    setSelectedUserIds([]);
+                    loadUsers();
+                    loadStats();
+                  } catch (err) {
+                    toast.error('Failed to delete some selected users');
+                  }
+                }
+              }}
+              className="px-3 py-1.5 bg-[#ef4444] text-white border-none rounded cursor-pointer text-xs font-semibold hover:opacity-90 transition-all"
+            >
+              Bulk Delete
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* User Table */}
       <div className="bg-[var(--color-card)] border border-[var(--color-border)] rounded-xl overflow-hidden">
@@ -237,13 +337,27 @@ const UserManagement = () => {
           <div className="p-[60px] text-center text-[var(--color-text-muted)]">No users found matching filters.</div>
         ) : (
           <div className="table-wrap">
-            <table className="w-full border-collapse text-left text-[13px]">
+            <table className="w-full min-w-[800px] border-collapse text-[13px] table-fixed">
               <thead>
                 <tr className="border-b border-[var(--color-border)] bg-[rgba(255,255,255,0.03)]">
-                  <th className="px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em]">User</th>
-                  <th className="px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em]">Role</th>
-                  <th className="px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em]">Status</th>
-                  <th className="px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em] text-right">Actions</th>
+                  <th className="w-[46px] px-3 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em] text-center">
+                    <input
+                      type="checkbox"
+                      checked={users.length > 0 && selectedUserIds.length === users.length}
+                      onChange={() => {
+                        if (selectedUserIds.length === users.length) {
+                          setSelectedUserIds([]);
+                        } else {
+                          setSelectedUserIds(users.map(u => u._id));
+                        }
+                      }}
+                      className="cursor-pointer"
+                    />
+                  </th>
+                  <th className="w-[25%] px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em] text-left">User</th>
+                  <th className="w-[25%] px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em] text-left">Role</th>
+                  <th className="w-[25%] px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em] text-left">Status</th>
+                  <th className="w-[25%] px-5 py-3.5 font-semibold text-[#acacac] text-[11px] uppercase tracking-[0.05em] text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -253,20 +367,34 @@ const UserManagement = () => {
 
                   return (
                     <tr key={u._id} className="border-b border-[var(--color-border-soft)] transition-colors duration-200 table-row-hover">
-                      <td className="px-5 py-3.5">
-                        <div className="font-semibold text-[#e4e4e4]">{u.name}</div>
-                        <div className="text-xs text-[#888]">{u.email}</div>
+                      <td className="px-3 py-3.5 text-center w-[46px]">
+                        <input
+                          type="checkbox"
+                          checked={selectedUserIds.includes(u._id)}
+                          onChange={() => {
+                            if (selectedUserIds.includes(u._id)) {
+                              setSelectedUserIds(prev => prev.filter(id => id !== u._id));
+                            } else {
+                              setSelectedUserIds(prev => [...prev, u._id]);
+                            }
+                          }}
+                          className="cursor-pointer"
+                        />
                       </td>
-                      <td className="px-5 py-3.5">{getRoleBadge(u.role)}</td>
-                      <td className="px-5 py-3.5">
-                        <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                      <td className="px-5 py-3.5 text-left overflow-hidden text-ellipsis whitespace-nowrap">
+                        <div className="font-semibold text-[#e4e4e4] overflow-hidden text-ellipsis">{u.name}</div>
+                        <div className="text-xs text-[#888] overflow-hidden text-ellipsis">{u.email}</div>
+                      </td>
+                      <td className="px-5 py-3.5 text-left">{getRoleBadge(u.role)}</td>
+                      <td className="px-5 py-3.5 text-left">
+                        <div className="flex justify-start items-center gap-1.5 whitespace-nowrap">
                           {u.securityFlags >= 5 || (u.securityBlockUntil && new Date(u.securityBlockUntil) > new Date()) ? (
                             <span className="status-blocked inline-flex items-center gap-1 bg-[rgba(239,68,68,0.1)] text-[#ef4444] py-1 px-2 rounded-md text-[11px] border border-[rgba(239,68,68,0.2)]">
                               <ShieldAlert size={11} /> Blocked
                             </span>
                           ) : !u.isApproved ? (
                             <span className="status-pending inline-flex items-center gap-1 bg-[rgba(251,146,60,0.1)] text-[#fb923c] py-1 px-2 rounded-md text-[11px] border border-[rgba(251,146,60,0.2)]">
-                              <RefreshCw size={11} className="spin" /> Pending Approval
+                              <RefreshCw size={11} className="spin" /> Pending
                             </span>
                           ) : !u.isActive ? (
                             <span className="status-suspended inline-flex items-center gap-1 bg-[rgba(239,68,68,0.1)] text-[#f87171] py-1 px-2 rounded-md text-[11px] border border-[rgba(239,68,68,0.2)]">
@@ -279,22 +407,23 @@ const UserManagement = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 text-right">
-                        <div className="flex gap-2 justify-end items-center">
+                      <td className="px-5 py-3.5 text-left">
+                        <div className="flex gap-2 justify-start items-center">
                            {canEdit && !isSelf && (
                             <>
                               {!u.isApproved ? (
                                 <div className="inline-flex gap-1.5">
-                                  <button className="btn btn-primary px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1" onClick={() => handleToggleStatus(u, 'isApproved', true)}>
-                                    <Check size={11} /> Approve
+                                  <button className="p-1.5 h-7 w-7 rounded-md inline-flex items-center justify-center bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 cursor-pointer transition-all" title="Approve Account" onClick={() => handleToggleStatus(u, 'isApproved', true)}>
+                                    <Check size={14} />
                                   </button>
-                                  <button className="btn btn-danger px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1 bg-[#e53e3e] border-none" onClick={() => handleToggleStatus(u, { isApproved: true, isActive: false })}>
-                                    <XCircle size={11} /> Suspend
+                                  <button className="p-1.5 h-7 w-7 rounded-md inline-flex items-center justify-center bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 cursor-pointer transition-all" title="Suspend Account" onClick={() => handleToggleStatus(u, { isApproved: true, isActive: false })}>
+                                    <XCircle size={14} />
                                   </button>
                                 </div>
                               ) : (
                                 <button
-                                  className={`btn ${u.isActive ? 'btn-danger' : 'btn-primary'} px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1`}
+                                  className={`p-1.5 h-7 w-7 rounded-md inline-flex items-center justify-center border cursor-pointer transition-all ${u.isActive ? 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20'}`}
+                                  title={u.isActive ? 'Suspend Account' : 'Unsuspend Account'}
                                   onClick={() => {
                                     if (u.isActive) {
                                       setStatusModal({ user: u });
@@ -303,8 +432,7 @@ const UserManagement = () => {
                                     }
                                   }}
                                 >
-                                  {u.isActive ? <XCircle size={11} /> : <CheckCircle size={11} />}
-                                  {u.isActive ? 'Suspend' : 'Unsuspend'}
+                                  {u.isActive ? <XCircle size={14} /> : <CheckCircle size={14} />}
                                 </button>
                               )}
                               
@@ -313,7 +441,8 @@ const UserManagement = () => {
                                 <>
                                   {(u.securityFlags >= 5 || (u.securityBlockUntil && new Date(u.securityBlockUntil) > new Date())) && (
                                     <button
-                                      className="btn btn-secondary px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1 bg-[rgba(245,158,11,0.1)] text-[#f59e0b] border border-[rgba(245,158,11,0.25)]"
+                                      className="p-1.5 h-7 w-7 rounded-md inline-flex items-center justify-center bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 hover:bg-yellow-500/20 cursor-pointer transition-all"
+                                      title="Unblock User"
                                       onClick={async () => {
                                         const ok = await confirm(`Are you sure you want to unblock user "${u.name}"?`, 'Unblock User');
                                         if (ok) {
@@ -328,11 +457,12 @@ const UserManagement = () => {
                                         }
                                       }}
                                     >
-                                      <Unlock size={11} /> Unblock
+                                      <Unlock size={14} />
                                     </button>
                                   )}
-                                    <button
-                                      className="btn btn-danger px-3 py-1 text-[11px] h-7 inline-flex items-center gap-1 bg-[#ef4444] text-white border-none"
+                                  <button
+                                    className="p-1.5 h-7 w-7 rounded-md inline-flex items-center justify-center bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 cursor-pointer transition-all"
+                                    title="Delete User"
                                     onClick={async () => {
                                       const ok = await confirm(`Are you sure you want to permanently delete user "${u.name}"?`, 'Delete User');
                                       if (ok) {
@@ -348,7 +478,7 @@ const UserManagement = () => {
                                       }
                                     }}
                                   >
-                                    Delete
+                                    <Trash2 size={14} />
                                   </button>
                                 </>
                               )}
@@ -358,9 +488,10 @@ const UserManagement = () => {
                           {!canEdit && !isSelf && <span className="text-[11px] text-[var(--color-text-muted)]">No access</span>}
                           <Link 
                             to={isSuperAdmin ? `/super-admin/users/${u._id}/activity` : `/admin/users/${u._id}/activity`} 
-                            className="btn btn-secondary flex items-center gap-1 px-3 py-1 text-[11px] h-7 bg-[rgba(20,160,125,0.1)] text-[var(--color-teal)] border border-[rgba(20,160,125,0.25)]"
+                            className="p-1.5 h-7 w-7 rounded-md inline-flex items-center justify-center bg-teal-500/10 text-teal-400 border border-teal-500/20 hover:bg-teal-500/20 cursor-pointer transition-all"
+                            title="View Activity Logs"
                           >
-                            <Eye size={12} /> Activity
+                            <Eye size={14} />
                           </Link>
                         </div>
                       </td>
@@ -440,6 +571,14 @@ const UserManagement = () => {
           </div>
         </div>
       )}
+
+      {/* User/Admin Creation Modal */}
+      <CreateUserModal
+        isOpen={modalOpen}
+        type={modalType}
+        onClose={closeModal}
+        onSuccess={handleCreateSuccess}
+      />
     </div>
   );
 };

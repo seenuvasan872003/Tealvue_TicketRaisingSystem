@@ -45,7 +45,7 @@ export default function ExportButton({ endpoint, filename = 'export', filters = 
       <button
         onClick={() => setOpen(!open)}
         disabled={loading}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/20 text-white/70 hover:border-teal-500/50 hover:text-teal-300 transition-all text-sm font-medium bg-transparent disabled:opacity-50"
+        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#14a07d] to-[#0f766e] hover:from-[#0f766e] hover:to-[#14a07d] text-white transition-all duration-300 text-sm font-semibold disabled:opacity-50"
       >
         {loading ? (
           <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">

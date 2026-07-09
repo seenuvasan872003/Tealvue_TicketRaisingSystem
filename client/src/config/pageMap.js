@@ -1,21 +1,7 @@
 import { lazy } from 'react';
 
 const PAGE_MAP = {
-  create_admin: {
-    'super-admin': lazy(() => import('../pages/CreateAdminAccount')),
-    admin:       lazy(() => import('../pages/CreateAdminAccount')),
-    user:        lazy(() => import('../pages/CreateAdminAccount')),
-    team_admin:  lazy(() => import('../pages/CreateAdminAccount')),
-    team_user:   lazy(() => import('../pages/CreateAdminAccount'))
-  },
 
-  create_user: {
-    'super-admin': lazy(() => import('../pages/CreateUserAccount')),
-    admin:       lazy(() => import('../pages/CreateUserAccount')),
-    team_admin:  lazy(() => import('../pages/CreateUserAccount')),
-    user:        lazy(() => import('../pages/CreateUserAccount')),
-    team_user:   lazy(() => import('../pages/CreateUserAccount'))
-  },
 
   all_users: {
     'super-admin': lazy(() => import('../pages/UserManagement')),
@@ -159,7 +145,11 @@ const PAGE_MAP = {
     team_user:   lazy(() => import('../pages/ClientLogs'))
   },
   manage_categories: {
-    'super-admin': lazy(() => import('../pages/Categories'))
+    'super-admin': lazy(() => import('../pages/Categories')),
+    admin:       lazy(() => import('../pages/Categories')),
+    team_admin:  lazy(() => import('../pages/Categories')),
+    user:        lazy(() => import('../pages/Categories')),
+    team_user:   lazy(() => import('../pages/Categories'))
   },
   user_activity_logs: {
     'super-admin': lazy(() => import('../pages/UserActivityDashboard')),

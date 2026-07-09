@@ -20,6 +20,9 @@ const activityLogSchema = new mongoose.Schema(
         'TICKET_RESTORED',
         'USER_CREATED',
         'FEATURE_UPDATED',
+        'FEATURE_ASSIGNED_TO_ROLES',
+        'FEATURE_REMOVED_FROM_ROLES',
+        'ROLE_FEATURES_RESET',
       ],
     },
     ticketId: {

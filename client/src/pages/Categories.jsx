@@ -121,7 +121,10 @@ const Categories = () => {
             className="flex-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-white py-2.5 px-3.5 text-[13px] outline-none"
             required
           />
-          <button type="submit" className="btn btn-primary flex items-center gap-1.5">
+          <button 
+            type="submit" 
+            className="bg-gradient-to-r from-[#14a07d] to-[#0f766e] hover:from-[#0f766e] hover:to-[#14a07d] text-white font-semibold px-4 py-2.5 rounded-lg flex items-center gap-1.5 transition-all duration-300 text-[13px] cursor-pointer shadow-md border-none"
+          >
             <Plus size={16} /> Add Category
           </button>
         </form>

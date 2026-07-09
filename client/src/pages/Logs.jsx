@@ -186,7 +186,7 @@ const Logs = () => {
             <button
               key={r}
               onClick={() => setRange(r)}
-              className={`px-[14px] py-[6px] rounded-md border-none text-white cursor-pointer text-xs font-semibold capitalize transition-all duration-200 ${range === r ? 'bg-[var(--color-teal)]' : 'bg-transparent'}`}
+              className={`px-[14px] py-[6px] rounded-md border-none text-white cursor-pointer text-xs font-semibold capitalize transition-all duration-300 ${range === r ? 'bg-gradient-to-r from-[#14a07d] to-[#0f766e] hover:from-[#0f766e] hover:to-[#14a07d] shadow-md' : 'bg-transparent'}`}
             >
               {r}
             </button>
@@ -327,7 +327,7 @@ const Logs = () => {
                               <Clock size={11} /> {new Date(log.createdAt).toLocaleString()}
                             </span>
                           </div>
-                          <div className="text-[13px] text-[#e4e4e4] mt-1 text-ellipsis overflow-hidden whitespace-nowrap">
+                          <div className="text-[13px] text-[#e4e4e4] mt-1 break-words leading-snug">
                             {log.note}
                           </div>
                           {log.ticketId && (
