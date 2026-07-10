@@ -105,8 +105,8 @@ app.use('/api/users',         require('./routes/users'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/teams',         require('./routes/teams'));
 app.use('/api/logs',          require('./routes/logs'));
-app.get('/api/role-features/me', protect, require('./controllers/roleFeatureController').getMyFeatures);
-app.post('/api/role-features/violation', protect, require('./controllers/roleFeatureController').logViolation);
+app.get('/api/features/me', protect, require('./controllers/roleFeatureController').getMyFeatures);
+app.post('/api/features/violation', protect, require('./controllers/roleFeatureController').logViolation);
 
 // ─── Role-Based Feature API Routes ─────────────────────────
 app.use('/api/super-admin',   protect, requireRolePrefix, require('./routes/superAdmin/createAdmin'));
@@ -141,8 +141,8 @@ app.use('/api/admin/user-activity',       protect, requireRolePrefix, trackActiv
 app.use('/api/team-admin/user-activity',  protect, requireRolePrefix, trackActivity, require('./routes/teamAdmin/userActivity'));
 
 app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/ticketApproval'));
-app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/roleFeatures'));
-
+app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/features'));
+app.use('/api/super-admin',               protect, requireRolePrefix, require('./routes/superAdmin/roleManagement'));
 
 app.use('/api/user',                      protect, requireRolePrefix, require('./routes/user/myTickets'));
 app.use('/api/user',                      protect, requireRolePrefix, require('./routes/user/createTicket'));

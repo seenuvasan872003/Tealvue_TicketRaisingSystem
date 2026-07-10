@@ -511,8 +511,8 @@ const AllTickets = () => {
                       <td className="py-3.5 px-4 text-xs text-[#acacac] whitespace-nowrap">{formatDate(t.createdAt)}</td>
                       <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex gap-2 items-center">
-                          <button className="btn btn-ghost btn-sm p-1.5 h-10 w-10 flex items-center justify-center rounded-md" title="View Ticket" onClick={() => navigate(`/tickets/${t._id}`)}>
-                            <Eye size={25} />
+                          <button className="btn btn-ghost btn-sm p-2 h-9 w-9 flex items-center justify-center rounded-md" title="View Ticket" onClick={() => navigate(`/tickets/${t._id}`)}>
+                            <Eye size={18} />
                           </button>
                           {t.approvalStatus === 'rejected' ? (
                             <>

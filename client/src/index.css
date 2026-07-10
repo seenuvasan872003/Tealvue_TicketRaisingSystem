@@ -234,7 +234,7 @@ input, select, textarea,
   color: var(--color-text);
   font-size: 13px;
   font-family: 'Inter', 'Roboto', sans-serif;
-  padding: 10px 12px;
+  padding: 10px 25px;
   width: 100%;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;

@@ -10,6 +10,12 @@ const ROLE_PREFIX = {
 
 const requireRolePrefix = (req, res, next) => {
   let role = req.user?.role;
+
+  // Super Admin has unrestricted access to ALL API paths — bypass prefix check
+  if (role === 'super-admin') {
+    return next();
+  }
+
   if (role === 'super-admin') {
     role = 'super_admin';
   }

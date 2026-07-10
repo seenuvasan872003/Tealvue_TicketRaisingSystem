@@ -23,6 +23,7 @@ const activityLogSchema = new mongoose.Schema(
         'FEATURE_ASSIGNED_TO_ROLES',
         'FEATURE_REMOVED_FROM_ROLES',
         'ROLE_FEATURES_RESET',
+        'ROLE_CHANGED',
       ],
     },
     ticketId: {

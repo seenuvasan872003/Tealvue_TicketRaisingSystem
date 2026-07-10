@@ -28,11 +28,11 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 // ── Role styling ───────────────────────────────────────────
 const ROLE_META = {
-  'super-admin': { label: 'Super Admin', textCls: 'text-[#f59e0b]', bgCls: 'bg-[rgba(245,158,11,0.12)]', borderCls: 'border-[#f59e0b]/20', borderHoverCls: 'border-[#f59e0b]/40', avatarBgCls: 'bg-gradient-to-br from-[#f59e0b]/20 to-[#f59e0b]/40', avatarBorderCls: 'border-[#f59e0b]/25', badgeBgCls: 'bg-[#f59e0b]/10', Icon: Crown, barBgCls: 'bg-[#f59e0b]' },
-  'admin':       { label: 'Admin',       textCls: 'text-[#14b8a6]', bgCls: 'bg-[rgba(20,184,166,0.12)]', borderCls: 'border-[#14b8a6]/20', borderHoverCls: 'border-[#14b8a6]/40', avatarBgCls: 'bg-gradient-to-br from-[#14b8a6]/20 to-[#14b8a6]/40', avatarBorderCls: 'border-[#14b8a6]/25', badgeBgCls: 'bg-[#14b8a6]/10', Icon: ShieldCheck, barBgCls: 'bg-[#14b8a6]' },
-  'user':        { label: 'User',        textCls: 'text-[#94a3b8]', bgCls: 'bg-[rgba(148,163,184,0.12)]', borderCls: 'border-[#94a3b8]/20', borderHoverCls: 'border-[#94a3b8]/40', avatarBgCls: 'bg-gradient-to-br from-[#94a3b8]/20 to-[#94a3b8]/40', avatarBorderCls: 'border-[#94a3b8]/25', badgeBgCls: 'bg-[#94a3b8]/10', Icon: User, barBgCls: 'bg-[#94a3b8]' },
-  'team_admin':  { label: 'Team Admin',  textCls: 'text-[#818cf8]', bgCls: 'bg-[rgba(129,140,248,0.12)]', borderCls: 'border-[#818cf8]/20', borderHoverCls: 'border-[#818cf8]/40', avatarBgCls: 'bg-gradient-to-br from-[#818cf8]/20 to-[#818cf8]/40', avatarBorderCls: 'border-[#818cf8]/25', badgeBgCls: 'bg-[#818cf8]/10', Icon: ShieldCheck, barBgCls: 'bg-[#818cf8]' },
-  'team_user':   { label: 'Team Agent',  textCls: 'text-[#60a5fa]', bgCls: 'bg-[rgba(96,165,250,0.12)]', borderCls: 'border-[#60a5fa]/20', borderHoverCls: 'border-[#60a5fa]/40', avatarBgCls: 'bg-gradient-to-br from-[#60a5fa]/20 to-[#60a5fa]/40', avatarBorderCls: 'border-[#60a5fa]/25', badgeBgCls: 'bg-[#60a5fa]/10', Icon: User, barBgCls: 'bg-[#60a5fa]' },
+  'super-admin': { label: 'Super Admin', textCls: 'text-amber-400', bgCls: 'bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent', borderCls: 'border-amber-500/30', borderHoverCls: 'border-amber-500/50', avatarBgCls: 'bg-gradient-to-br from-amber-600 to-orange-700', avatarBorderCls: 'border-amber-500/30', badgeBgCls: 'bg-amber-500/15', Icon: Crown, barBgCls: 'bg-amber-400' },
+  'admin':       { label: 'Admin',       textCls: 'text-teal-400',  bgCls: 'bg-gradient-to-br from-teal-500/20 via-teal-500/10 to-transparent', borderCls: 'border-teal-500/30', borderHoverCls: 'border-teal-500/50', avatarBgCls: 'bg-gradient-to-br from-teal-600 to-teal-700', avatarBorderCls: 'border-teal-500/30', badgeBgCls: 'bg-teal-500/15', Icon: ShieldCheck, barBgCls: 'bg-teal-400' },
+  'team_admin':  { label: 'Team Admin',  textCls: 'text-cyan-400',  bgCls: 'bg-gradient-to-br from-cyan-500/20 via-cyan-500/10 to-transparent', borderCls: 'border-cyan-500/30', borderHoverCls: 'border-cyan-500/50', avatarBgCls: 'bg-gradient-to-br from-cyan-600 to-cyan-700', avatarBorderCls: 'border-cyan-500/30', badgeBgCls: 'bg-cyan-500/15', Icon: ShieldCheck, barBgCls: 'bg-cyan-400' },
+  'team_user':   { label: 'Team Agent',  textCls: 'text-blue-400',  bgCls: 'bg-gradient-to-br from-blue-500/20 via-blue-500/10 to-transparent', borderCls: 'border-blue-500/30', borderHoverCls: 'border-blue-500/50', avatarBgCls: 'bg-gradient-to-br from-blue-600 to-blue-700', avatarBorderCls: 'border-blue-500/30', badgeBgCls: 'bg-blue-500/15', Icon: User, barBgCls: 'bg-blue-400' },
+  'user':        { label: 'User',        textCls: 'text-slate-400', bgCls: 'bg-gradient-to-br from-slate-500/20 via-slate-500/10 to-transparent', borderCls: 'border-slate-500/30', borderHoverCls: 'border-slate-500/50', avatarBgCls: 'bg-gradient-to-br from-slate-600 to-slate-700', avatarBorderCls: 'border-slate-500/30', badgeBgCls: 'bg-slate-500/15', Icon: User, barBgCls: 'bg-slate-400' },
 };
 
 const ROLE_ORDER = ['super-admin', 'admin', 'team_admin', 'team_user', 'user'];
@@ -83,7 +83,7 @@ const UserCard = ({ userRecord, currentUserId, onSaved }) => {
     setUnblocking(true);
     try {
       const activeRole = localStorage.getItem('user_role') || 'super-admin';
-      const apiPath = getFeatureApiPath('roles_features', activeRole);
+      const apiPath = getFeatureApiPath('features_management', activeRole);
       const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
       
       await API.put(`${relativePath}/unblock/${userRecord.userId}`);
@@ -209,7 +209,7 @@ const RoleSection = ({ role, users, currentUserId, onSaved }) => {
     setBulkLoading(true);
     try {
       const activeRole = localStorage.getItem('user_role') || 'super-admin';
-      const apiPath = getFeatureApiPath('roles_features', activeRole);
+      const apiPath = getFeatureApiPath('features_management', activeRole);
       const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
       await API.put(`${relativePath}/reset-role`, { role });
       toast.success(`All ${meta.label} accounts reset to defaults!`);
@@ -270,7 +270,7 @@ const RoleSection = ({ role, users, currentUserId, onSaved }) => {
 import { getCache, setCache } from '../utils/cache';
 
 // ── Main Page ──────────────────────────────────────────────
-const RolesFeatures = () => {
+const FeaturesManagement = () => {
   const { user: currentUser } = useAuth();
   const [allUsers, setAllUsers]     = useState(() => {
     const cached = getCache('role_features_all');
@@ -312,7 +312,7 @@ const RolesFeatures = () => {
     try {
       const featuresParam = featureIds.join(',');
       const rolesParam = rolesArray.join(',');
-      const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+      const apiPath = getFeatureApiPath('features_management', currentUser?.role);
       const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
       const { data } = await API.get(`${relativePath}/preview-count?featureIds=${featuresParam}&roles=${rolesParam}`);
       setPreviewCount(data.count || 0);
@@ -333,7 +333,7 @@ const RolesFeatures = () => {
     if (selectedFeatures.length === 0 || selectedRoles.length === 0) return;
     setApplying(true);
     try {
-      const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+      const apiPath = getFeatureApiPath('features_management', currentUser?.role);
       const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
       const { data } = await API.put(`${relativePath}/assign-to-roles`, {
         featureIds: selectedFeatures,
@@ -356,7 +356,7 @@ const RolesFeatures = () => {
     if (!ok) return;
     setApplying(true);
     try {
-      const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+      const apiPath = getFeatureApiPath('features_management', currentUser?.role);
       const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
       const { data } = await API.put(`${relativePath}/remove-from-roles`, {
         featureIds: selectedFeatures,
@@ -382,7 +382,7 @@ const RolesFeatures = () => {
     );
     if (!ok) return;
     try {
-      const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+      const apiPath = getFeatureApiPath('features_management', currentUser?.role);
       const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
       await API.put(`${relativePath}/reset-role`, { role });
       toast.success(`Features reset to defaults for role: ${role}`);
@@ -399,7 +399,7 @@ const RolesFeatures = () => {
         setLoading(true);
       }
       try {
-        const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+        const apiPath = getFeatureApiPath('features_management', currentUser?.role);
         const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
         const res = await API.get(relativePath);
         const fetched = res.data || [];
@@ -899,4 +899,4 @@ const RolesFeatures = () => {
   );
 };
 
-export default RolesFeatures;
+export default FeaturesManagement;

@@ -130,12 +130,15 @@ const PAGE_MAP = {
     team_admin:  lazy(() => import('../pages/TicketApproval')),
     team_user:   lazy(() => import('../pages/TicketApproval'))
   },
-  roles_features: { 
-    'super-admin': lazy(() => import('../pages/RolesFeatures')),
-    admin:       lazy(() => import('../pages/RolesFeatures')),
-    user:        lazy(() => import('../pages/RolesFeatures')),
-    team_admin:  lazy(() => import('../pages/RolesFeatures')),
-    team_user:   lazy(() => import('../pages/RolesFeatures'))
+  features_management: { 
+    'super-admin': lazy(() => import('../pages/FeaturesManagement')),
+    admin:       lazy(() => import('../pages/FeaturesManagement')),
+    user:        lazy(() => import('../pages/FeaturesManagement')),
+    team_admin:  lazy(() => import('../pages/FeaturesManagement')),
+    team_user:   lazy(() => import('../pages/FeaturesManagement'))
+  },
+  role_management: {
+    'super-admin': lazy(() => import('../pages/RoleManagement'))
   },
   client_logs: { 
     'super-admin': lazy(() => import('../pages/ClientLogs')),

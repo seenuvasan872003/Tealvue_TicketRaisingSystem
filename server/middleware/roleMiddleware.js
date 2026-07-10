@@ -49,6 +49,9 @@ const requireOnlyAdmin = (req, res, next) => {
 // ============================================================
 const requireFeature = (featureId) => async (req, res, next) => {
   try {
+    if (req.user && req.user.role === 'super-admin') {
+      return next();
+    }
     const doc = await RoleFeature.findOne({ userId: req.user._id }).lean();
     const features = doc?.features || [];
     if (features.includes(featureId)) {

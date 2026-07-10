@@ -31,7 +31,7 @@ export const preloadByRole = async (user, onProgress) => {
     { key: 'profile', call: fetchProfile(), ttl: 30, text: 'Loading profile...' },
     { key: 'notifications', call: getMyNotifications(), ttl: 1, text: 'Fetching notifications...', select: (data) => data?.notifications || [] },
     { key: 'unread_count', call: getUnreadCount(), ttl: 1, text: 'Syncing notifications count...', select: (data) => data?.count || 0 },
-    { key: 'role_features', call: API.get('/role-features/me'), ttl: 30, text: 'Verifying permissions...', select: (data) => data?.features || [] }
+    { key: 'role_features', call: API.get('/features/me'), ttl: 30, text: 'Verifying permissions...', select: (data) => data?.features || [] }
   ];
 
   // 2. Define role-specific requests using real, existing functions
@@ -43,7 +43,7 @@ export const preloadByRole = async (user, onProgress) => {
       { key: 'ticket_approval', call: callFeatureApi('ticket_approval', role, 'GET', null, { page: 1, limit: 20 }), ttl: 3, text: 'Syncing ticket approvals...', select: (data) => data?.tickets || [] },
       { key: 'agencies_dashboard', call: getTeamsDashboard(), ttl: 5, text: 'Loading agency insights...' },
       { key: 'activity_logs', call: API.get('/logs?range=daily'), ttl: 5, text: 'Syncing system logs...' },
-      { key: 'role_features_all', call: API.get('/super-admin/role-features'), ttl: 30, text: 'Retrieving security policies...' }
+      { key: 'role_features_all', call: API.get('/super-admin/features'), ttl: 30, text: 'Retrieving security policies...' }
     );
   } else if (role === 'admin') {
     requests.push(

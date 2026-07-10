@@ -89,7 +89,7 @@ const getUserFeatures = async (req, res) => {
   }
 };
 
-// ── Update single user's features (super-admin) ───────────
+// ── Update single user's features (super-admin) ─────────
 const updateUserFeatures = async (req, res) => {
   try {
     const { features } = req.body;
@@ -100,16 +100,7 @@ const updateUserFeatures = async (req, res) => {
     const targetUser = await User.findById(req.params.userId).select('_id name email role');
     if (!targetUser) return res.status(404).json({ message: 'User not found' });
 
-    // Guard: super-admin cannot remove roles_features from themselves
-    if (
-      req.params.userId === req.user._id.toString() &&
-      req.user.role === 'super-admin' &&
-      !features.includes('roles_features')
-    ) {
-      return res.status(400).json({
-        message: 'You cannot remove access to the Roles & Features page from your own account.'
-      });
-    }
+
 
     const doc = await RoleFeature.findOneAndUpdate(
       { userId: targetUser._id },
@@ -347,10 +338,6 @@ const removeFeatureFromRoles = async (req, res) => {
 
     let warning = null;
     let updateIds = userIds;
-    if (featureIds.includes('roles_features') && roles.includes('super-admin')) {
-      updateIds = userIds.filter(uid => uid.toString() !== req.user._id.toString());
-      warning = "The 'roles_features' feature was not removed from your own account for safety.";
-    }
 
     await RoleFeature.updateMany(
       { userId: { $in: updateIds } },

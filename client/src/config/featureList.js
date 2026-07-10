@@ -280,8 +280,8 @@ export const FEATURES = [
     }
   },
   {
-    "id": "roles_features",
-    "label": "Roles & Features",
+    "id": "features_management",
+    "label": "Features",
     "section": "MANAGEMENT",
     "icon": "ti-shield-check",
     "roles": [
@@ -292,18 +292,33 @@ export const FEATURES = [
       "team_user"
     ],
     "paths": {
-      "super-admin": "/super-admin/roles",
-      "admin": "/admin/roles",
-      "user": "/user/roles",
-      "team_admin": "/team-admin/roles",
-      "team_user": "/team-user/roles"
+      "super-admin": "/super-admin/features",
+      "admin": "/admin/features",
+      "user": "/user/features",
+      "team_admin": "/team-admin/features",
+      "team_user": "/team-user/features"
     },
     "apiPaths": {
-      "super-admin": "/api/super-admin/role-features",
-      "admin": "/api/admin/role-features",
-      "user": "/api/user/role-features",
-      "team_admin": "/api/team-admin/role-features",
-      "team_user": "/api/team-user/role-features"
+      "super-admin": "/api/super-admin/features",
+      "admin": "/api/admin/features",
+      "user": "/api/user/features",
+      "team_admin": "/api/team-admin/features",
+      "team_user": "/api/team-user/features"
+    }
+  },
+  {
+    "id": "role_management",
+    "label": "Role",
+    "section": "MANAGEMENT",
+    "icon": "ti-user-cog",
+    "roles": [
+      "super-admin"
+    ],
+    "paths": {
+      "super-admin": "/super-admin/role"
+    },
+    "apiPaths": {
+      "super-admin": "/api/super-admin/role-management"
     }
   },
   {

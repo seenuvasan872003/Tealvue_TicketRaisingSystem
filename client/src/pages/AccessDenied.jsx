@@ -28,7 +28,7 @@ const AccessDenied = () => {
   useEffect(() => {
     const reportViolation = async () => {
       try {
-        const res = await API.post('/role-features/violation', { 
+        const res = await API.post('/features/violation', { 
           featureId: featureId || 'unknown',
           route: window.location.pathname
         });

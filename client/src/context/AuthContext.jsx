@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
   // ── Fetch user features from API ──────────────────────
   const fetchFeatures = async (role) => {
     try {
-      const res = await API.get('/role-features/me');
+      const res = await API.get('/features/me');
       setFeatures(res.data.features || []);
     } catch (err) {
       // Fallback to role defaults if API unreachable
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const [profileRes, featuresRes] = await Promise.all([
             fetchProfile(),
-            API.get('/role-features/me').catch(err => ({ data: { features: ROLE_DEFAULTS[localStorage.getItem('user_role')] || ['dashboard'] } }))
+            API.get('/features/me').catch(err => ({ data: { features: ROLE_DEFAULTS[localStorage.getItem('user_role')] || ['dashboard'] } }))
           ]);
           setUser(profileRes.data);
           localStorage.setItem('user_role', profileRes.data.role);
@@ -167,7 +167,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{
-      user, token, loading, features,
+      user, token, loading, features, setFeatures,
       login, loginWithToken, register, logout, updateProfile, refreshUser,
       isSuperAdmin, isAdminLevel, isUser,
       hasFeature,

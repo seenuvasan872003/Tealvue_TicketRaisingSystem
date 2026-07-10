@@ -53,20 +53,28 @@ const FeatureChecklist = ({ userId, role, features: savedFeatures, onSaved, onCl
     return ROLE_DEFAULTS[role] || ['dashboard'];
   }, [role]);
 
+  // ── Core locked features that super-admins always keep ─────
+  const SUPER_ADMIN_LOCKED = ['features_management', 'role_management'];
+
   // ── Toggle ─────────────────────────────────────────────────
   const toggle = useCallback((featureId) => {
     if (defaultFeatures.includes(featureId)) {
       toast.warning('This is a default feature for this role and cannot be modified.');
       return;
     }
-    if (isSelf && featureId === 'roles_features') {
-      toast.warning('You cannot remove Roles & Features access from your own account.');
+    if (isSelf && featureId === 'features_management') {
+      toast.warning('You cannot remove Features access from your own account.');
+      return;
+    }
+    // Super-admin: lock features_management and role_management
+    if (role === 'super-admin' && SUPER_ADMIN_LOCKED.includes(featureId)) {
+      toast.warning('This feature is mandatory for Super Admins and cannot be removed.');
       return;
     }
     setLocal(prev =>
       prev.includes(featureId) ? prev.filter(f => f !== featureId) : [...prev, featureId]
     );
-  }, [isSelf, defaultFeatures]);
+  }, [isSelf, defaultFeatures, role]);
 
   // ── Select All / Deselect All ──────────────────────────────
   const selectAll = () => {
@@ -75,10 +83,14 @@ const FeatureChecklist = ({ userId, role, features: savedFeatures, onSaved, onCl
   };
   const deselectAll = () => {
     // Keep only the default features for this role (which are locked)
-    // plus roles_features if isSelf
+    // plus features_management if isSelf
     const keep = [...defaultFeatures];
-    if (isSelf && !keep.includes('roles_features')) {
-      keep.push('roles_features');
+    if (isSelf && !keep.includes('features_management')) {
+      keep.push('features_management');
+    }
+    // Super-admin: always keep locked features
+    if (role === 'super-admin') {
+      SUPER_ADMIN_LOCKED.forEach(f => { if (!keep.includes(f)) keep.push(f); });
     }
     setLocal(keep);
   };
@@ -91,7 +103,7 @@ const FeatureChecklist = ({ userId, role, features: savedFeatures, onSaved, onCl
   const handleSave = async () => {
     setSaving(true);
     try {
-      const apiPath = getFeatureApiPath('roles_features', currentUser?.role);
+      const apiPath = getFeatureApiPath('features_management', currentUser?.role);
       const relativePath = apiPath.startsWith('/api') ? apiPath.substring(4) : apiPath;
       const res = await API.put(`${relativePath}/${userId}`, { features: local });
       toast.success('Features updated successfully!');
@@ -193,26 +205,29 @@ const FeatureChecklist = ({ userId, role, features: savedFeatures, onSaved, onCl
               {items.map(feature => {
                 const enabled     = local.includes(feature.id);
                 const isDefault   = defaultFeatures.includes(feature.id);
-                const isProtected = (isSelf && feature.id === 'roles_features') || isDefault;
+                const isProtected = (isSelf && feature.id === 'features_management') || isDefault ||
+                  (role === 'super-admin' && SUPER_ADMIN_LOCKED.includes(feature.id));
+                // Auto-tick: Super-Admin must always have features_management & role_management checked
+                const effectiveEnabled = (role === 'super-admin' && SUPER_ADMIN_LOCKED.includes(feature.id)) ? true : enabled;
                 return (
                   <label
                     key={feature.id}
                     htmlFor={`feat-${userId}-${feature.id}`}
-                    className={`flex items-center gap-2 px-2.5 py-[7px] rounded-lg transition-all duration-150 ${isProtected ? "cursor-not-allowed opacity-60" : "cursor-pointer"} ${enabled ? "bg-[rgba(20,184,166,0.09)] border border-[rgba(20,184,166,0.22)]" : "bg-white/2 border border-white/5 hover:bg-white/5"}`}
+                    className={`flex items-center gap-2 px-2.5 py-[7px] rounded-lg transition-all duration-150 ${isProtected ? "cursor-not-allowed opacity-60" : "cursor-pointer"} ${effectiveEnabled ? "bg-[rgba(20,184,166,0.09)] border border-[rgba(20,184,166,0.22)]" : "bg-white/2 border border-white/5 hover:bg-white/5"}`}
                   >
                     {/* Custom checkbox visual */}
-                    <div className={`w-4 h-4 rounded shrink-0 flex items-center justify-center transition-all duration-150 border-2 ${enabled ? "border-[var(--color-teal)] bg-[var(--color-teal)]" : "border-white/20 bg-transparent"}`}>
-                      {enabled && <Check size={10} color="#fff" strokeWidth={3} />}
+                    <div className={`w-4 h-4 rounded shrink-0 flex items-center justify-center transition-all duration-150 border-2 ${effectiveEnabled ? "border-[var(--color-teal)] bg-[var(--color-teal)]" : "border-white/20 bg-transparent"}`}>
+                      {effectiveEnabled && <Check size={10} color="#fff" strokeWidth={3} />}
                     </div>
                     <input
                       id={`feat-${userId}-${feature.id}`}
                       type="checkbox"
-                      checked={enabled}
+                      checked={effectiveEnabled}
                       disabled={isProtected}
                       onChange={() => toggle(feature.id)}
                       className="absolute opacity-0 w-0 h-0"
                     />
-                    <span className={`text-[12.5px] flex-1 ${enabled ? "font-semibold text-[var(--color-text)]" : "font-normal text-[var(--color-text-muted)]"}`}>
+                    <span className={`text-[12.5px] flex-1 ${effectiveEnabled ? "font-semibold text-[var(--color-text)]" : "font-normal text-[var(--color-text-muted)]"}`}>
                       {feature.label}
                     </span>
                     {/* Status indicator dot / Lock icon */}
@@ -221,7 +236,7 @@ const FeatureChecklist = ({ userId, role, features: savedFeatures, onSaved, onCl
                         <AlertCircle size={12} color="var(--color-text-muted)" />
                       </span>
                     ) : (
-                      <div className={`w-[7px] h-[7px] rounded-full shrink-0 transition-all duration-200 ${enabled ? "bg-[#10b981] shadow-[0_0_6px_#10b98166]" : "bg-white/10"}`} />
+                      <div className={`w-[7px] h-[7px] rounded-full shrink-0 transition-all duration-200 ${effectiveEnabled ? "bg-[#10b981] shadow-[0_0_6px_#10b98166]" : "bg-white/10"}`} />
                     )}
                     {isProtected && !isDefault && <AlertCircle size={11} color="var(--color-text-muted)" />}
                   </label>

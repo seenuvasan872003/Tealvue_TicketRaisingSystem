@@ -48,8 +48,8 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // Check if account is security blocked
-    if (user.securityBlockUntil && user.securityBlockUntil > new Date()) {
+    // Check if account is security blocked (Super Admin is never blocked)
+    if (user.role !== 'super-admin' && user.securityBlockUntil && user.securityBlockUntil > new Date()) {
       const remainingMs = user.securityBlockUntil.getTime() - Date.now();
       const remainingHours = Math.ceil(remainingMs / (1000 * 60 * 60));
       return res.status(403).json({
